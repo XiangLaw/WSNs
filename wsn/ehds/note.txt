@@ -1,0 +1,4 @@
+This is code folder for the Efficient Hole Detour Scheme for Geographic Routing in Wireless Sensor Networks. We call the protocol EHDS for short.
+This is a protocol for routing avoiding hole identified by BOUNDHOLE. The precise hole is represented by a circle bound. The protocol effectiently uses circle information to avoid the hole.
+
+*** NOTICE: The protocol class derives boundhole class to explore the boundhole process. The BOUNDHOLE code is able to be found in folder /ns/boundhole
