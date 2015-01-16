@@ -349,6 +349,7 @@ OBJ_CC = \
 	wsn/octagon/octagon.o  \
 	wsn/scalegoal/scalegoal.o  \
 	wsn/scalehexagon/scalehexagon.o  \
+	wsn/greedy/greedy.o wsn/greedy/greedy_nbr.o \
 	$(OBJ_STL)
 
 

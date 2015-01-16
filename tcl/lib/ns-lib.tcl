@@ -677,6 +677,10 @@ Simulator instproc create-wireless-node args {
 			DYNAMICPOLYGON {
 				set ragent [$self create-dynamicpolygon-agent $node]
 			}
+			GREEDY {
+				set ragent [$self create-greedy-agent $node]
+			}
+
 			MDART {
 				set ragent [$self create-mdart-agent $node]
                         }
@@ -2557,3 +2561,9 @@ Simulator instproc prepare-to-stop {} {
 	}
 }
     
+Simulator instproc create-greedy-agent { node } {
+	set ragent [new Agent/Greedy [$node node-addr]]
+	$self at 0.0 "$ragent start"
+	$node set ragent_ $ragent
+	return $ragent
+}
