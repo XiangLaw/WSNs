@@ -92,6 +92,8 @@ PriQueue::recv(Packet *p, Handler *h)
                 case PT_AODV:
 		case PT_AOMDV:
 		case PT_MDART:
+    // GREEDY
+    case PT_GREEDY:
 			recvHighPriority(p, h);
                         break;
 

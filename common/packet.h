@@ -213,7 +213,9 @@ static const packet_t PT_GRID = 82;				// approximate hole by gird
 static const packet_t PT_GRIDDYNAMIC = 83;		// gird dynamic
 static const packet_t PT_DYNAMICPOLYGON = 84;	// Dynamic polygon
 
-static packet_t       PT_NTYPE = 85; 			// This MUST be the LAST one
+static const packet_t PT_GREEDY = 85;
+
+static packet_t       PT_NTYPE = 86; 			// This MUST be the LAST one
 
 enum packetClass
 {
@@ -443,6 +445,8 @@ public:
 		name_[PT_GRID]="GRID";
 		name_[PT_GRIDDYNAMIC]="GRIDDYNAMIC";
 		name_[PT_DYNAMICPOLYGON]="DYNAMICPOLYGON";
+		// pvhau		
+		name_[PT_GREEDY] = "greedy";
 
 		name_[PT_NTYPE]= "undefined";
 	}

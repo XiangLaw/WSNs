@@ -192,6 +192,8 @@ set protolist {
 	GRID	
 	GRIDDYNAMIC
 	DYNAMICPOLYGON
+# pvhau
+	GREEDY
 # Other:
 	Encap 	# common/encap.cc
 	IPinIP 	# IP encapsulation 

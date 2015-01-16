@@ -677,6 +677,9 @@ Simulator instproc create-wireless-node args {
 			DYNAMICPOLYGON {
 				set ragent [$self create-dynamicpolygon-agent $node]
 			}
+			GREEDY {
+				set ragent [$self create-greedy-agent $node]
+			}
 			MDART {
 				set ragent [$self create-mdart-agent $node]
                         }
@@ -1129,6 +1132,25 @@ Simulator instproc create-dynamicpolygon-agent { node } {
 	$self at 30	"$ragent boundhole"
 	$self at 90	"$ragent routing"
 	return $ragent	
+}
+
+# GREEDY
+Simulator instproc create-greedy-agent { node } {
+	set ragent [new Agent/Greedy [$node node-addr]]
+
+	set addr [$node node-addr]
+    
+	$ragent addr $addr
+	$ragent node $node
+	if [Simulator set mobile_ip_] {
+		$ragent port-dmux [$node set dmux_]
+	}
+	$node addr $addr
+	$node set ragent_ $ragent
+	
+	$self at 0.0 "$ragent set-location"
+	$self at 0.0 "$ragent start"
+	return $ragent
 }
 
 Simulator instproc create-puma-agent { node } {
