@@ -192,6 +192,8 @@ set protolist {
 	GRID	
 	GRIDDYNAMIC
 	DYNAMICPOLYGON
+# pvhau
+	GREEDY
 # Other:
 	GREEDY 	# greedy
 	Encap 	# common/encap.cc

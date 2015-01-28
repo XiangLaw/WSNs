@@ -230,7 +230,7 @@
 #endif // NS_DIFFUSION
 
 #ifndef INTEREST_FORWARD_DELAY
-#error "No Radio Parameters Selected in ./configure !"
+//#error "No Radio Parameters Selected in ./configure !"
 #endif // !INTEREST_FORWARD_DELAY
 
 // The following timeouts are used for determining when gradients,
