@@ -1656,3 +1656,6 @@ Agent/DYNAMICPOLYGON set limit_ 0
 Agent/DYNAMICPOLYGON set range_ 40
 Agent/DYNAMICPOLYGON set r_ 100
 Agent/DYNAMICPOLYGON set limit_boundhole_hop_ 80
+
+#greedy
+#Agent/GREEDY set 

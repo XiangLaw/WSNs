@@ -30,7 +30,6 @@
 #include "greedy_pkt.h"
 #include "greedy_nbr.h"
 #include "greedy_flow.h"
-
 #include "agent.h"
 #include "packet.h"
 #include "trace.h"

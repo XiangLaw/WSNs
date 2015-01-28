@@ -76,7 +76,6 @@ private:
 	int limit_boundhole_hop_;
 
 	stuckangle* stuck_angle_;
-	polygonHole* hole_list_;
 
 	void startUp();
 
@@ -95,6 +94,9 @@ private:
 	void dumpTime();
 	void dumpBoundhole();
 	void dumpArea();
+
+protected:
+	polygonHole* hole_list_;
 
 public:
 	GridOnlineAgent();

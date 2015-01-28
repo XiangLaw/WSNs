@@ -2579,3 +2579,9 @@ Simulator instproc prepare-to-stop {} {
 	}
 }
     
+Simulator instproc create-greedy-agent { node } {
+	set ragent [new Agent/Greedy [$node node-addr]]
+	$self at 0.0 "$ragent start"
+	$node set ragent_ $ragent
+	return $ragent
+}

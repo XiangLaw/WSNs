@@ -173,7 +173,11 @@ set pvals(83) GRIDDYNAMIC\n\
 set ptype(dynamicpolygon) 84\n\
 set pvals(84) DYNAMICPOLYGON\n\
 set ptype(greedy) 85\n\
+<<<<<<< HEAD
+set pvals(85) Greedy\n\
+=======
 set pvals(85) greedy\n\
+>>>>>>> 3b298a9a711a818e189b2f7f7e9bc607a906b6a0
 proc ptype2val {str} {\n\
 global ptype\n\
 set str [string tolower $str]\n\

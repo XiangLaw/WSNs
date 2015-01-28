@@ -194,6 +194,7 @@ set protolist {
 	DYNAMICPOLYGON
 	GREEDY
 # Other:
+	GREEDY 	# greedy
 	Encap 	# common/encap.cc
 	IPinIP 	# IP encapsulation 
 	HDLC 	# High Level Data Link Control
