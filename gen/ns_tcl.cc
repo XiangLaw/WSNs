@@ -101,15 +101,9 @@ ns will fall back on running the first perl in your path.\\\n\
 The wrong version of perl may break the test suites.\\\n\
 Reconfigure and rebuild ns if this is a problem.\\\n\
 \"\n\
-<<<<<<< HEAD
-checkout_executable TCLSH \"/home/huyvq/workspace/thesis/NS2/bin/tclsh8.5\" tclsh \"\\\n\
-When configured, ns found the right version of tclsh in\\\n\
-/home/huyvq/workspace/thesis/NS2/bin/tclsh8.5\n\
-=======
 checkout_executable TCLSH \"/usr/share/ns-allinone-2.35/bin/tclsh8.5\" tclsh \"\\\n\
 When configured, ns found the right version of tclsh in\\\n\
 /usr/share/ns-allinone-2.35/bin/tclsh8.5\n\
->>>>>>> 3b298a9a711a818e189b2f7f7e9bc607a906b6a0
 but it doesn't seem to be there anymore, so\\\n\
 ns will fall back on running the first tclsh in your path.\\\n\
 The wrong version of tclsh may break the test suites.\\\n\
@@ -3461,11 +3455,7 @@ SCALEGOAL\n\
 GRID	\n\
 GRIDDYNAMIC\n\
 DYNAMICPOLYGON\n\
-<<<<<<< HEAD
-GREEDY 	# greedy\n\
-=======
 GREEDY\n\
->>>>>>> 3b298a9a711a818e189b2f7f7e9bc607a906b6a0
 Encap 	# common/encap.cc\n\
 IPinIP 	# IP encapsulation \n\
 HDLC 	# High Level Data Link Control\n\
@@ -20212,10 +20202,7 @@ Agent/DYNAMICPOLYGON set limit_ 0\n\
 Agent/DYNAMICPOLYGON set range_ 40\n\
 Agent/DYNAMICPOLYGON set r_ 100\n\
 Agent/DYNAMICPOLYGON set limit_boundhole_hop_ 80\n\
-<<<<<<< HEAD
 \n\
-=======
->>>>>>> 3b298a9a711a818e189b2f7f7e9bc607a906b6a0
 if [TclObject is-class Network/Pcap/Live] {\n\
 Network/Pcap/Live set snaplen_ 4096;# bpf snap len\n\
 Network/Pcap/Live set promisc_ false;\n\
@@ -21277,10 +21264,6 @@ set ragent [$self create-dynamicpolygon-agent $node]\n\
 GREEDY {\n\
 set ragent [$self create-greedy-agent $node]\n\
 }\n\
-<<<<<<< HEAD
-\n\
-=======
->>>>>>> 3b298a9a711a818e189b2f7f7e9bc607a906b6a0
 MDART {\n\
 set ragent [$self create-mdart-agent $node]\n\
 }\n\
@@ -21693,8 +21676,6 @@ $self at 90	\"$ragent routing\"\n\
 return $ragent	\n\
 }\n\
 \n\
-<<<<<<< HEAD
-=======
 Simulator instproc create-greedy-agent { node } {\n\
 set ragent [new Agent/Greedy [$node node-addr]]\n\
 \n\
@@ -21713,7 +21694,6 @@ $self at 0.0 \"$ragent start\"\n\
 return $ragent\n\
 }\n\
 \n\
->>>>>>> 3b298a9a711a818e189b2f7f7e9bc607a906b6a0
 Simulator instproc create-puma-agent { node } {\n\
 set ragent [new Agent/PUMA [$node node-addr]]\n\
 $self at 0.0 \"$ragent start\"\n\
@@ -22935,16 +22915,6 @@ foreach i $lagent {\n\
 $i stop\n\
 }\n\
 }\n\
-\n\
-<<<<<<< HEAD
-Simulator instproc create-greedy-agent { node } {\n\
-set ragent [new Agent/Greedy [$node node-addr]]\n\
-$self at 0.0 \"$ragent start\"\n\
-$node set ragent_ $ragent\n\
-return $ragent\n\
-}\n\
-=======
->>>>>>> 3b298a9a711a818e189b2f7f7e9bc607a906b6a0
 \n\
 Simulator instproc attach-diffapp { node diffapp } {\n\
 $diffapp dr [$node get-dr]\n\

@@ -213,11 +213,7 @@ static const packet_t PT_GRID = 82;				// approximate hole by gird
 static const packet_t PT_GRIDDYNAMIC = 83;		// gird dynamic
 static const packet_t PT_DYNAMICPOLYGON = 84;	// Dynamic polygon
 
-<<<<<<< HEAD
 static const packet_t PT_GREEDY = 85; 			// greedy
-=======
-static const packet_t PT_GREEDY = 85;
->>>>>>> 3b298a9a711a818e189b2f7f7e9bc607a906b6a0
 
 static packet_t       PT_NTYPE = 86; 			// This MUST be the LAST one
 

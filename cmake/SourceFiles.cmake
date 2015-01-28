@@ -55,7 +55,7 @@ STRING(REPLACE ";" "	" NS_TCL_LIB_STL "${NS_TCL_LIB_STL}")
 
 add_custom_command(OUTPUT version.c ns_tcl.cc ptypes.cc
   COMMAND ${TCL_TCLSH} ${CMAKE_CURRENT_SOURCE_DIR}/bin/string2c.tcl version_string < ${CMAKE_CURRENT_SOURCE_DIR}/VERSION > version.c
-  COMMAND ./ptypes2tcl > ptypes.cc
+  COMMAND ./bin/ptypes2tcl > ptypes.cc
   COMMAND ${TCL_TCLSH} ${CMAKE_CURRENT_SOURCE_DIR}/bin/tcl-expand.tcl ${CMAKE_CURRENT_SOURCE_DIR}/tcl/lib/ns-lib.tcl ${NS_TCL_LIB_STL} | tcl2c++ et_ns_lib > ns_tcl.cc
   DEPENDS ptypes2tcl
 )
