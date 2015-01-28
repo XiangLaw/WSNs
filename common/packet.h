@@ -212,10 +212,11 @@ static const packet_t PT_SCALEGOAL = 81;		// broadcast scale convex hull hole
 static const packet_t PT_GRID = 82;				// approximate hole by gird
 static const packet_t PT_GRIDDYNAMIC = 83;		// gird dynamic
 static const packet_t PT_DYNAMICPOLYGON = 84;	// Dynamic polygon
-
+// wsn-ext
 static const packet_t PT_GREEDY = 85; 			// greedy
+static const packet_t PT_ELBARGRIDONLINE = 86; // elbar + gridonline
 
-static packet_t       PT_NTYPE = 86; 			// This MUST be the LAST one
+static packet_t       PT_NTYPE = 87; 			// This MUST be the LAST one
 
 enum packetClass
 {
@@ -446,9 +447,9 @@ public:
 		name_[PT_GRIDDYNAMIC]="GRIDDYNAMIC";
 		name_[PT_DYNAMICPOLYGON]="DYNAMICPOLYGON";
 
-		name_[PT_GREEDY] = "greedy";
-
+        // wsn-ext
 		name_[PT_GREEDY]="Greedy";
+        name_[PT_ELBARGRIDONLINE] = "ELBARGRIDONLINE";
 
 		name_[PT_NTYPE]= "undefined";
 	}

@@ -1,6 +1,8 @@
 #include "elbar.h"
+#include "elbar_packet.h"
 #include "../include/tcl.h"
 
+int hdr_elbar_gridonline::offset_;
 
 static class ElbarGridOnlineHeaderClass : public PacketHeaderClass 
 {
@@ -9,7 +11,6 @@ static class ElbarGridOnlineHeaderClass : public PacketHeaderClass
 		{
 			bind_offset(&hdr_elbar_gridonline::offset_);
 		}
-		~ElbarGridOnlineHeaderClass(){}
 } class_elbargridonlinehdr;
 
 static class ElbarGridOnlineAgentClass : public TclClass
@@ -26,15 +27,35 @@ static class ElbarGridOnlineAgentClass : public TclClass
  * Agent implementation
  */
 
-GridOnlineAgent::GridOnlineAgent() : GPSRAgent(),
-		findStuck_timer_(this, &GridOnlineAgent::findStuckAngle),
-		grid_timer_(this, &GridOnlineAgent::sendBoundHole)
+ElbarGridOnlineAgent::ElbarGridOnlineAgent() : GridOnlineAgent()
 {
-	stuck_angle_ = NULL;
-	hole_list_ = NULL;
-	bind("range_", &range_);
-	bind("limit_", &limit_);
-	bind("r_", &r_);
-	bind("limit_boundhole_hop_", &limit_boundhole_hop_);
+}
+
+int
+ElbarGridOnlineAgent::command(int argc, const char*const* argv)
+{
+    return GPSRAgent::command(argc,argv);
+}
+
+// handle the receive packet just of type PT_GRID
+void
+ElbarGridOnlineAgent::recv(Packet *p, Handler *h)
+{
+    hdr_cmn *cmh = HDR_CMN(p);
+
+    switch (cmh->ptype())
+    {
+        case PT_HELLO:
+            GPSRAgent::recv(p, h);
+            break;
+
+        case PT_ELBARGRIDONLINE:
+            // TODO: handle here
+            break;
+
+        default:
+            drop(p, " UnknowType");
+            break;
+    }
 }
 

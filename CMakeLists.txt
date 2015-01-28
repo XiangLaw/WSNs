@@ -3,7 +3,6 @@ project(ns)
 set(TARNAME ns)
 
 set(CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake" ${CMAKE_MODULE_PATH})
-set(CMAKE_RUNTIME_OUTPUT_DIRECTORY_DEBUG ${CMAKE_BINARY_DIR}/bin)
 
 # program name, version etc
 
@@ -17,7 +16,7 @@ find_package(PkgConfig REQUIRED)
 
 ##########################################################################
 if(NOT DEFINED BIN_INSTALL_DIR)
-    set(BIN_INSTALL_DIR "${CMAKE_INSTALL_PREFIX}/bin")
+    set(BIN_INSTALL_DIR "/home/eleven/")
 endif(NOT DEFINED BIN_INSTALL_DIR)
 if(NOT DEFINED DATA_INSTALL_DIR)
     set(DATA_INSTALL_DIR "${CMAKE_INSTALL_PREFIX}/share")
@@ -65,6 +64,9 @@ target_link_libraries(ptypes2tcl)
 #######################################################################
 ### source code files
 include(SourceFiles)
+#######################################################################
+get_filename_component(PARENT_DIR ${ns_SOURCE_DIR} PATH)
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${PARENT_DIR}/bin")
 ################################################################
 ### ns
 include_directories(

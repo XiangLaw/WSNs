@@ -680,6 +680,9 @@ Simulator instproc create-wireless-node args {
 			GREEDY {
 				set ragent [$self create-greedy-agent $node]
 			}
+			ELBARGRIDONLINE{
+			    set ragent [$self create-elbargridonline-agent $node]
+			}
 			MDART {
 				set ragent [$self create-mdart-agent $node]
                         }
@@ -1151,6 +1154,23 @@ Simulator instproc create-greedy-agent { node } {
 	$self at 0.0 "$ragent set-location"
 	$self at 0.0 "$ragent start"
 	return $ragent
+}
+
+# ELBAR - GRID ONLINE
+Simulator instproc create-elbargridonline-agent { node } {
+	set ragent [new Agent/ELBARGRIDONLINE]
+    	set addr [$node node-addr]
+    	$ragent addr $addr
+    	$ragent node $node
+    	if [Simulator set mobile_ip_] {
+    		$ragent port-dmux [$node demux]
+    	}
+    	$node addr $addr
+    	$node set ragent_ $ragent
+    	$self at 0.0 	"$ragent start"    ;# start updates
+    	$self at 30	"$ragent boundhole"
+    	$self at 90	"$ragent routing"
+    	return $ragent
 }
 
 Simulator instproc create-puma-agent { node } {
@@ -2577,11 +2597,4 @@ Simulator instproc prepare-to-stop {} {
 	foreach i $lagent {
 		$i stop
 	}
-}
-    
-Simulator instproc create-greedy-agent { node } {
-	set ragent [new Agent/Greedy [$node node-addr]]
-	$self at 0.0 "$ragent start"
-	$node set ragent_ $ragent
-	return $ragent
 }
