@@ -38,7 +38,7 @@ CPP	= g++
 LINK	= $(CPP)
 LINK_SHLIB = gcc -shared
 MKDEP	= ./conf/mkdep
-TCLSH	= /home/huyvq/workspace/thesis/NS2/bin/tclsh8.5
+TCLSH	= /usr/share/ns-allinone-2.35/bin/tclsh8.5
 TCL2C	= ../tclcl-1.20/tcl2c++
 AR	= ar rc $(BLANK)
 
@@ -64,7 +64,7 @@ DEFINE	= -DTCP_DELAY_BIND_ALL -DNO_TK -DTCLCL_CLASSINSTVAR  -DNDEBUG -DLINUX_TCP
 INCLUDES = \
 	-I.  \
 	-I. \
-	-I/home/huyvq/workspace/thesis/NS2/tclcl-1.20 -I/home/huyvq/workspace/thesis/NS2/otcl-1.14 -I/home/huyvq/workspace/thesis/NS2/include -I/home/huyvq/workspace/thesis/NS2/include -I/home/huyvq/workspace/thesis/NS2/include -I/usr/include/pcap \
+	-I/usr/share/ns-allinone-2.35/tclcl-1.20 -I/usr/share/ns-allinone-2.35/otcl-1.14 -I/usr/share/ns-allinone-2.35/include -I/usr/share/ns-allinone-2.35/include -I/usr/share/ns-allinone-2.35/include -I/usr/include/pcap \
 	-I./tcp -I./sctp -I./common -I./link -I./queue \
 	-I./adc -I./apps -I./mac -I./mobile -I./trace \
 	-I./routing -I./tools -I./classifier -I./mcast \
@@ -76,7 +76,7 @@ INCLUDES = \
 
 
 LIB	= \
-	-L/home/huyvq/workspace/thesis/NS2/tclcl-1.20 -ltclcl -L/home/huyvq/workspace/thesis/NS2/otcl-1.14 -lotcl -L/home/huyvq/workspace/thesis/NS2/lib -ltk8.5 -L/home/huyvq/workspace/thesis/NS2/lib -ltcl8.5 \
+	-L/usr/share/ns-allinone-2.35/tclcl-1.20 -ltclcl -L/usr/share/ns-allinone-2.35/otcl-1.14 -lotcl -L/usr/share/ns-allinone-2.35/lib -ltk8.5 -L/usr/share/ns-allinone-2.35/lib -ltcl8.5 \
 	-lXext -lX11 \
 	 -lnsl -ldl \
 	-lm -lm 
@@ -349,7 +349,7 @@ OBJ_CC = \
 	wsn/octagon/octagon.o  \
 	wsn/scalegoal/scalegoal.o  \
 	wsn/scalehexagon/scalehexagon.o  \
-	wsn/greedy/greedy.o wsn/greedy/greedy_nbr.o \
+	wsn/greedy-2/greedy.o wsn/greedy-2/greedy_nbr.o wsn/greedy-2/greedy_flow.o  \
 	$(OBJ_STL)
 
 
