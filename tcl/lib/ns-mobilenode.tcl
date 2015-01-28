@@ -928,3 +928,21 @@ SRNodeNew instproc reset args {
 	eval $self next $args
 	$dsr_agent_ reset
 }
+
+
+#wsn - set by pvhau
+Node/MobileNode instproc get-ragent {} {
+	$self instvar ragent_
+	return $ragent_
+}
+
+Node/MobileNode instproc set-flow-data {dest x y} {
+	$self instvar ragent_
+	$ragent_ set-flow-data $dest $x $y
+}
+
+Node/MobileNode instproc set-nbr {n x y} {
+	$self instvar ragent_
+	$ragent_ set-nbr $n $x $y
+}
+#end added code

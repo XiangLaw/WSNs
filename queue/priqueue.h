@@ -1,4 +1,3 @@
-
 /* -*-	Mode:C++; c-basic-offset:8; tab-width:8; indent-tabs-mode:t -*- */
 /*
  * Copyright (c) 1997 Regents of the University of California.
@@ -48,39 +47,42 @@
 #include "lib/bsd-list.h"
 
 class PriQueue;
+
 typedef int (*PacketFilter)(Packet *, void *);
 
 LIST_HEAD(PriQueue_List, PriQueue);
 
 class PriQueue : public DropTail {
 public:
-        PriQueue();
+    PriQueue();
 
-        int     command(int argc, const char*const* argv);
-        void    recv(Packet *p, Handler *h);
+    int command(int argc, const char *const *argv);
 
-        void    recvHighPriority(Packet *, Handler *);
-        // insert packet at front of queue
+    void recv(Packet *p, Handler *h);
 
-        void filter(PacketFilter filter, void * data);
-        // apply filter to each packet in queue, 
-        // - if filter returns 0 leave packet in queue
-        // - if filter returns 1 remove packet from queue
+    void recvHighPriority(Packet *, Handler *);
+    // insert packet at front of queue
 
-        Packet* filter(nsaddr_t id);
+    void filter(PacketFilter filter, void *data);
+    // apply filter to each packet in queue,
+    // - if filter returns 0 leave packet in queue
+    // - if filter returns 1 remove packet from queue
 
-	void	Terminate(void);
+    Packet *filter(nsaddr_t id);
+
+    void Terminate(void);
+
 private:
-        int Prefer_Routing_Protocols;
- 
-	/*
-	 * A global list of Interface Queues.  I use this list to iterate
-	 * over all of the queues at the end of the simulation and flush
-	 * their contents. - josh
-	 */
+    int Prefer_Routing_Protocols;
+
+    /*
+     * A global list of Interface Queues.  I use this list to iterate
+     * over all of the queues at the end of the simulation and flush
+     * their contents. - josh
+     */
 public:
-	LIST_ENTRY(PriQueue) link;
-	static struct PriQueue_List prhead;
+    LIST_ENTRY(PriQueue) link;
+    static struct PriQueue_List prhead;
 };
 
 #endif /* !_priqueue_h */

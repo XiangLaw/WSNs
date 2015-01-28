@@ -445,7 +445,7 @@ public:
 		name_[PT_GRID]="GRID";
 		name_[PT_GRIDDYNAMIC]="GRIDDYNAMIC";
 		name_[PT_DYNAMICPOLYGON]="DYNAMICPOLYGON";
-		// pvhau		
+
 		name_[PT_GREEDY] = "greedy";
 
 		name_[PT_NTYPE]= "undefined";
