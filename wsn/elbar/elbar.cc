@@ -29,12 +29,15 @@ static class ElbarGridOnlineAgentClass : public TclClass
 
 ElbarGridOnlineAgent::ElbarGridOnlineAgent() : GridOnlineAgent()
 {
+    alpha_min_ = M_PI / 3;
+    alpha_max_ = 2 * M_PI / 3;
+    parallelogram_ = NULL;
 }
 
 int
 ElbarGridOnlineAgent::command(int argc, const char*const* argv)
 {
-    return GPSRAgent::command(argc,argv);
+    return GridOnlineAgent::command(argc,argv);
 }
 
 // handle the receive packet just of type PT_GRID
@@ -46,7 +49,7 @@ ElbarGridOnlineAgent::recv(Packet *p, Handler *h)
     switch (cmh->ptype())
     {
         case PT_HELLO:
-            GPSRAgent::recv(p, h);
+            GridOnlineAgent::recv(p, h);
             break;
 
         case PT_ELBARGRIDONLINE:
@@ -59,3 +62,18 @@ ElbarGridOnlineAgent::recv(Packet *p, Handler *h)
     }
 }
 
+void ElbarGridOnlineAgent::holeCoveringParralelogramDetermination() {
+
+}
+
+void ElbarGridOnlineAgent::routing() {
+
+}
+
+void ElbarGridOnlineAgent::sendBoundHole() {
+    GridOnlineAgent::sendBoundHole();
+}
+
+void ElbarGridOnlineAgent::recvBoundHole(Packet *packet) {
+    GridOnlineAgent::recvBoundHole(packet);
+}
