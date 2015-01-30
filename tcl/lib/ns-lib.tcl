@@ -1170,6 +1170,7 @@ Simulator instproc create-elbar-gridonline-agent { node } {
 	$self at 0.0 	"$ragent start"    ;# start updates
 	$self at 30	"$ragent boundhole"
 	$self at 90	"$ragent routing"
+	$self at 99 "$ragent broadcast"
 	return $ragent
 }
 

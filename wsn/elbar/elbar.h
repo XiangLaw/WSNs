@@ -32,18 +32,19 @@ struct parallelogram{
 
 class ElbarGridOnlineAgent: public GridOnlineAgent {
 private:
-    struct angleView*  angle_list_;
-    struct parallelogram* parallelogram_list_;
 
-    void routing(Packet *p);
 
     // detect covering parallelogram and view angle
     bool detectParallelogram();
     RoutingMode holeAvoidingProb();
     Elbar_Region regionDetermine(double angle);
 
-    void recvBoundHole(Packet *p);
-    void sendBoundHole();
+    void recvElbar(Packet *p);
+    void sendElbar(Packet *p);
+
+    void broadcastHci();   // hole core information broadcast
+    void recvHci(Packet *p);        // recv hole core information
+    void routing(Packet *p);        // elbar routing algorithm
 
 public:
 	ElbarGridOnlineAgent();

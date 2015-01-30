@@ -1,7 +1,3 @@
-/*
-*
-* */
-
 #include "common/ns-process.h"
 #include "elbar_packet_data.h"
 #include "cstring"
@@ -29,63 +25,65 @@ ElbarGridOnlinePacketData::ElbarGridOnlinePacketData(ElbarGridOnlinePacketData &
     }
 }
 
-void ElbarGridOnlinePacketData::addData(Point p)
+void ElbarGridOnlinePacketData::add_data(double x, double y)
 {
     unsigned char* temp = data_;
     data_ = new unsigned char[data_len_ + element_size_];
 
     memcpy(data_, temp, data_len_);
-    memcpy(data_ + data_len_, &(p.x_), sizeof(double));
-    memcpy(data_ + data_len_ + sizeof(double), &(p.y_), sizeof(double));
+    memcpy(data_ + data_len_ , &x, sizeof(double));
+    memcpy(data_ + data_len_ + sizeof(double), &y, sizeof(double));
 
     data_len_ += element_size_;
 }
 
-void
-ElbarGridOnlinePacketData::addData(int index, Point p)
-{
-    unsigned char* temp = data_;
-    data_ = new unsigned char[data_len_ + element_size_];
+void ElbarGridOnlinePacketData::dump() {
+    FILE *fp = fopen("ElbarGridOnline.tr", "a+");
 
-    int offset = index * element_size_;
-
-    memcpy(data_, temp, offset);
-    memcpy(data_ + offset, &p.x_, sizeof(double));
-    memcpy(data_ + offset + sizeof(double), &p.y_, sizeof(double));
-    memcpy(data_ + offset + sizeof(double) + sizeof(double), temp + offset, data_len_ - offset);
-
-    data_len_ += element_size_;
-}
-
-void ElbarGridOnlinePacketData::dump()
-{
-    FILE *fp = fopen("DataDump.tr", "w");
-
-    for (int i = 0; i < size(); i++)
+    for (int i = 1; i <= data_len_ / element_size_; i++)
     {
-        Point n = getData(i);
+        node n = get_data(i);
         fprintf(fp, "%f\t%f\n", n.x_, n.y_);
     }
+    node n = get_data(1);
+    fprintf(fp, "%f\t%f\n", n.x_, n.y_);
     fprintf(fp, "\n");
     fclose(fp);
 }
 
-Point ElbarGridOnlinePacketData::getData(int index)
+node ElbarGridOnlinePacketData::get_data(int index)
 {
-    Point re;
-    int offset = index * element_size_;
-
-    memcpy(&re.x_,  data_ + offset,  sizeof(double));
+    node re;
+    int offset = (index - 1) * element_size_;
+    memcpy(&re.x_,  data_ + offset ,  sizeof(double));
     memcpy(&re.y_,  data_ + offset + sizeof(double), sizeof(double));
 
     return re;
 }
 
-void ElbarGridOnlinePacketData::removeData(int index)
+int ElbarGridOnlinePacketData::indexOf(node no)
 {
-    if (index >= size() || index < 0) return;
+    return indexOf(no.x_, no.y_);
+}
 
-    int offset = index * element_size_;
+int ElbarGridOnlinePacketData::indexOf(double x, double y)
+{
+    node n;
+    for (int i = 0; i < element_size_; i++)
+    {
+        n = get_data(i);
+        if (n.x_ == x && n.y_ == y)
+            return i;
+    }
+
+    return -1;
+}
+
+void ElbarGridOnlinePacketData::rmv_data(int index)
+{
+    if (index > data_len_ / element_size_ || index <= 0) return;
+
+    int offset = (index - 1) * element_size_;
 
     unsigned char * temp = data_;
     data_ = new unsigned char [data_len_ - element_size_];
