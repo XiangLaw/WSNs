@@ -116,7 +116,7 @@ Angle	G::angle(Point* p0, Point* p1, Point* p2)
 }
 
 /**
- * angle of vector (p3, p2) to vector (p1, p0)
+ * angle of vector (p2, p3) to vector (p0, p1)
  */
 Angle	G::angle(Point p0, Point p1, Point p2, Point p3)
 {
@@ -672,3 +672,11 @@ double	G::area(node* n)
 	return s;
 }
 
+
+
+/*
+ * Extension function
+ */
+Angle G::rawAngle(Point* p0, Point* p1, Point* p2, Point* p3){
+    return atan2(p1->y_ - p0->y_, p1->x_ - p0->x_) - atan2(p3->y_ - p2->y_, p3->x_ - p2->x_);
+}

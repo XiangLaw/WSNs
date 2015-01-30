@@ -1658,4 +1658,11 @@ Agent/DYNAMICPOLYGON set r_ 100
 Agent/DYNAMICPOLYGON set limit_boundhole_hop_ 80
 
 #greedy
-#Agent/GREEDY set 
+#Agent/GREEDY set
+
+Agent/ELBARGRIDONLINE set hello_period_ 0
+Agent/ELBARGRIDONLINE set energy_checkpoint_ 995
+Agent/ELBARGRIDONLINE set limit_ 0
+Agent/ELBARGRIDONLINE set range_ 40
+Agent/ELBARGRIDONLINE set r_ 100
+Agent/ELBARGRIDONLINE set limit_boundhole_hop_ 80

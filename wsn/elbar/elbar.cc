@@ -1,3 +1,5 @@
+#include <tclDecls.h>
+#include <bits/ios_base.h>
 #include "elbar.h"
 #include "elbar_packet.h"
 #include "../include/tcl.h"
@@ -34,10 +36,18 @@ ElbarGridOnlineAgent::ElbarGridOnlineAgent() : GridOnlineAgent()
 int
 ElbarGridOnlineAgent::command(int argc, const char*const* argv)
 {
-    return GPSRAgent::command(argc,argv);
+    if (argc == 2){
+        if (strcasecmp(argv[1], "routing") == 0){
+            // routing use elbar algorithm
+            routing();
+            return TCL_OK;
+        }
+    }
+
+    return GridOnlineAgent::command(argc,argv);
 }
 
-// handle the receive packet just of type PT_GRID
+// handle the receive packet just of type PT_ELBARGRIDONLINE
 void
 ElbarGridOnlineAgent::recv(Packet *p, Handler *h)
 {
@@ -50,7 +60,7 @@ ElbarGridOnlineAgent::recv(Packet *p, Handler *h)
             break;
 
         case PT_ELBARGRIDONLINE:
-            // TODO: handle here
+            recvBoundHole(p);
             break;
 
         default:
@@ -59,3 +69,45 @@ ElbarGridOnlineAgent::recv(Packet *p, Handler *h)
     }
 }
 
+/*------------------------------ Routing --------------------------*/
+/*
+ * Hole covering parallelogram determination
+ */
+void ElbarGridOnlineAgent::detectParallelogram(){
+    struct polygonHole* hole;
+    struct node* item;
+
+    // detect view angle
+    for (hole = hole_list_; hole != NULL; hole = hole->next_){
+        item = hole->node_list_;
+        struct node* left = hole->node_list_;
+        struct node* right = hole->node_list_;
+        if (item != NULL && item->next_ != NULL) {
+            item = item->next_;
+            do {
+                Angle a = G::rawAngle(left, this, item, this);
+                if (a < 0) left = item;
+                a = G::rawAngle(right, this, item, this);
+                if (a > 0) right = item;
+                item = item->next_;
+            } while (item && item != hole->node_list_);
+        }
+    }
+}
+
+/*
+ * Hole bypass routing
+ */
+void ElbarGridOnlineAgent::routing() {
+
+}
+
+/*
+ * recv packet
+ */
+void GridOnlineAgent::recvBoundHole(Packet *) {
+}
+
+/*
+ * sendBoudHole info
+ */

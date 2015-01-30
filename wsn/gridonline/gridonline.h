@@ -70,10 +70,10 @@ private:
 	GridOnlineTimer findStuck_timer_;
 	GridOnlineTimer grid_timer_;
 
-	double range_;
-	double limit_;
-	double r_;
-	int limit_boundhole_hop_;
+    double range_;
+    double limit_;
+    double r_;
+    int limit_boundhole_hop_;
 
 	stuckangle* stuck_angle_;
 
@@ -83,9 +83,8 @@ private:
 	node* getNeighborByBoundhole(Point*, Point*);
 
 	void sendBoundHole();
-	void recvBoundHole(Packet*);
 
-	void addData(Packet * p, bool isLast = false);
+    void addData(Packet * p, bool isLast = false);
 	void addMesh(GridOnlinePacketData *data, double x, double y, bool isLast = false);
 	void reduce(GridOnlinePacketData *data);
 
@@ -97,6 +96,8 @@ private:
 
 protected:
 	polygonHole* hole_list_;
+
+    void recvBoundHole(Packet*);
 
 public:
 	GridOnlineAgent();

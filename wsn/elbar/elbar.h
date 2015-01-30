@@ -3,19 +3,32 @@
 
 #include <vector>
 #include "../geomathhelper/geo_math_helper.h"
-#include "../gpsr/gpsr.h"
 #include "../gridonline/gridonline.h"
 
-class ElbarGridOnlineAgent;
+struct angleView {
+    struct polygonHole* hole_;
+    double angle_;
+};
+
+struct parallelogram{
+    struct polygonHole* hole;
+    struct node* anchorLeft_;
+    struct node* anchorRight_;
+    struct node* anchorTop_;
+};
 
 class ElbarGridOnlineAgent: public GridOnlineAgent {
+private:
+    struct angleView*  angle_list_;
+    struct parallelogram* parallelogram_list_;
+
+    void routing();
+    // detect covering parallelogram and view angle
+    void detectParallelogram();
 public:
 	ElbarGridOnlineAgent();
 	int 	command(int, const char*const*);
 	void 	recv(Packet*, Handler*);
-
-protected:
-	void routing();
 };
 
 #endif

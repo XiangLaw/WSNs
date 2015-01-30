@@ -160,7 +160,7 @@ public:
 	static Angle	angle(Point  p0, Point* p1, Point* p2) { return angle(&p0, p1, p2); }
 
 	/**
-	 * angle of vector (p3, p2) to vector (p1, p0)
+	 * angle of vector (p2, p3) to vector (p0, p1)
 	 */
 	static Angle	angle(Point  p0, Point  p1, Point  p2, Point  p3);
 	static Angle	angle(Point* p0, Point* p1, Point* p2, Point* p3) { return angle(*p0, *p1, *p2, *p3); }
@@ -291,6 +291,10 @@ public:
 
 	// find perpendicular bisector of segment ((x1, y1), (x2, y2))
 	static void perpendicular_bisector(double x1, double y1, double x2, double y2, double &a, double &b, double &c);
+
+
+    // extenstion
+    static Angle rawAngle(Point* p0, Point* p1, Point* p2, Point* p3);
 };
 
 #endif /* GEO_MATH_HELPER_H_ */
