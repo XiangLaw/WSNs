@@ -133,6 +133,7 @@ bool ElbarGridOnlineAgent::detectParallelogram(){
     // detect view angle
     ai = hole_list_->node_list_;
     aj = hole_list_->node_list_;
+    tmp = hole_list_;
     item = tmp->node_list_;
     for(tmp = hole_list_; tmp != NULL; tmp = tmp->next_)
     {
@@ -148,6 +149,7 @@ bool ElbarGridOnlineAgent::detectParallelogram(){
     vj = hole_list_->node_list_;
     hi = 0;
     hj = 0;
+    tmp = hole_list_;
     item = tmp->node_list_; // A(k)
 
     for(tmp = hole_list_; tmp != NULL; tmp = tmp->next_)
@@ -208,7 +210,6 @@ Elbar_Region ElbarGridOnlineAgent::regionDetermine(double angle) {
  */
 void ElbarGridOnlineAgent::routing(Packet *p) {
     struct hdr_cmn*				    cmh = HDR_CMN(p);
-    struct hdr_ip*				    iph = HDR_IP(p);
     struct hdr_elbar_gridonline*    egh = HDR_ELBAR_GRID(p);
 
     Point* destionantion;
