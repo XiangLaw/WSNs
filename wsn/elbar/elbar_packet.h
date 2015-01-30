@@ -3,6 +3,8 @@
 
 #include "packet.h"
 
+#define ELBAR_BOUNDHOLE     0x01
+
 #define HDR_ELBAR_GRID(p) hdr_elbar_gridonline::access(p)
 
 struct hdr_elbar_gridonline
@@ -11,7 +13,9 @@ struct hdr_elbar_gridonline
     Point prev_;	// Previews node
     Point i_;
 
-    inline int size() { return 3 * sizeof(Point); }
+    uint8_t type_;
+
+    inline int size() { return 3 * sizeof(Point) + sizeof(uint8_t); }
 
     static int offset_;
     inline static int& offset() { return offset_; }

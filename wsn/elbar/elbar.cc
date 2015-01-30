@@ -1,8 +1,7 @@
-#include <tclDecls.h>
 #include <bits/ios_base.h>
+#include <X11/Xutil.h>
 #include "elbar.h"
 #include "elbar_packet.h"
-#include "../include/tcl.h"
 
 int hdr_elbar_gridonline::offset_;
 
@@ -25,12 +24,16 @@ static class ElbarGridOnlineAgentClass : public TclClass
 		}
 } class_elbargridonline;
 
+
 /**
  * Agent implementation
  */
-
 ElbarGridOnlineAgent::ElbarGridOnlineAgent() : GridOnlineAgent()
 {
+    this->alpha_max_ = M_PI * 2 / 3;
+    this->alpha_min_ = M_PI / 3;
+
+    routingMode_ = holeAvoidingProb();
 }
 
 int
@@ -52,6 +55,7 @@ void
 ElbarGridOnlineAgent::recv(Packet *p, Handler *h)
 {
     hdr_cmn *cmh = HDR_CMN(p);
+    hdr_elbar_gridonline *egh = HDR_ELBAR_GRID(<#p#>);
 
     switch (cmh->ptype())
     {
@@ -59,9 +63,13 @@ ElbarGridOnlineAgent::recv(Packet *p, Handler *h)
             GPSRAgent::recv(p, h);
             break;
 
-        case PT_ELBARGRIDONLINE:
-            recvBoundHole(p);
+        case PT_ELBARGRIDONLINE: {
+            if(egh->type_ == ELBAR_BOUNDHOLE) {
+                recvBoundHole(p);
+            }
+
             break;
+        };
 
         default:
             drop(p, " UnknowType");
@@ -94,6 +102,7 @@ bool ElbarGridOnlineAgent::detectParallelogram(){
     Line li;
     Line lj;
 
+    double angle;
     /*// detect view angle
     for (tmp = hole_list_; tmp != NULL; tmp = tmp->next_){
         item = tmp->node_list_;
@@ -154,28 +163,65 @@ bool ElbarGridOnlineAgent::detectParallelogram(){
         !G::intersection(li, lj, b))
         return false;
 
-    this->parallelogram_->a_ = a;
-    this->parallelogram_->b_ = b;
-    this->parallelogram_->c_ = c;
-    this->parallelogram_->p_.x_ =this->x_;
-    this->parallelogram_->p_.y_ = this->y_;
+    /*
+    save Hole information into local memory if this node is in region 2
+     */
+    angle = G::angle(ai, this, aj);
+    region_ = regionDetermine(angle);
+    if(REGION_2 == region_) {
+        this->parallelogram_->a_ = a;
+        this->parallelogram_->b_ = b;
+        this->parallelogram_->c_ = c;
+        this->parallelogram_->p_.x_ =this->x_;
+        this->parallelogram_->p_.y_ = this->y_;
+        this->alpha_ = angle;
+    }
 
     return true;
 }
 
+RoutingMode ElbarGridOnlineAgent::holeAvoidingProb() {
+    srand(time(NULL));
+    if(rand() % 2 == 0)
+        return HOLE_AWARE_MODE;
+    return GREEDY_MODE;
+}
+
+Elbar_Region ElbarGridOnlineAgent::regionDetermine(double angle) {
+    if(angle < alpha_min_) return REGION_3;
+    if(angle > alpha_max_) return REGION_1;
+    return REGION_2;
+}
+
 /*
  * Hole bypass routing
+ * TODO: elbar routing algorithm implemtation
  */
 void ElbarGridOnlineAgent::routing() {
-
+    struct hdr_ip	*iph = HDR_IP(p);
+    struct hdr_cmn 	*cmh = HDR_CMN(p);
+    struct hdr_grid *bhh = HDR_GRID(p);
 }
 
-/*
- * recv packet
- */
-void GridOnlineAgent::recvBoundHole(Packet *) {
+/*---------------------- BoundHole --------------------------------*/
+/**
+* TODO:
+*/
+void ElbarGridOnlineAgent::recvBoundHole(Packet *p) {
+
+    detectParallelogram();
+
+    if(region_ == REGION_3) { // stop broadcast hole core information
+        drop(p, "out_of_region_2");
+    }
+    else {
+        GridOnlineAgent::recvBoundHole(p);
+    }
 }
 
-/*
- * sendBoudHole info
- */
+/**
+* TODO: do what?
+*/
+void ElbarGridOnlineAgent::sendBoundHole() {
+    GridOnlineAgent::sendBoundHole();
+}

@@ -99,7 +99,10 @@ enum AppDataType {
 	GRIDDYNAMIC_DATA,
 
 	// Dynamic polygon
-	DYNAMICPOLYGON_DATA
+	DYNAMICPOLYGON_DATA,
+
+    // Elbar
+    ELBAR_GRIDONLINE_DATA,
 };
 
 // Interface for generic application-level data unit. It should know its 
