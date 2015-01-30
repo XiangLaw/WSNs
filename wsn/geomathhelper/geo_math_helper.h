@@ -295,6 +295,7 @@ public:
 
     // extenstion
     static Angle rawAngle(Point* p0, Point* p1, Point* p2, Point* p3);
+    static Angle directedAngle(Point *a, Point* p, Point* b);
 };
 
 #endif /* GEO_MATH_HELPER_H_ */

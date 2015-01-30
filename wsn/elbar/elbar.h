@@ -10,11 +10,13 @@ struct angleView {
     double angle_;
 };
 
+// parallelogram P ABC
 struct parallelogram{
-    struct polygonHole* hole;
-    struct node* anchorLeft_;
-    struct node* anchorRight_;
-    struct node* anchorTop_;
+    //struct polygonHole* hole;
+    struct node p_;
+    struct node a_;
+    struct node b_;
+    struct node c_;
 };
 
 class ElbarGridOnlineAgent: public GridOnlineAgent {
@@ -24,11 +26,18 @@ private:
 
     void routing();
     // detect covering parallelogram and view angle
-    void detectParallelogram();
+    bool detectParallelogram();
 public:
 	ElbarGridOnlineAgent();
 	int 	command(int, const char*const*);
 	void 	recv(Packet*, Handler*);
+
+
+private:
+    double alpha_max_;
+    double alpha_min_;
+    double alpha_;          // alpha angle
+    parallelogram* parallelogram_;
 };
 
 #endif

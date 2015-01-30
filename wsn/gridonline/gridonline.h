@@ -82,8 +82,6 @@ private:
 	void findStuckAngle();
 	node* getNeighborByBoundhole(Point*, Point*);
 
-	void sendBoundHole();
-
     void addData(Packet * p, bool isLast = false);
 	void addMesh(GridOnlinePacketData *data, double x, double y, bool isLast = false);
 	void reduce(GridOnlinePacketData *data);
@@ -96,8 +94,8 @@ private:
 
 protected:
 	polygonHole* hole_list_;
-
-    void recvBoundHole(Packet*);
+    virtual void sendBoundHole();
+    virtual void recvBoundHole(Packet*);
 
 public:
 	GridOnlineAgent();

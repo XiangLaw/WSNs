@@ -680,3 +680,9 @@ double	G::area(node* n)
 Angle G::rawAngle(Point* p0, Point* p1, Point* p2, Point* p3){
     return atan2(p1->y_ - p0->y_, p1->x_ - p0->x_) - atan2(p3->y_ - p2->y_, p3->x_ - p2->x_);
 }
+
+Angle G::directedAngle(Point* a, Point* p, Point* b)
+{
+    if (*a == *p || *a == *b) return 0;
+    return (atan2(p->y_ - a->y_, p->x_ - a->x_) - atan2(b->y_ - a->y_, b->x_ - a->x_));
+}

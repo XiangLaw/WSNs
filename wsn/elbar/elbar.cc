@@ -73,15 +73,32 @@ ElbarGridOnlineAgent::recv(Packet *p, Handler *h)
 /*
  * Hole covering parallelogram determination
  */
-void ElbarGridOnlineAgent::detectParallelogram(){
-    struct polygonHole* hole;
+bool ElbarGridOnlineAgent::detectParallelogram(){
+    struct polygonHole*tmp;
     struct node* item;
 
-    // detect view angle
-    for (hole = hole_list_; hole != NULL; hole = hole->next_){
-        item = hole->node_list_;
-        struct node* left = hole->node_list_;
-        struct node* right = hole->node_list_;
+    struct node* ai;
+    struct node* aj;
+
+    struct node a;
+    struct node b;
+    struct node c;
+
+    struct node* vi;
+    struct node* vj;
+
+    double hi;
+    double hj;
+    double h;
+
+    Line li;
+    Line lj;
+
+    /*// detect view angle
+    for (tmp = hole_list_; tmp != NULL; tmp = tmp->next_){
+        item = tmp->node_list_;
+        struct node* left = tmp->node_list_;
+        struct node* right = tmp->node_list_;
         if (item != NULL && item->next_ != NULL) {
             item = item->next_;
             do {
@@ -90,9 +107,60 @@ void ElbarGridOnlineAgent::detectParallelogram(){
                 a = G::rawAngle(right, this, item, this);
                 if (a > 0) right = item;
                 item = item->next_;
-            } while (item && item != hole->node_list_);
+            } while (item && item != tmp->node_list_);
         }
+    }*/
+
+    // detect view angle
+    ai = hole_list_->node_list_;
+    aj = hole_list_->node_list_;
+    item = tmp->node_list_;
+    for(tmp = hole_list_; tmp != NULL; tmp = tmp->next_)
+    {
+        if(G::directedAngle(ai, this, item) > 0)
+            ai = item;
+        if(G::directedAngle(aj, this, item) < 0)
+            aj = item;
+        item = item->next_;
     }
+
+    // detect parallelogram
+    vi = hole_list_->node_list_;
+    vj = hole_list_->node_list_;
+    hi = 0;
+    hj = 0;
+    item = tmp->node_list_; // A(k)
+
+    for(tmp = hole_list_; tmp != NULL; tmp = tmp->next_)
+    {
+        h = G::distance(item->x_, item->y_, this->x_, this->y_, ai->x_, ai->y_);
+        if(h > hi) {
+            hi = h;
+            vi = item;
+        }
+        h = G::distance(item->x_, item->y_, this->x_, this->y_, aj->x_, aj->y_);
+        if(h > hj) {
+            hj = h;
+            vj = item;
+        }
+        item = item->next_;
+    }
+
+    li = G::parallel_line(vi, G::line(this, ai));
+    lj = G::parallel_line(vj, G::line(this, aj));
+
+    if(!G::intersection(lj, G::line(this, ai), a) ||
+        !G::intersection(li, G::line(this, aj), c) ||
+        !G::intersection(li, lj, b))
+        return false;
+
+    this->parallelogram_->a_ = a;
+    this->parallelogram_->b_ = b;
+    this->parallelogram_->c_ = c;
+    this->parallelogram_->p_.x_ =this->x_;
+    this->parallelogram_->p_.y_ = this->y_;
+
+    return true;
 }
 
 /*
