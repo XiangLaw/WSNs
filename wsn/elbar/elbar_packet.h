@@ -2,6 +2,7 @@
 #define ELBAR_GRIDONLINE_H_
 
 #include "packet.h"
+#include "elbar.h"
 
 #define ELBAR_BOUNDHOLE     0x01
 
@@ -9,13 +10,12 @@
 
 struct hdr_elbar_gridonline
 {
-    Point last_;	// Pre-previews node
-    Point prev_;	// Previews node
-    Point i_;
+    RoutingMode forwarding_mode_;
+    Point anchor_point_;
 
     uint8_t type_;
 
-    inline int size() { return 3 * sizeof(Point) + sizeof(uint8_t); }
+    inline int size() { return sizeof(RoutingMode) + sizeof(Point) + sizeof(uint8_t); }
 
     static int offset_;
     inline static int& offset() { return offset_; }

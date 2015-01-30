@@ -35,7 +35,7 @@ private:
     struct angleView*  angle_list_;
     struct parallelogram* parallelogram_list_;
 
-    void routing();
+    void routing(Packet *p);
 
     // detect covering parallelogram and view angle
     bool detectParallelogram();
@@ -55,7 +55,7 @@ private:
     double alpha_min_;
     double alpha_;          // alpha angle
     parallelogram* parallelogram_;
-    RoutingMode routingMode_;
+    RoutingMode routing_mode_;
     Elbar_Region region_;   // region to a specific hole
 };
 

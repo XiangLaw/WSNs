@@ -33,7 +33,7 @@ ElbarGridOnlineAgent::ElbarGridOnlineAgent() : GridOnlineAgent()
     this->alpha_max_ = M_PI * 2 / 3;
     this->alpha_min_ = M_PI / 3;
 
-    routingMode_ = holeAvoidingProb();
+    routing_mode_ = holeAvoidingProb();
 }
 
 int
@@ -197,10 +197,144 @@ Elbar_Region ElbarGridOnlineAgent::regionDetermine(double angle) {
  * Hole bypass routing
  * TODO: elbar routing algorithm implemtation
  */
-void ElbarGridOnlineAgent::routing() {
-    struct hdr_ip	*iph = HDR_IP(p);
-    struct hdr_cmn 	*cmh = HDR_CMN(p);
-    struct hdr_grid *bhh = HDR_GRID(p);
+void ElbarGridOnlineAgent::routing(Packet *p) {
+    struct hdr_cmn*				    cmh = HDR_CMN(p);
+    struct hdr_ip*				    iph = HDR_IP(p);
+    struct hdr_elbar_gridonline*    egh = HDR_ELBAR_GRID(p);
+
+    Point* destionantion;
+    Angle alpha;
+    Point anchor_point;
+    RoutingMode routing_mode;
+
+    if(region_ == REGION_3 || region_ == REGION_1) {
+        // greedy mode
+        egh->anchor_point_ = NULL;
+        egh->forwarding_mode_ = GREEDY_MODE;
+        node* nexthop = getNeighborByGreedy(*dest);
+        if(nexthop == NULL) {
+            drop(p, DROP_RTR_NO_ROUTE);
+            return;
+        }
+        cmh->direction() = hdr_cmn::DOWN;
+        cmh->addr_type() = NS_AF_INET;
+        cmh->last_hop_ = my_id_;
+        cmh->next_hop_ = nexthop->id_;
+        send(p, 0);
+    }
+    else if(region_ == REGION_2) { // elbar routing
+        destionantion = dest;
+        alpha = this->alpha_;
+        anchor_point = egh->anchor_point_;
+        routing_mode = egh->forwarding_mode_;
+
+        if(dest->x_ || dest->y_) {
+            if (cmh->direction() == hdr_cmn::UP	&&
+                    (this->x_ == destionantion->x_ && this->y_ == destionantion->y_))	// up to destination
+            {
+                dumpHopcount(p);
+                port_dmux_->recv(p, 0);
+                return;
+            }
+            if(routing_mode == HOLE_AWARE_MODE) {
+                if(G::directedAngle(destionantion, this, &(parallelogram_->a_)) * G::directedAngle(destionantion, this, &(parallelogram_->c_)) >= 0)
+                { // alpha does not contain D
+                    egh->forwarding_mode_ = GREEDY_MODE;
+                    node* nexthop = getNeighborByGreedy(*destionantion);
+                    if(nexthop == NULL) {
+                        drop(p, DROP_RTR_NO_ROUTE);
+                        return;
+                    }
+                    cmh->direction() = hdr_cmn::DOWN;
+                    cmh->addr_type() = NS_AF_INET;
+                    cmh->last_hop_ = my_id_;
+                    cmh->next_hop_ = nexthop->id_;
+                    send(p, 0);
+                }
+                else {
+                    node* nexthop = getNeighborByGreedy(anchor_point);
+                    if(nexthop == NULL) {
+                        drop(p, DROP_RTR_NO_ROUTE);
+                        return;
+                    }
+                    cmh->direction() = hdr_cmn::DOWN;
+                    cmh->addr_type() = NS_AF_INET;
+                    cmh->last_hop_ = my_id_;
+                    cmh->next_hop_ = nexthop->id_;
+                    send(p, 0);
+                }
+            }
+            else {
+                if(alpha_ != NULL &&
+                        G::directedAngle(destionantion, this, &(parallelogram_->a_)) * G::directedAngle(destionantion, this, &(parallelogram_->c_)) < 0) {
+                    // alpha contains D
+                    if(routing_mode_ == HOLE_AWARE_MODE) {
+
+                        Line cd = G::line(parallelogram_->c_, destionantion);
+                        Line ad = G::line(parallelogram_->a_, destionantion);
+                        if(G::distance(parallelogram_->p_, parallelogram_->c_ )<=
+                        G::distance(parallelogram_->p_, parallelogram_->a_)) {
+                            // pc <= pa
+                            if(G::directedAngle(destionantion, &(parallelogram_->c_), &(parallelogram_->p_)) *
+                                    G::directedAngle(destionantion, &(parallelogram_->c_), &(parallelogram_->b_))
+                                    >= 0) { // cd does not intersect with the hole
+                                egh->anchor_point_ = parallelogram_->c_;
+                            }
+                            else {
+                                egh->anchor_point_ = parallelogram_->a_;
+                            }
+                        }
+                        else {
+                            if(G::directedAngle(destionantion, &(parallelogram_->a_), &(parallelogram_->p_)) *
+                                    G::directedAngle(destionantion, &(parallelogram_->a_), &(parallelogram_->b_))
+                                    >= 0) {
+                                egh->anchor_point_ = parallelogram_->a_;
+                            }
+                            else {
+                                egh->anchor_point_ = parallelogram_->c_;
+                            }
+                        }
+
+                        egh->forwarding_mode_ = HOLE_AWARE_MODE;
+                        node* nexthop = getNeighborByGreedy(anchor_point);
+                        if(nexthop == NULL) {
+                            drop(p, DROP_RTR_NO_ROUTE);
+                            return;
+                        }
+                        cmh->direction() = hdr_cmn::DOWN;
+                        cmh->addr_type() = NS_AF_INET;
+                        cmh->last_hop_ = my_id_;
+                        cmh->next_hop_ = nexthop->id_;
+                        send(p, 0);
+                    }
+                    else {
+                        node* nexthop = getNeighborByGreedy(*destionantion);
+                        if(nexthop == NULL) {
+                            drop(p, DROP_RTR_NO_ROUTE);
+                            return;
+                        }
+                        cmh->direction() = hdr_cmn::DOWN;
+                        cmh->addr_type() = NS_AF_INET;
+                        cmh->last_hop_ = my_id_;
+                        cmh->next_hop_ = nexthop->id_;
+                        send(p, 0);
+                    }
+                }
+                else {
+                    node* nexthop = getNeighborByGreedy(*destionantion);
+                    if(nexthop == NULL) {
+                        drop(p, DROP_RTR_NO_ROUTE);
+                        return;
+                    }
+                    cmh->direction() = hdr_cmn::DOWN;
+                    cmh->addr_type() = NS_AF_INET;
+                    cmh->last_hop_ = my_id_;
+                    cmh->next_hop_ = nexthop->id_;
+                    send(p, 0);
+                }
+            }
+        }
+    }
 }
 
 /*---------------------- BoundHole --------------------------------*/

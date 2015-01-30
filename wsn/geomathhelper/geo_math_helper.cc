@@ -681,6 +681,9 @@ Angle G::rawAngle(Point* p0, Point* p1, Point* p2, Point* p3){
     return atan2(p1->y_ - p0->y_, p1->x_ - p0->x_) - atan2(p3->y_ - p2->y_, p3->x_ - p2->x_);
 }
 
+/**
+* directed angle (pa, pb)
+* */
 Angle G::directedAngle(Point* a, Point* p, Point* b)
 {
     if (*a == *p || *a == *b) return 0;
