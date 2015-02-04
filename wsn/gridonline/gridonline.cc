@@ -577,12 +577,15 @@ GridOnlineAgent::dumpBoundhole()
 	for (polygonHole* p = hole_list_; p != NULL; p = p->next_)
 	{
 		node* n = p->node_list_;
-		do {
-			fprintf(fp, "%f	%f\n", n->x_, n->y_);
-			n = n->next_;
-		} while (n && n != p->node_list_);
+        if (n != NULL) {
+            do {
+                fprintf(fp, "%f	%f\n", n->x_, n->y_);
+                n = n->next_;
+            } while (n && n != p->node_list_);
+        }
 
-		fprintf(fp, "%f	%f\n\n", p->node_list_->x_, p->node_list_->y_);
+        if (p->node_list_  != NULL)
+		    fprintf(fp, "%f	%f\n\n", p->node_list_->x_, p->node_list_->y_);
 	}
 
 	fclose(fp);
@@ -594,7 +597,9 @@ GridOnlineAgent::dumpArea()
 	if (hole_list_)
 	{
 		FILE * fp = fopen("Area.tr", "a+");
-		fprintf(fp, "%f\n", G::area(hole_list_->node_list_));
+        // check if hole is NULL
+        if (hole_list_->node_list_)
+		    fprintf(fp, "%f\n", G::area(hole_list_->node_list_));
 		fclose(fp);
 	}
 }

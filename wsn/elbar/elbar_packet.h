@@ -11,9 +11,9 @@
 
 struct hdr_elbar_gridonline
 {
-    Point dest_;
+    Point* dest_;
     RoutingMode forwarding_mode_;
-    Point anchor_point_;
+    Point* anchor_point_;
     uint8_t type_;
 
     inline int size() { return sizeof(RoutingMode) + 2 * sizeof(Point) + sizeof(uint8_t); }

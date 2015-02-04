@@ -71,7 +71,7 @@ ElbarGridOnlineAgent::recv(Packet *p, Handler *h)
 
 /*------------------------------ Recv -----------------------------*/
 void ElbarGridOnlineAgent::recvElbar(Packet * p) {
-    hdr_elbar_gridonline *egh = HDR_ELBAR_GRID(<#p#>);
+    hdr_elbar_gridonline *egh = HDR_ELBAR_GRID(p);
 
     switch(egh->type_) {
         case ELBAR_BROADCAST:
@@ -213,7 +213,7 @@ void ElbarGridOnlineAgent::routing(Packet *p) {
     struct hdr_elbar_gridonline*    egh = HDR_ELBAR_GRID(p);
 
     Point* destionantion;
-    Point anchor_point;
+    Point* anchor_point;
     RoutingMode routing_mode;
 
     if(region_ == REGION_3 || region_ == REGION_1 ||
@@ -261,7 +261,7 @@ void ElbarGridOnlineAgent::routing(Packet *p) {
                     send(p, 0);
                 }
                 else {
-                    node* nexthop = getNeighborByGreedy(anchor_point);
+                    node* nexthop = getNeighborByGreedy(*anchor_point);
                     if(nexthop == NULL) {
                         drop(p, DROP_RTR_NO_ROUTE);
                         return;
@@ -285,25 +285,25 @@ void ElbarGridOnlineAgent::routing(Packet *p) {
                             if(G::directedAngle(destionantion, &(parallelogram_->c_), &(parallelogram_->p_)) *
                                     G::directedAngle(destionantion, &(parallelogram_->c_), &(parallelogram_->b_))
                                     >= 0) { // cd does not intersect with the hole
-                                egh->anchor_point_ = parallelogram_->c_;
+                                egh->anchor_point_ = &(parallelogram_->c_);
                             }
                             else {
-                                egh->anchor_point_ = parallelogram_->a_;
+                                egh->anchor_point_ = &(parallelogram_->a_);
                             }
                         }
                         else {
                             if(G::directedAngle(destionantion, &(parallelogram_->a_), &(parallelogram_->p_)) *
                                     G::directedAngle(destionantion, &(parallelogram_->a_), &(parallelogram_->b_))
                                     >= 0) {
-                                egh->anchor_point_ = parallelogram_->a_;
+                                egh->anchor_point_ = &(parallelogram_->a_);
                             }
                             else {
-                                egh->anchor_point_ = parallelogram_->c_;
+                                egh->anchor_point_ = &(parallelogram_->c_);
                             }
                         }
 
                         egh->forwarding_mode_ = HOLE_AWARE_MODE;
-                        node* nexthop = getNeighborByGreedy(anchor_point);
+                        node* nexthop = getNeighborByGreedy(*anchor_point);
                         if(nexthop == NULL) {
                             drop(p, DROP_RTR_NO_ROUTE);
                             return;
