@@ -349,7 +349,7 @@ OBJ_CC = \
 	wsn/octagon/octagon.o  \
 	wsn/scalegoal/scalegoal.o  \
 	wsn/scalehexagon/scalehexagon.o  \
-	wsn/greedy-2/greedy.o wsn/greedy-2/greedy_nbr.o wsn/greedy-2/greedy_flow.o  \
+	wsn/elbar/elbar.o wsn/elbar/elbar_packet_data.o  \
 	$(OBJ_STL)
 
 

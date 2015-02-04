@@ -365,7 +365,8 @@ void ElbarGridOnlineAgent::broadcastHci(){
     payload = new ElbarGridOnlinePacketData();
     for(tmp = hole_list_; tmp != NULL; tmp = tmp->next_) {
         node* item = tmp->node_list_;
-        payload->add_data(item->x_, item->y_);
+        if (item != NULL)
+            payload->add_data(item->x_, item->y_);
     }
     p->setdata(payload);
 
