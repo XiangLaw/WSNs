@@ -31,21 +31,11 @@
     </ADDITIONAL_GENERATION_ENVIRONMENT>
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="de4b06ea-b800-44c5-aa84-06bc4288f778" name="Default" comment="update">
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/scripts/100tcl/Area.tr" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/scripts/100tcl/Energy.tr" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/scripts/100tcl/GridOnline.tr" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/scripts/100tcl/Hopcount.tr" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/scripts/100tcl/Trace.tr" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/scripts/100tcl/Neighbors.tr" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/scripts/100tcl/Time.tr" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/scripts/100tcl/cbr.tcl" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/scripts/100tcl/energy.tr" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/scripts/100tcl/nodeoff.tcl" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/scripts/100tcl/simulate.tcl" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/scripts/100tcl/topo_data.tcl" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/Makefile" afterPath="$PROJECT_DIR$/Makefile" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/wsn/elbar/elbar.cc" afterPath="$PROJECT_DIR$/wsn/elbar/elbar.cc" />
+    <list default="true" id="de4b06ea-b800-44c5-aa84-06bc4288f778" name="Default" comment="update script">
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/scripts/100tcl/cbr.tcl" afterPath="$PROJECT_DIR$/scripts/100tcl/cbr.tcl" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/scripts/100tcl/nodeoff.tcl" afterPath="$PROJECT_DIR$/scripts/100tcl/nodeoff.tcl" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/scripts/100tcl/simulate.tcl" afterPath="$PROJECT_DIR$/scripts/100tcl/simulate.tcl" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/scripts/100tcl/topo_data.tcl" afterPath="$PROJECT_DIR$/scripts/100tcl/topo_data.tcl" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/workspace.xml" afterPath="$PROJECT_DIR$/.idea/workspace.xml" />
     </list>
     <ignored path="ns-2.35.iws" />
@@ -408,7 +398,13 @@
       <option name="project" value="LOCAL" />
       <updated>1423035184142</updated>
     </task>
-    <option name="localTasksCounter" value="6" />
+    <task id="LOCAL-00006" summary="update script">
+      <created>1423036207786</created>
+      <option name="number" value="00006" />
+      <option name="project" value="LOCAL" />
+      <updated>1423036207786</updated>
+    </task>
+    <option name="localTasksCounter" value="7" />
     <servers />
   </component>
   <component name="TodoView" selected-index="0">
@@ -433,7 +429,7 @@
   </component>
   <component name="ToolWindowManager">
     <frame x="-1" y="27" width="1368" height="742" extended-state="6" />
-    <editor active="true" />
+    <editor active="false" />
     <layout>
       <window_info id="Project" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" weight="0.2669145" sideWeight="0.5" order="0" side_tool="false" content_ui="combo" />
       <window_info id="TODO" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.3289689" sideWeight="0.5" order="6" side_tool="false" content_ui="tabs" />
@@ -475,7 +471,8 @@
     <MESSAGE value="resolve conflict" />
     <MESSAGE value="add elbar selekon inherite from gridonline + deploy elbar implement in tcl" />
     <MESSAGE value="successful build elbar" />
-    <option name="LAST_COMMIT_MESSAGE" value="successful build elbar" />
+    <MESSAGE value="update script" />
+    <option name="LAST_COMMIT_MESSAGE" value="update script" />
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager>
