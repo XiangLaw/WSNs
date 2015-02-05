@@ -214,7 +214,7 @@ static const packet_t PT_GRIDDYNAMIC = 83;		// gird dynamic
 static const packet_t PT_DYNAMICPOLYGON = 84;	// Dynamic polygon
 // wsn-ext
 static const packet_t PT_GREEDY = 85; 			// greedy
-static const packet_t PT_ELBARGRIDONLINE = 86; // elbar + gridonline
+static const packet_t PT_ELBARGRID = 86; // elbar + grid
 
 static packet_t       PT_NTYPE = 87; 			// This MUST be the LAST one
 
@@ -449,7 +449,7 @@ public:
 
         // wsn-ext
 		name_[PT_GREEDY]="Greedy";
-        name_[PT_ELBARGRIDONLINE] = "ELBARGRIDONLINE";
+        name_[PT_ELBARGRID] = "ELBARGRID";
 
 		name_[PT_NTYPE]= "undefined";
 	}

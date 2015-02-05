@@ -72,10 +72,6 @@ private:
 
     double range_;
     double limit_;
-    double r_;
-    int limit_boundhole_hop_;
-
-	stuckangle* stuck_angle_;
 
 	void startUp();
 
@@ -93,7 +89,11 @@ private:
 	void dumpArea();
 
 protected:
-	polygonHole* hole_list_;
+    double r_;
+    int limit_boundhole_hop_;
+    stuckangle* stuck_angle_;
+    polygonHole* hole_list_;
+
     virtual void sendBoundHole();
     virtual void recvBoundHole(Packet*);
 

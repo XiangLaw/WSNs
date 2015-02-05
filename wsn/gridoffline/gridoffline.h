@@ -70,36 +70,46 @@ private:
 
 	double range_;
 	double limit_;
-	double r_;
-	int limit_boundhole_hop_;
-
-	stuckangle* stuck_angle_;
-	polygonHole* hole_;
-
-	void startUp();
+//	double r_;
+//	int limit_boundhole_hop_;
+//
+//	stuckangle* stuck_angle_;
+//	polygonHole* hole_list_;
 
 	void findStuckAngle();
-	node* getNeighborByBoundhole(Point*, Point*);
-
-	void sendBoundHole();
-	void recvBoundHole(Packet*);
 
 	//void sendGridOffline(polygonHole* h);
 	//void recvGridOffline(Packet* p);
 
-	void addData(Packet*);
-
-	void createPolygonHole(Packet*);
 	void reducePolygonHole(polygonHole* h);
+    void startUp();
 
-	void dumpTime();
-	void dumpBoundhole();
-	void dumpArea();
+
+protected:
+    double r_;
+    int limit_boundhole_hop_;
+    stuckangle* stuck_angle_;
+    polygonHole* hole_list_;
+
+    node* getNeighborByBoundhole(Point*, Point*);
+
+    void createPolygonHole(Packet*);
+
+    void dumpTime();
+    void dumpBoundhole();
+    void dumpArea();
+
+    virtual void addData(Packet*);
+    virtual void sendBoundHole();
+    virtual void recvBoundHole(Packet*);
 
 public:
 	GridOfflineAgent();
 	int 	command(int, const char*const*);
 	void 	recv(Packet*, Handler*);
+
+public:
+    virtual char const * getAgentName();
 };
 
 #endif /* GRID_H_ */

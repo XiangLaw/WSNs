@@ -102,7 +102,7 @@ enum AppDataType {
 	DYNAMICPOLYGON_DATA,
 
     // Elbar
-    ELBAR_GRIDONLINE_DATA,
+    ELBAR_GRIDOFFLINE_DATA,
 };
 
 // Interface for generic application-level data unit. It should know its 

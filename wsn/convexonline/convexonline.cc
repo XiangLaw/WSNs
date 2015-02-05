@@ -642,6 +642,7 @@ ConvexOnlineAgent::dumpBoundhole()
 {
 	FILE *fp = fopen("ConvexOnline.tr", "a+");
 
+    fprintf(fp, "%d - hole\n", my_id_);
 	for (polygonHole* p = hole_list_; p != NULL; p = p->next_)
 	{
 		node* n = p->node_list_;

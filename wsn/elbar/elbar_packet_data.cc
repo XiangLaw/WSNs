@@ -2,14 +2,14 @@
 #include "elbar_packet_data.h"
 #include "cstring"
 
-ElbarGridOnlinePacketData::ElbarGridOnlinePacketData() : AppData(ELBAR_GRIDONLINE_DATA)
+ElbarGridOfflinePacketData::ElbarGridOfflinePacketData() : AppData(ELBAR_GRIDOFFLINE_DATA)
 {
     data_ = NULL;
     data_len_ = 0;
     element_size_ = 2 * sizeof(double);
 }
 
-ElbarGridOnlinePacketData::ElbarGridOnlinePacketData(ElbarGridOnlinePacketData &d) : AppData(d)
+ElbarGridOfflinePacketData::ElbarGridOfflinePacketData(ElbarGridOfflinePacketData &d) : AppData(d)
 {
     element_size_ = 2 * sizeof(double);
     data_len_ = d.data_len_;
@@ -25,7 +25,7 @@ ElbarGridOnlinePacketData::ElbarGridOnlinePacketData(ElbarGridOnlinePacketData &
     }
 }
 
-void ElbarGridOnlinePacketData::add_data(double x, double y)
+void ElbarGridOfflinePacketData::add_data(double x, double y)
 {
     unsigned char* temp = data_;
     data_ = new unsigned char[data_len_ + element_size_];
@@ -37,7 +37,7 @@ void ElbarGridOnlinePacketData::add_data(double x, double y)
     data_len_ += element_size_;
 }
 
-void ElbarGridOnlinePacketData::dump() {
+void ElbarGridOfflinePacketData::dump() {
     FILE *fp = fopen("ElbarGridOnline.tr", "a+");
 
     for (int i = 1; i <= data_len_ / element_size_; i++)
@@ -51,7 +51,7 @@ void ElbarGridOnlinePacketData::dump() {
     fclose(fp);
 }
 
-node ElbarGridOnlinePacketData::get_data(int index)
+node ElbarGridOfflinePacketData::get_data(int index)
 {
     node re;
     int offset = (index - 1) * element_size_;
@@ -61,12 +61,12 @@ node ElbarGridOnlinePacketData::get_data(int index)
     return re;
 }
 
-int ElbarGridOnlinePacketData::indexOf(node no)
+int ElbarGridOfflinePacketData::indexOf(node no)
 {
     return indexOf(no.x_, no.y_);
 }
 
-int ElbarGridOnlinePacketData::indexOf(double x, double y)
+int ElbarGridOfflinePacketData::indexOf(double x, double y)
 {
     node n;
     for (int i = 0; i < element_size_; i++)
@@ -79,7 +79,7 @@ int ElbarGridOnlinePacketData::indexOf(double x, double y)
     return -1;
 }
 
-void ElbarGridOnlinePacketData::rmv_data(int index)
+void ElbarGridOfflinePacketData::rmv_data(int index)
 {
     if (index > data_len_ / element_size_ || index <= 0) return;
 
@@ -94,12 +94,12 @@ void ElbarGridOnlinePacketData::rmv_data(int index)
     data_len_ -= element_size_;
 }
 
-AppData* ElbarGridOnlinePacketData::copy()
+AppData*ElbarGridOfflinePacketData::copy()
 {
-    return new ElbarGridOnlinePacketData(*this);
+    return new ElbarGridOfflinePacketData(*this);
 }
 
-int ElbarGridOnlinePacketData::size() const
+int ElbarGridOfflinePacketData::size() const
 {
     return data_len_ / element_size_;
 }

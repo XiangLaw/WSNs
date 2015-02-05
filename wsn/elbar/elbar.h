@@ -3,7 +3,7 @@
 
 #include <vector>
 #include "../geomathhelper/geo_math_helper.h"
-#include "../gridonline/gridonline.h"
+#include "../gridoffline/gridoffline.h"
 
 enum RoutingMode {
     HOLE_AWARE_MODE,
@@ -30,9 +30,8 @@ struct parallelogram{
     struct node c_;
 };
 
-class ElbarGridOnlineAgent: public GridOnlineAgent {
+class ElbarGridOfflineAgent : public GridOfflineAgent {
 private:
-
 
     // detect covering parallelogram and view angle
     bool detectParallelogram();
@@ -46,8 +45,11 @@ private:
     void recvHci(Packet *p);        // recv hole core information
     void routing(Packet *p);        // elbar routing algorithm
 
+protected:
+    virtual void recvBoundHole(Packet*);
+
 public:
-	ElbarGridOnlineAgent();
+	ElbarGridOfflineAgent();
 	int 	command(int, const char*const*);
 	void 	recv(Packet*, Handler*);
 
@@ -58,6 +60,10 @@ private:
     parallelogram* parallelogram_;
     RoutingMode routing_mode_;
     Elbar_Region region_;   // region to a specific hole
+
+public:
+    virtual char const * getAgentName();
+
 };
 
 #endif

@@ -4,7 +4,7 @@
 #include "packet.h"
 #include "wsn/gpsr/gpsr.h"
 
-class ElbarGridOnlinePacketData : public AppData
+class ElbarGridOfflinePacketData : public AppData
 {
 private:
     unsigned char* data_;
@@ -13,8 +13,8 @@ public:
     int data_len_;
     int element_size_;
 
-    ElbarGridOnlinePacketData();
-    ElbarGridOnlinePacketData(ElbarGridOnlinePacketData &d);	// Copy
+    ElbarGridOfflinePacketData();
+    ElbarGridOfflinePacketData(ElbarGridOfflinePacketData &d);	// Copy
 
     // collect new id
     void add_data(double x, double y);

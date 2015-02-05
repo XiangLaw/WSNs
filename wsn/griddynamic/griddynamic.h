@@ -112,7 +112,7 @@ private:
 	GridDynamicTimer updateSta_timer_;
 
 	stuckangle* stuck_angle_;
-	//polygonHole* hole_;
+	//polygonHole* hole_list_;
 	gridHole* hole_;
 
 	bool isBoundary;
