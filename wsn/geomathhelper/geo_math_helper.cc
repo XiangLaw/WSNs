@@ -690,7 +690,7 @@ Angle G::rawAngle(Point* p0, Point* p1, Point* p2, Point* p3){
 Angle G::directedAngle(Point* a, Point* p, Point* b)
 {
     if (*a == *p || *a == *b) return 0;
-    return (atan2(p->y_ - a->y_, p->x_ - a->x_) - atan2(b->y_ - a->y_, b->x_ - a->x_));
+    return (atan2(a->y_ - p->y_, a->x_ - p->x_) - atan2(b->y_ - p->y_, b->x_ - p->x_));
 }
 
 // check if a point in a polygon

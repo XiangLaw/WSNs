@@ -27,7 +27,6 @@ struct angleView {
 
 // parallelogram P ABC
 struct parallelogram {
-    struct polygonHole *hole_;
     struct node p_;
     struct node a_;
     struct node b_;
@@ -57,11 +56,6 @@ class ElbarGridOfflineAgent : public GridOfflineAgent {
 private:
     friend class ElbarGridOfflineTimer;
 
-    ElbarGridOfflineTimer broadcast_timer_;
-    ElbarGridOfflineTimer routing_timer_;
-
-    nsaddr_t dest_addr;
-
     // detect covering parallelogram and view angle
     void detectParallelogram();
     int holeAvoidingProb();
@@ -69,11 +63,14 @@ private:
 
     void recvElbar(Packet *p);
     void sendElbar(Packet *p);
-    void sendElbarData();
 
-    void broadcastHci();   // hole core information broadcast
+    void broadcastHci();            // hole core information broadcast
     void recvHci(Packet *p);        // recv hole core information
     void routing(Packet *p);        // elbar routing algorithm
+
+    virtual char const *getAgentName();
+    void dumpAngle();
+    void createGrid(Packet *pPacket); // re-create grid bound hole
 
 protected:
     virtual void recvBoundHole(Packet *);
@@ -93,11 +90,10 @@ private:
     parallelogram *parallelogram_;
     int routing_mode_;
     Elbar_Region region_;   // region to a specific hole
+                            // convert to struct array for multi hole
 
-public:
-    virtual char const *getAgentName();
-    void dumpAngle();
-    void createGrid(Packet *pPacket);
+    ElbarGridOfflineTimer broadcast_timer_;
+
 };
 
 #endif

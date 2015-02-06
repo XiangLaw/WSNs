@@ -1,6 +1,5 @@
 #include <bits/ios_base.h>
 #include <X11/Xutil.h>
-#include <tclDecls.h>
 #include "elbar.h"
 #include "elbar_packet.h"
 #include "elbar_packet_data.h"
@@ -34,9 +33,7 @@ ElbarGridOfflineTimer::expire(Event *e) {
 */
 ElbarGridOfflineAgent::ElbarGridOfflineAgent()
         : GridOfflineAgent(),
-          broadcast_timer_(this, &ElbarGridOfflineAgent::broadcastHci),
-          routing_timer_(this, &ElbarGridOfflineAgent::sendElbarData)
-{
+          broadcast_timer_(this, &ElbarGridOfflineAgent::broadcastHci), {
     this->alpha_max_ = M_PI * 2 / 3;
     this->alpha_min_ = M_PI / 3;
 
@@ -55,13 +52,6 @@ ElbarGridOfflineAgent::command(int argc, const char *const *argv) {
         if (strcasecmp(argv[1], "broadcast") == 0) {
             broadcast_timer_.resched(randSend_.uniform(0.0, 5));
 //            broadcastHci();
-            return TCL_OK;
-        }
-    } else if (argc == 4){
-        if (strcasecmp(argv[1], "routing") == 0){
-            dest = new Point();
-            dest->x_ = atoi(argv[2]);
-//            routing_timer_.resched(randSend_.uniform(0.0, 5));
             return TCL_OK;
         }
     }
@@ -139,10 +129,10 @@ void ElbarGridOfflineAgent::detectParallelogram() {
             item = tmp->node_list_;
 
             do {
-                if (G::rawAngle(this, ai, this, item) > 0) {
+                if (G::directedAngle(ai, this, item) > 0) {
                     ai = item;
                 }
-                if (G::rawAngle(this, aj, this, item) < 0)
+                if (G::directedAngle(aj, this, item) < 0)
                     aj = item;
                 item = item->next_;
             } while (item && item->next_ != tmp->node_list_);
@@ -184,7 +174,7 @@ void ElbarGridOfflineAgent::detectParallelogram() {
             /*
         save Hole information into local memory if this node is in region 2
          */
-            angle = G::rawAngle(this, aj, this, ai);
+            angle = G::directedAngle(aj, this, ai);
             angle = angle > 0 ? angle : -angle; //abs
 
             region_ = regionDetermine(angle);
@@ -200,7 +190,7 @@ void ElbarGridOfflineAgent::detectParallelogram() {
                 this->parallelogram_ = parallel;
             }
         } else {
-            angle = alpha_max_;
+            // angle = alpha_max_;
             region_ = REGION_1;
         }
 
@@ -367,40 +357,6 @@ void ElbarGridOfflineAgent::routing(Packet *p) {
     }
 }
 
-// send elbar data packet
-void
-ElbarGridOfflineAgent::sendElbarData() {
-    Packet *p;
-    ElbarGridOfflinePacketData *payload;
-    hdr_cmn *cmh;
-    hdr_ip *iph;
-    hdr_elbar_grid *egh;
-
-    if (hole_list_ == NULL)
-        return;
-
-    p = allocpkt();
-    payload = new ElbarGridOfflinePacketData();
-    p->setdata(payload);
-
-    cmh = HDR_CMN(p);
-    iph = HDR_IP(p);
-    egh = HDR_ELBAR_GRID(p);
-
-    iph->daddr() = dest_addr;
-    iph->saddr() = my_id_;
-    iph->sport() = RT_PORT;
-    iph->dport() = RT_PORT;
-    iph->ttl_ = limit_boundhole_hop_;
-
-    cmh->size() += IP_HDR_LEN + egh->size();
-
-    egh->forwarding_mode_ = GREEDY_MODE;
-    egh->type_ = ELBAR_DATA;
-
-    send(p, 0);
-}
-
 /*---------------------- Broacast HCI --------------------------------*/
 /**
 *
@@ -423,40 +379,41 @@ void ElbarGridOfflineAgent::broadcastHci() {
 //    detect parallelogram
     detectParallelogram();
 
+    // send only first hole
 //    polygonHole* hole = hole_list_;
 //    do{
-        p = allocpkt();
-        payload = new ElbarGridOfflinePacketData();
-        for (tmp = hole_list_; tmp != NULL; tmp = tmp->next_) {
-            node *item = tmp->node_list_;
-            do {
-                payload->add_data(item->x_, item->y_);
-                item = item->next_;
-            } while (item && item->next_ != tmp->node_list_);
-        }
-        p->setdata(payload);
+    p = allocpkt();
+    payload = new ElbarGridOfflinePacketData();
+    for (tmp = hole_list_; tmp != NULL; tmp = tmp->next_) {
+        node *item = tmp->node_list_;
+        do {
+            payload->add_data(item->x_, item->y_);
+            item = item->next_;
+        } while (item && item->next_ != tmp->node_list_);
+    }
+    p->setdata(payload);
 
-        cmh = HDR_CMN(p);
-        iph = HDR_IP(p);
-        egh = HDR_ELBAR_GRID(p);
+    cmh = HDR_CMN(p);
+    iph = HDR_IP(p);
+    egh = HDR_ELBAR_GRID(p);
 
-        cmh->ptype() = PT_ELBARGRID;
-        cmh->direction() = hdr_cmn::DOWN;
-        cmh->next_hop_ = IP_BROADCAST;
-        cmh->last_hop_ = my_id_;
-        cmh->addr_type_ = NS_AF_INET;
-        cmh->size() += IP_HDR_LEN + egh->size();
+    cmh->ptype() = PT_ELBARGRID;
+    cmh->direction() = hdr_cmn::DOWN;
+    cmh->next_hop_ = IP_BROADCAST;
+    cmh->last_hop_ = my_id_;
+    cmh->addr_type_ = NS_AF_INET;
+    cmh->size() += IP_HDR_LEN + egh->size();
 
-        iph->daddr() = IP_BROADCAST;
-        iph->saddr() = my_id_;
-        iph->sport() = RT_PORT;
-        iph->dport() = RT_PORT;
-        iph->ttl_ = limit_boundhole_hop_;
+    iph->daddr() = IP_BROADCAST;
+    iph->saddr() = my_id_;
+    iph->sport() = RT_PORT;
+    iph->dport() = RT_PORT;
+    iph->ttl_ = limit_boundhole_hop_;
 
-        egh->forwarding_mode_ = GREEDY_MODE;
-        egh->type_ = ELBAR_BROADCAST;
+    egh->forwarding_mode_ = GREEDY_MODE;
+    egh->type_ = ELBAR_BROADCAST;
 
-        send(p, 0);
+    send(p, 0);
 //        hole = hole->next_;
 //    } while (hole && hole->next_ != hole_list_);
 }
@@ -489,13 +446,14 @@ void ElbarGridOfflineAgent::recvHci(Packet *p) {
 
     createGrid(p);
 
-    // check if it'alpha already exist
-    for (angleView* angle = alpha_; angle; angle = angle->next_){
-        if (angle->hole_id_ == iph->saddr()){
-            drop(p, "Received");
+    // check if its alpha already exist
+    for (angleView *angle = alpha_; angle; angle = angle->next_) {
+        if (angle->hole_id_ == iph->saddr()) {
+            drop(p, "HciReceived");
             return;
         }
     }
+
     // determine region & parallelogram if alpha is not detected
     detectParallelogram();
 
@@ -508,13 +466,12 @@ void ElbarGridOfflineAgent::recvHci(Packet *p) {
 }
 
 void ElbarGridOfflineAgent::createGrid(Packet *p) {
-    struct hdr_ip*		iph = HDR_IP(p);
+    struct hdr_ip *iph = HDR_IP(p);
 //    hdr_cmn*     cmh = HDR_CMN(p);
 
     // check if is really receive this hole's information
-    for (polygonHole* h = hole_list_; h; h = h->next_)
-    {
-        if (h->hole_id_ == iph->saddr())	// already received
+    for (polygonHole *h = hole_list_; h; h = h->next_) {
+        if (h->hole_id_ == iph->saddr())    // already received
         {
             drop(p, "Received");
             return;
@@ -532,10 +489,10 @@ void ElbarGridOfflineAgent::createGrid(Packet *p) {
         int x = my_id_;
     data->dump();
 
-    node * head = NULL;
+    node *head = NULL;
     for (int i = 1; i <= data->size(); i++) {
         node n = data->get_data(i);
-        node* item = new node();
+        node *item = new node();
         item->x_ = n.x_;
         item->y_ = n.y_;
         item->next_ = head;
@@ -547,69 +504,7 @@ void ElbarGridOfflineAgent::createGrid(Packet *p) {
     hole_list_ = hole_item;
 }
 
-
-//------------------BoundHole---------------------------
-void
-ElbarGridOfflineAgent::recvBoundHole(Packet *p) {
-    // add data to packet
-    addData(p);
-
-    struct hdr_ip *iph = HDR_IP(p);
-    struct hdr_cmn *cmh = HDR_CMN(p);
-    struct hdr_grid *bhh = HDR_GRID(p);
-
-    // if the grid packet has came back to the initial node
-    if (iph->saddr() == my_id_) {
-        if (iph->ttl_ > (limit_boundhole_hop_ - 5)) {
-            drop(p, " SmallHole");    // drop hole that have less than 5 hop
-        }
-        else {
-            createPolygonHole(p);
-
-            dumpBoundhole();
-            dumpTime();
-            dumpEnergy();
-            dumpArea();
-
-            drop(p, " GRID");
-        }
-        return;
-    }
-
-    if (iph->ttl_-- <= 0) {
-        drop(p, DROP_RTR_TTL);
-        return;
-    }
-
-    node *nb = getNeighborByBoundhole(&bhh->prev_, &bhh->last_);
-
-    // no neighbor to forward, drop message. it means the network is not interconnected
-    if (nb == NULL) {
-        drop(p, DROP_RTR_NO_ROUTE);
-        return;
-    }
-
-    // if neighbor already send grid message to that node
-    if (iph->saddr() > my_id_) {
-        for (stuckangle *sa = stuck_angle_; sa; sa = sa->next_) {
-            if (sa->a_->id_ == nb->id_) {
-                drop(p, " REPEAT");
-                return;
-            }
-        }
-    }
-
-    cmh->direction() = hdr_cmn::DOWN;
-    cmh->next_hop_ = nb->id_;
-    cmh->last_hop_ = my_id_;
-
-    iph->daddr() = nb->id_;
-
-    bhh->last_ = bhh->prev_;
-    bhh->prev_ = *this;
-
-    send(p, 0);
-}
+/*---------------------- Dump --------------------------------*/
 
 void ElbarGridOfflineAgent::initTraceFile() {
     FILE *fp;
