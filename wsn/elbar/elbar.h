@@ -61,6 +61,8 @@ private:
     int holeAvoidingProb();
     Elbar_Region regionDetermine(double angle);
 
+    void sendData(Packet *p);
+    void recvData(Packet *p);
     void recvElbar(Packet *p);
     void sendElbar(Packet *p);
 
