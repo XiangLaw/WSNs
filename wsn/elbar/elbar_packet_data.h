@@ -4,17 +4,17 @@
 #include "packet.h"
 #include "wsn/gpsr/gpsr.h"
 
-class ElbarGridOfflinePacketData : public AppData
-{
+class ElbarGridOfflinePacketData : public AppData {
 private:
-    unsigned char* data_;
+    unsigned char *data_;
 
 public:
     int data_len_;
     int element_size_;
 
     ElbarGridOfflinePacketData();
-    ElbarGridOfflinePacketData(ElbarGridOfflinePacketData &d);	// Copy
+
+    ElbarGridOfflinePacketData(ElbarGridOfflinePacketData &d);    // Copy
 
     // collect new id
     void add_data(double x, double y);
@@ -25,11 +25,13 @@ public:
     node get_data(int index);
 
     int indexOf(node);
+
     int indexOf(double x, double y);
 
     void rmv_data(int index);
 
-    AppData* copy();
+    AppData *copy();
+
     int size() const;
 };
 

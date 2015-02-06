@@ -677,8 +677,11 @@ double	G::area(node* n)
 /*
  * Extension function
  */
+// angle from vector (p0,p1) -> (p2,p3)
 Angle G::rawAngle(Point* p0, Point* p1, Point* p2, Point* p3){
-    return atan2(p1->y_ - p0->y_, p1->x_ - p0->x_) - atan2(p3->y_ - p2->y_, p3->x_ - p2->x_);
+
+    Angle  re = atan2(p1->y_ - p0->y_, p1->x_ - p0->x_) - atan2(p3->y_ - p2->y_, p3->x_ - p2->x_);
+    return re;
 }
 
 /**
@@ -688,4 +691,20 @@ Angle G::directedAngle(Point* a, Point* p, Point* b)
 {
     if (*a == *p || *a == *b) return 0;
     return (atan2(p->y_ - a->y_, p->x_ - a->x_) - atan2(b->y_ - a->y_, b->x_ - a->x_));
+}
+
+// check if a point in a polygon
+bool G::isPointInPolygon(Point* a, node* poly){
+    Point inf, temp;
+    int countRaycast = 0;
+    inf.x_ = a->x_;
+    inf.y_ = 1000000; // infinity
+    Line l = G::line(a, inf);
+    node* n1 = poly;
+    do{
+        node* n2 = n1->next_ != NULL ? n1->next_ : poly;
+        if (G::is_intersect(a, &inf, n1, n2)) countRaycast++;
+        n1 = n1->next_;
+    } while (n1 && n1->next_ != poly);
+    return countRaycast % 2 != 0;
 }

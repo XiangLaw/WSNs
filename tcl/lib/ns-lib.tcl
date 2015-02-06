@@ -1169,8 +1169,8 @@ Simulator instproc create-elbar-gridoffline-agent { node } {
 	$node set ragent_ $ragent
 	$self at 0.0 	"$ragent start"    ;# start updates
 	$self at 30	"$ragent boundhole"
-	$self at 90 "$ragent broadcast"
-	$self at 120 "$ragent routing"
+	$self at 98 "$ragent broadcast"
+	$self at 99 "$ragent routing"
 	return $ragent
 }
 

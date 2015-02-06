@@ -82,8 +82,6 @@ private:
 	//void recvGridOffline(Packet* p);
 
 	void reducePolygonHole(polygonHole* h);
-    void startUp();
-
 
 protected:
     double r_;
@@ -102,6 +100,7 @@ protected:
     virtual void addData(Packet*);
     virtual void sendBoundHole();
     virtual void recvBoundHole(Packet*);
+    virtual void startUp();
 
 public:
 	GridOfflineAgent();
@@ -110,6 +109,8 @@ public:
 
 public:
     virtual char const * getAgentName();
+
+    void initTraceFile();
 };
 
 #endif /* GRID_H_ */

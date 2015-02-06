@@ -124,15 +124,7 @@ GridOfflineAgent::startUp() {
     findStuck_timer_.resched(20);
 
     // clear trace file
-    FILE *fp;
-    fp = fopen("Area.tr", "w");
-    fclose(fp);
-    fp = fopen("GridOffline.tr", "w");
-    fclose(fp);
-    fp = fopen("Neighbors.tr", "w");
-    fclose(fp);
-    fp = fopen("Time.tr", "w");
-    fclose(fp);
+    initTraceFile();
 }
 
 // ------------------------ Bound hole ------------------------ //
@@ -361,8 +353,22 @@ GridOfflineAgent::addData(Packet *p) {
 
 void
 GridOfflineAgent::createPolygonHole(Packet *p) {
+    struct hdr_ip*		iph = HDR_IP(p);
+
+    // check if is really receive this hole's information
+    for (polygonHole* h = hole_list_; h; h = h->next_)
+    {
+        if (h->hole_id_ == iph->saddr())	// already received
+        {
+            drop(p, "Received");
+            return;
+        }
+    }
+
     // add new Hole
     polygonHole *newHole = new polygonHole();
+    newHole->hole_id_ = iph->saddr(); // set hole id
+    printf("holeId: %d\n", newHole->hole_id_);
     newHole->node_list_ = NULL;
     newHole->next_ = hole_list_;
     hole_list_ = newHole;
@@ -539,8 +545,6 @@ GridOfflineAgent::createPolygonHole(Packet *p) {
         }
     }
 
-    dumpBoundhole();
-
     // reduce polygon hole
     reducePolygonHole(newHole);
 }
@@ -645,5 +649,17 @@ void
 GridOfflineAgent::dumpArea() {
     FILE *fp = fopen("Area.tr", "a+");
     fprintf(fp, "%f\n", G::area(hole_list_->node_list_));
+    fclose(fp);
+}
+
+void GridOfflineAgent::initTraceFile() {
+    FILE *fp;
+    fp = fopen("Area.tr", "w");
+    fclose(fp);
+    fp = fopen("GridOffline.tr", "w");
+    fclose(fp);
+    fp = fopen("Neighbors.tr", "w");
+    fclose(fp);
+    fp = fopen("Time.tr", "w");
     fclose(fp);
 }

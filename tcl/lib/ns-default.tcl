@@ -1626,7 +1626,7 @@ Agent/GRIDOFFLINE set hello_period_ 0
 Agent/GRIDOFFLINE set energy_checkpoint_ 995
 Agent/GRIDOFFLINE set limit_ 0
 Agent/GRIDOFFLINE set range_ 40
-Agent/GRIDOFFLINE set r_ 100
+Agent/GRIDOFFLINE set r_ 20
 Agent/GRIDOFFLINE set limit_boundhole_hop_ 80
 
 Agent/GRIDONLINE set hello_period_ 0
@@ -1664,5 +1664,5 @@ Agent/ELBARGRIDOFFLINE set hello_period_ 0
 Agent/ELBARGRIDOFFLINE set energy_checkpoint_ 995
 Agent/ELBARGRIDOFFLINE set limit_ 0
 Agent/ELBARGRIDOFFLINE set range_ 40
-Agent/ELBARGRIDOFFLINE set r_ 100
+Agent/ELBARGRIDOFFLINE set r_ 20
 Agent/ELBARGRIDOFFLINE set limit_boundhole_hop_ 80
