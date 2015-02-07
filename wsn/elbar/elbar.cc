@@ -48,7 +48,7 @@ ElbarGridOfflineAgent::ElbarGridOfflineAgent()
         : GridOfflineAgent(),
           broadcast_timer_(this, &ElbarGridOfflineAgent::broadcastHci) {
     this->alpha_max_ = M_PI * 2/3;
-    this->alpha_min_ = M_PI / 8;
+    this->alpha_min_ = M_PI / 20;
 
     hole_list_ = NULL;
     parallelogram_ = NULL;
@@ -155,6 +155,7 @@ void ElbarGridOfflineAgent::configDataPacket(Packet *p) {
 
     egh->type_ = ELBAR_DATA;
     egh->daddr = iph->daddr(); // save destionation address
+    egh->dest = *dest;
     egh->forwarding_mode_ = GREEDY_MODE;
 
     iph->saddr() = my_id_;
@@ -322,11 +323,11 @@ void ElbarGridOfflineAgent::routing(Packet *p) {
         send(p, 0);
     }
     else if (region_ == REGION_2) { // elbar routing when in region 2 and have info about hole
-        destionantion = dest;
+        destionantion = &(egh->dest);
         anchor_point = &(egh->anchor_point_);
         routing_mode = egh->forwarding_mode_;
 
-        if (dest->x_ || dest->y_) {
+        if (destionantion->x_ || destionantion->y_) {
             if (cmh->direction() == hdr_cmn::UP &&
                     (this->x_ == destionantion->x_ && this->y_ == destionantion->y_))    // up to destination
             {
