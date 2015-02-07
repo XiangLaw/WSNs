@@ -61,7 +61,7 @@ private:
     int holeAvoidingProb();
     Elbar_Region regionDetermine(double angle);
 
-    void sendData(Packet *p);
+    void configDataPacket(Packet *p);
     void recvData(Packet *p);
     void recvElbar(Packet *p);
     void sendElbar(Packet *p);
@@ -72,11 +72,11 @@ private:
 
     virtual char const *getAgentName();
     void dumpAngle();
+    void dumpNodeInfoX();
+    void dumpNodeInfoY();
     void createGrid(Packet *pPacket); // re-create grid bound hole
 
 protected:
-    virtual void recvBoundHole(Packet *);
-
     virtual void initTraceFile();
 
 public:
@@ -95,7 +95,6 @@ private:
                             // convert to struct array for multi hole
 
     ElbarGridOfflineTimer broadcast_timer_;
-
 };
 
 #endif

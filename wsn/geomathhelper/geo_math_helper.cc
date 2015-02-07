@@ -685,12 +685,27 @@ Angle G::rawAngle(Point* p0, Point* p1, Point* p2, Point* p3){
 }
 
 /**
-* directed angle (pa, pb)
+* directed angle (pa, pb) clockwise
 * */
-Angle G::directedAngle(Point* a, Point* p, Point* b)
+Angle G::directedAngle(Point* b, Point* p, Point* a)
 {
-    if (*a == *p || *a == *b) return 0;
-    return (atan2(a->y_ - p->y_, a->x_ - p->x_) - atan2(b->y_ - p->y_, b->x_ - p->x_));
+//    if (*a == *p || *a == *b) return 0;
+//    double alpha = (atan2(a->y_ - p->y_, a->x_ - p->x_) - atan2(b->y_ - p->y_, b->x_ - p->x_));
+//    // reduce if |alpha| > PI
+//    if (alpha > M_PI){
+//        alpha -= M_PI;
+//    } else if (alpha < -M_PI){
+//        alpha += M_PI;
+//    }
+//    return alpha;
+    double  x1 = a->x_ - p->x_;
+    double  x2 = b->x_ - p->x_;
+    double  y1 = a->y_ - p->y_;
+    double  y2 = b->y_ - p->y_;
+    double dot = x1*x2 + y1*y2;      // dot product
+    double det = x1*y2 - y1*x2;      // determinant
+    double angle = atan2(det, dot);  // atan2(y, x) or atan2(sin, cos)
+    return angle;
 }
 
 // check if a point in a polygon

@@ -110,7 +110,7 @@ public:
 public:
     virtual char const * getAgentName();
 
-    void initTraceFile();
+    virtual void initTraceFile();
 };
 
 #endif /* GRID_H_ */

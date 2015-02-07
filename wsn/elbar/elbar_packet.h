@@ -12,6 +12,7 @@ struct hdr_elbar_grid {
     Point anchor_point_;
     Point last_;    // Pre-previews node
     Point prev_;    // Previews node
+    nsaddr_t daddr; // destination address
     int forwarding_mode_;
     int type_;
 
