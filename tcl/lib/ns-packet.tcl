@@ -192,9 +192,9 @@ set protolist {
 	GRID	
 	GRIDDYNAMIC
 	DYNAMICPOLYGON
+	ELBARGRIDOFFLINE
 # WSN-EXT
 	GREEDY
-	ELBARGRIDONLINE
 # Other:
 	Encap 	# common/encap.cc
 	IPinIP 	# IP encapsulation 

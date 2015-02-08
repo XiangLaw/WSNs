@@ -449,7 +449,7 @@ public:
 
         // wsn-ext
 		name_[PT_GREEDY]="Greedy";
-        name_[PT_ELBARGRID] = "ELBARGRID";
+        name_[PT_ELBARGRID] = "ELBARGRIDOFFLINE";
 
 		name_[PT_NTYPE]= "undefined";
 	}

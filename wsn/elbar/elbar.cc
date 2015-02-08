@@ -21,7 +21,7 @@ int hdr_elbar_grid::offset_;
 
 static class ElbarGridOfflineHeaderClass : public PacketHeaderClass {
 public:
-    ElbarGridOfflineHeaderClass() : PacketHeaderClass("PacketHeader/ELBARGRID", sizeof(hdr_elbar_grid)) {
+    ElbarGridOfflineHeaderClass() : PacketHeaderClass("PacketHeader/ELBARGRIDOFFLINE", sizeof(hdr_elbar_grid)) {
         bind_offset(&hdr_elbar_grid::offset_);
     }
 } class_elbargridofflinehdr;

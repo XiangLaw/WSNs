@@ -5,23 +5,23 @@
       <config projectName="ns" targetName="epa-tr-stat" />
       <config projectName="ns_2_35" targetName="epa-tr-stat" />
       <config projectName="ns" targetName="nlanr-tr-stat" />
-      <config projectName="ns_2_35" targetName="ns" />
-      <config projectName="ns_2_35" targetName="nstk" />
-      <config projectName="ns" targetName="ns" />
-      <config projectName="ns" targetName="setdest" />
+      <config projectName="ns" targetName="ucb-tr-stat" />
       <config projectName="ns_2_35" targetName="dec-tr-stat" />
+      <config projectName="ns_2_35" targetName="ns" />
+      <config projectName="ns_2_35" targetName="nlanr-tr-stat" />
+      <config projectName="ns" targetName="ptypes2tcl" />
+      <config projectName="ns_2_35" targetName="ns_2_35" />
       <config projectName="ns_2_35" targetName="ptypes2tcl" />
       <config projectName="ns_2_35" targetName="setdest" />
       <config projectName="ns" targetName="nstk" />
-      <config projectName="ns" targetName="ucb-tr-stat" />
+      <config projectName="ns_2_35" targetName="nstk" />
       <config projectName="ns_2_35" targetName="ucb-tr-stat" />
       <config projectName="ns" targetName="calcdest" />
       <config projectName="ns" targetName="nse" />
-      <config projectName="ns_2_35" targetName="nlanr-tr-stat" />
       <config projectName="ns_2_35" targetName="nse" />
       <config projectName="ns_2_35" targetName="calcdest" />
-      <config projectName="ns_2_35" targetName="ns_2_35" />
-      <config projectName="ns" targetName="ptypes2tcl" />
+      <config projectName="ns" targetName="setdest" />
+      <config projectName="ns" targetName="ns" />
       <config projectName="ns" targetName="dec-tr-stat" />
     </generated>
   </component>
@@ -32,9 +32,12 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="de4b06ea-b800-44c5-aa84-06bc4288f778" name="Default" comment="update elbar (see top of file elbar.cc for more)&#10;*  + change directedAngle (use clockwise)&#10;*  + reduce alpha_min_&#10;*  + fix follow">
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/scripts/100tcl/Neighbors.tr" afterPath="$PROJECT_DIR$/scripts/100tcl/Neighbors.tr" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/scripts/100tcl/Trace.tr" afterPath="$PROJECT_DIR$/scripts/100tcl/Trace.tr" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/wsn/elbar/elbar.cc" afterPath="$PROJECT_DIR$/wsn/elbar/elbar.cc" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/misc.xml" afterPath="$PROJECT_DIR$/.idea/misc.xml" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/scripts/100tcl/energy.tr" afterPath="$PROJECT_DIR$/scripts/100tcl/energy.tr" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/tcl/lib/ns-packet.tcl" afterPath="$PROJECT_DIR$/tcl/lib/ns-packet.tcl" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/common/packet.h" afterPath="$PROJECT_DIR$/common/packet.h" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/workspace.xml" afterPath="$PROJECT_DIR$/.idea/workspace.xml" />
     </list>
     <ignored path="ns-2.35.iws" />
     <ignored path=".idea/workspace.xml" />
@@ -58,19 +61,29 @@
       <file leaf-file-name="elbar.cc" pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/wsn/elbar/elbar.cc">
           <provider selected="true" editor-type-id="text-editor">
-            <state vertical-scroll-proportion="0.4786546">
-              <caret line="329" column="8" selection-start-line="329" selection-start-column="8" selection-end-line="329" selection-end-column="35" />
+            <state vertical-scroll-proportion="0.49676585">
+              <caret line="308" column="70" selection-start-line="308" selection-start-column="70" selection-end-line="308" selection-end-column="70" />
               <folding>
-                <element signature="e#4627#7892#0" expanded="false" />
-                <element signature="e#14957#16237#0" expanded="false" />
-                <element signature="e#16239#16480#0" expanded="false" />
-                <element signature="e#16482#17543#0" expanded="false" />
-                <element signature="e#17545#18319#0" expanded="false" />
-                <element signature="e#18321#18870#0" expanded="false" />
-                <element signature="e#18872#19127#0" expanded="false" />
-                <element signature="e#19129#19264#0" expanded="false" />
-                <element signature="e#19266#19401#0" expanded="false" />
+                <element signature="e#4634#7899#0" expanded="false" />
+                <element signature="e#14964#16244#0" expanded="false" />
+                <element signature="e#16246#16487#0" expanded="false" />
+                <element signature="e#16489#17550#0" expanded="false" />
+                <element signature="e#17552#18326#0" expanded="false" />
+                <element signature="e#18328#18877#0" expanded="false" />
+                <element signature="e#18879#19134#0" expanded="false" />
+                <element signature="e#19136#19271#0" expanded="false" />
+                <element signature="e#19273#19408#0" expanded="false" />
               </folding>
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file leaf-file-name="elbar_packet.h" pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/wsn/elbar/elbar_packet.h">
+          <provider selected="true" editor-type-id="text-editor">
+            <state vertical-scroll-proportion="0.0">
+              <caret line="28" column="42" selection-start-line="28" selection-start-column="42" selection-end-line="28" selection-end-column="42" />
+              <folding />
             </state>
           </provider>
         </entry>
@@ -89,7 +102,6 @@
         <option value="$PROJECT_DIR$/CMakeLists.txt" />
         <option value="$PROJECT_DIR$/wsn/gridoffline/grid_packet.h" />
         <option value="$PROJECT_DIR$/cmake/SourceFiles.cmake" />
-        <option value="$PROJECT_DIR$/tcl/lib/ns-packet.tcl" />
         <option value="$USER_HOME$/Study/GR/NS2/Source/tcl/simulate.tcl" />
         <option value="$USER_HOME$/Study/GR/NS2/Source/tcl/topo_data.tcl" />
         <option value="$USER_HOME$/Study/GR/NS2/Source/tcl/cbr.tcl" />
@@ -116,7 +128,6 @@
         <option value="$PROJECT_DIR$/wsn/convexhull/convexhull.cc" />
         <option value="$PROJECT_DIR$/scripts/100tcl/ConvexOnline.tr" />
         <option value="$PROJECT_DIR$/wsn/elbar/elbar_packet_data.cc" />
-        <option value="$PROJECT_DIR$/common/packet.h" />
         <option value="$PROJECT_DIR$/wsn/goal/goal.cc" />
         <option value="$PROJECT_DIR$/common/scheduler.cc" />
         <option value="$PROJECT_DIR$/mac/ll.cc" />
@@ -133,6 +144,8 @@
         <option value="$PROJECT_DIR$/tcl/lib/ns-lib.tcl" />
         <option value="$PROJECT_DIR$/../tclcl-1.20/tclcl.h" />
         <option value="$PROJECT_DIR$/wsn/elbar/elbar_packet.h" />
+        <option value="$PROJECT_DIR$/tcl/lib/ns-packet.tcl" />
+        <option value="$PROJECT_DIR$/common/packet.h" />
         <option value="$PROJECT_DIR$/wsn/elbar/elbar.cc" />
       </list>
     </option>
@@ -146,9 +159,9 @@
   <component name="OCFindUsagesOptions" text="false" ivars="false" properties="true" derivedClasses="false" />
   <component name="ProjectFrameBounds">
     <option name="x" value="65" />
-    <option name="y" value="24" />
+    <option name="y" value="-4" />
     <option name="width" value="1375" />
-    <option name="height" value="876" />
+    <option name="height" value="904" />
   </component>
   <component name="ProjectLevelVcsManager" settingsEditedManually="false">
     <OptionsSetting value="true" id="Add" />
@@ -258,6 +271,7 @@
     <property name="LayoutCode.rearrangeEntriesPlain text" value="false" />
     <property name="settings.editor.selected.configurable" value="editor.preferences.appearance" />
     <property name="settings.editor.splitter.proportion" value="0.2" />
+    <property name="SearchEverywhereHistoryKey" value="ns-pack&#9;FILE&#9;file:///home/huyvq/workspace/thesis/NS2/ns-2.35/tcl/lib/ns-packet.tcl&#10;packet.h&#9;FILE&#9;file:///home/huyvq/workspace/thesis/NS2/ns-2.35/common/packet.h&#10;ns-packet&#9;FILE&#9;file:///home/huyvq/workspace/thesis/NS2/ns-2.35/tcl/lib/ns-packet.tcl" />
   </component>
   <component name="RecentsManager">
     <key name="CopyFile.RECENT_KEYS">
@@ -420,27 +434,27 @@
     </todo-panel>
   </component>
   <component name="ToolWindowManager">
-    <frame x="65" y="24" width="1375" height="876" extended-state="6" />
+    <frame x="65" y="-4" width="1375" height="904" extended-state="6" />
     <editor active="true" />
     <layout>
       <window_info id="Project" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" weight="0.26254547" sideWeight="0.5" order="0" side_tool="false" content_ui="combo" />
       <window_info id="TODO" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.3289689" sideWeight="0.5" order="6" side_tool="false" content_ui="tabs" />
+      <window_info id="Messages" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.31257784" sideWeight="0.4850909" order="7" side_tool="false" content_ui="tabs" />
       <window_info id="CMake" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.31631383" sideWeight="0.48290908" order="11" side_tool="false" content_ui="tabs" />
       <window_info id="Event Log" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.31631383" sideWeight="0.5170909" order="8" side_tool="true" content_ui="tabs" />
       <window_info id="Version Control" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.32789558" sideWeight="0.48727274" order="9" side_tool="false" content_ui="tabs" />
+      <window_info id="Run" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.32503113" sideWeight="0.5" order="2" side_tool="false" content_ui="tabs" />
       <window_info id="Structure" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.24981412" sideWeight="0.5" order="1" side_tool="false" content_ui="tabs" />
       <window_info id="Terminal" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.3289689" sideWeight="0.5" order="10" side_tool="false" content_ui="tabs" />
       <window_info id="Favorites" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="2" side_tool="true" content_ui="tabs" />
+      <window_info id="Debug" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.39975095" sideWeight="0.5" order="3" side_tool="false" content_ui="tabs" />
       <window_info id="Cvs" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.25" sideWeight="0.5" order="4" side_tool="false" content_ui="tabs" />
-      <window_info id="Messages" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.31257784" sideWeight="0.4850909" order="7" side_tool="false" content_ui="tabs" />
       <window_info id="Message" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="0" side_tool="false" content_ui="tabs" />
       <window_info id="Commander" active="false" anchor="right" auto_hide="false" internal_type="SLIDING" type="SLIDING" visible="false" weight="0.4" sideWeight="0.5" order="0" side_tool="false" content_ui="tabs" />
       <window_info id="Inspection" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.4" sideWeight="0.5" order="5" side_tool="false" content_ui="tabs" />
-      <window_info id="Run" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.32503113" sideWeight="0.5" order="2" side_tool="false" content_ui="tabs" />
       <window_info id="Hierarchy" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.25" sideWeight="0.5" order="2" side_tool="false" content_ui="combo" />
       <window_info id="Find" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.30884185" sideWeight="0.49739778" order="1" side_tool="false" content_ui="tabs" />
       <window_info id="Ant Build" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.25" sideWeight="0.5" order="1" side_tool="false" content_ui="tabs" />
-      <window_info id="Debug" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.39975095" sideWeight="0.5" order="3" side_tool="false" content_ui="tabs" />
     </layout>
     <layout-to-restore>
       <window_info id="TODO" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.3289689" sideWeight="0.5" order="6" side_tool="false" content_ui="tabs" />
@@ -516,19 +530,22 @@
           <line>378</line>
           <option name="timeStamp" value="172" />
         </line-breakpoint>
+        <line-breakpoint enabled="true" type="com.jetbrains.cidr.execution.debugger.OCBreakpointType">
+          <url>file://$PROJECT_DIR$/wsn/elbar/elbar.cc</url>
+          <line>295</line>
+          <option name="timeStamp" value="174" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="com.jetbrains.cidr.execution.debugger.OCBreakpointType">
+          <url>file://$PROJECT_DIR$/wsn/elbar/elbar.cc</url>
+          <line>325</line>
+          <option name="timeStamp" value="176" />
+        </line-breakpoint>
       </breakpoints>
-      <option name="time" value="173" />
+      <option name="time" value="177" />
     </breakpoint-manager>
     <watches-manager />
   </component>
   <component name="editorHistoryManager">
-    <entry file="file://$PROJECT_DIR$/scripts/100tcl/DataDump.tr">
-      <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="0.0">
-          <caret line="0" column="0" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/wsn/goal/goal.cc">
       <provider selected="true" editor-type-id="text-editor">
         <state vertical-scroll-proportion="0.69987065">
@@ -854,14 +871,6 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/wsn/elbar/elbar_packet.h">
-      <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="0.27943078">
-          <caret line="12" column="23" selection-start-line="12" selection-start-column="10" selection-end-line="12" selection-end-column="23" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/trace/cmu-trace.cc">
       <provider selected="true" editor-type-id="text-editor">
         <state vertical-scroll-proportion="0.0">
@@ -870,28 +879,44 @@
         </state>
       </provider>
     </entry>
+    <entry file="file://$PROJECT_DIR$/tcl/lib/ns-packet.tcl">
+      <provider selected="true" editor-type-id="text-editor">
+        <state vertical-scroll-proportion="0.9534282">
+          <caret line="231" column="6" selection-start-line="231" selection-start-column="6" selection-end-line="231" selection-end-column="6" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
     <entry file="file://$PROJECT_DIR$/common/packet.h">
       <provider selected="true" editor-type-id="text-editor">
+        <state vertical-scroll-proportion="0.58669835">
+          <caret line="451" column="47" selection-start-line="451" selection-start-column="47" selection-end-line="451" selection-end-column="47" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/wsn/elbar/elbar_packet.h">
+      <provider selected="true" editor-type-id="text-editor">
         <state vertical-scroll-proportion="0.0">
-          <caret line="694" column="0" selection-start-line="694" selection-start-column="0" selection-end-line="694" selection-end-column="0" />
+          <caret line="28" column="42" selection-start-line="28" selection-start-column="42" selection-end-line="28" selection-end-column="42" />
           <folding />
         </state>
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/wsn/elbar/elbar.cc">
       <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="0.4786546">
-          <caret line="329" column="8" selection-start-line="329" selection-start-column="8" selection-end-line="329" selection-end-column="35" />
+        <state vertical-scroll-proportion="0.49676585">
+          <caret line="308" column="70" selection-start-line="308" selection-start-column="70" selection-end-line="308" selection-end-column="70" />
           <folding>
-            <element signature="e#4627#7892#0" expanded="false" />
-            <element signature="e#14957#16237#0" expanded="false" />
-            <element signature="e#16239#16480#0" expanded="false" />
-            <element signature="e#16482#17543#0" expanded="false" />
-            <element signature="e#17545#18319#0" expanded="false" />
-            <element signature="e#18321#18870#0" expanded="false" />
-            <element signature="e#18872#19127#0" expanded="false" />
-            <element signature="e#19129#19264#0" expanded="false" />
-            <element signature="e#19266#19401#0" expanded="false" />
+            <element signature="e#4634#7899#0" expanded="false" />
+            <element signature="e#14964#16244#0" expanded="false" />
+            <element signature="e#16246#16487#0" expanded="false" />
+            <element signature="e#16489#17550#0" expanded="false" />
+            <element signature="e#17552#18326#0" expanded="false" />
+            <element signature="e#18328#18877#0" expanded="false" />
+            <element signature="e#18879#19134#0" expanded="false" />
+            <element signature="e#19136#19271#0" expanded="false" />
+            <element signature="e#19273#19408#0" expanded="false" />
           </folding>
         </state>
       </provider>
