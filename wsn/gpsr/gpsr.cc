@@ -451,7 +451,6 @@ GPSRAgent::recvGPSR(Packet* p, hdr_gpsr* gdh)
 			default:
 				drop(p, " UnknowType");
 				return;
-				break;
 		}
 
 		gdh->prev_ = *this;

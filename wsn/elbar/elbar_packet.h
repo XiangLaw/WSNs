@@ -13,10 +13,15 @@ struct hdr_elbar_grid {
     int type_;
     nsaddr_t daddr; // destination address
     Point anchor_point_;
-    Point destionation_;    // destionantion node of simulation
+    Point destination_;    // destionantion node of simulation
+
+    // gpsr header
+    u_int8_t gprs_type_;
+    Point peri_;
+    Point prev_;
 
     inline int size() {
-        return ( 2 * sizeof(Point) + 2*sizeof(int) + sizeof(nsaddr_t));
+        return ( 4 * sizeof(Point) + 2*sizeof(int) + sizeof(nsaddr_t) + sizeof(u_int8_t));
     }
 
     static int offset_;

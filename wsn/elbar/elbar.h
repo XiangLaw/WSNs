@@ -49,6 +49,10 @@ private:
     void recvElbar(Packet *p);
     void sendElbar(Packet *p);
 
+    // gpsr
+    void sendGPSR(Packet *p);
+    node* recvGPSR(Packet *p, Point destination);
+
     void broadcastHci();            // hole core information broadcast
     void recvHci(Packet *p);        // recv hole core information
     void routing(Packet *p);        // elbar routing algorithm
