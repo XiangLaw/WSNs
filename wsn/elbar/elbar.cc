@@ -633,7 +633,7 @@ node* ElbarGridOfflineAgent::recvGPSR(Packet *p, Point destionation) {
 
     node * nb = NULL;
 
-    switch (egh->type_)
+    switch (egh->gprs_type_)
     {
         case GPSR_GPSR:
             nb = getNeighborByGreedy(destionation, *this);
@@ -649,7 +649,7 @@ node* ElbarGridOfflineAgent::recvGPSR(Packet *p, Point destionation) {
                 }
                 else
                 {
-                    egh->type_	= GPSR_PERIME;
+                    egh->gprs_type_	= GPSR_PERIME;
                     egh->peri_	= *this;
                 }
             }
@@ -660,7 +660,7 @@ node* ElbarGridOfflineAgent::recvGPSR(Packet *p, Point destionation) {
             nb = getNeighborByGreedy(destionation, egh->peri_);
             if (nb)
             {
-                egh->type_ = GPSR_GPSR;
+                egh->gprs_type_ = GPSR_GPSR;
             }
             else
             {
