@@ -5,23 +5,23 @@
       <config projectName="ns" targetName="epa-tr-stat" />
       <config projectName="ns_2_35" targetName="epa-tr-stat" />
       <config projectName="ns" targetName="nlanr-tr-stat" />
-      <config projectName="ns_2_35" targetName="nstk" />
-      <config projectName="ns_2_35" targetName="nlanr-tr-stat" />
       <config projectName="ns_2_35" targetName="ns" />
-      <config projectName="ns_2_35" targetName="ns_2_35" />
+      <config projectName="ns_2_35" targetName="nstk" />
+      <config projectName="ns" targetName="ns" />
+      <config projectName="ns" targetName="setdest" />
+      <config projectName="ns_2_35" targetName="dec-tr-stat" />
       <config projectName="ns_2_35" targetName="ptypes2tcl" />
       <config projectName="ns_2_35" targetName="setdest" />
-      <config projectName="ns" targetName="ptypes2tcl" />
       <config projectName="ns" targetName="nstk" />
-      <config projectName="ns" targetName="ns" />
       <config projectName="ns" targetName="ucb-tr-stat" />
       <config projectName="ns_2_35" targetName="ucb-tr-stat" />
       <config projectName="ns" targetName="calcdest" />
       <config projectName="ns" targetName="nse" />
+      <config projectName="ns_2_35" targetName="nlanr-tr-stat" />
       <config projectName="ns_2_35" targetName="nse" />
       <config projectName="ns_2_35" targetName="calcdest" />
-      <config projectName="ns" targetName="setdest" />
-      <config projectName="ns_2_35" targetName="dec-tr-stat" />
+      <config projectName="ns_2_35" targetName="ns_2_35" />
+      <config projectName="ns" targetName="ptypes2tcl" />
       <config projectName="ns" targetName="dec-tr-stat" />
     </generated>
   </component>
@@ -32,11 +32,9 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="de4b06ea-b800-44c5-aa84-06bc4288f778" name="Default" comment="update elbar (see top of file elbar.cc for more)&#10;*  + change directedAngle (use clockwise)&#10;*  + reduce alpha_min_&#10;*  + fix follow">
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/scripts/100tcl/Neighbors.tr" afterPath="$PROJECT_DIR$/scripts/100tcl/Neighbors.tr" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/wsn/elbar/elbar.cc" afterPath="$PROJECT_DIR$/wsn/elbar/elbar.cc" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/wsn/elbar/elbar_packet.h" afterPath="$PROJECT_DIR$/wsn/elbar/elbar_packet.h" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/scripts/100tcl/energy.tr" afterPath="$PROJECT_DIR$/scripts/100tcl/energy.tr" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/ns-2.35.iml" afterPath="$PROJECT_DIR$/.idea/ns-2.35.iml" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/workspace.xml" afterPath="$PROJECT_DIR$/.idea/workspace.xml" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/misc.xml" afterPath="$PROJECT_DIR$/.idea/misc.xml" />
     </list>
     <ignored path="ns-2.35.iws" />
     <ignored path=".idea/workspace.xml" />
@@ -60,49 +58,19 @@
       <file leaf-file-name="elbar.cc" pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/wsn/elbar/elbar.cc">
           <provider selected="true" editor-type-id="text-editor">
-            <state vertical-scroll-proportion="0.29296875">
-              <caret line="340" column="0" selection-start-line="340" selection-start-column="0" selection-end-line="340" selection-end-column="0" />
+            <state vertical-scroll-proportion="0.4786546">
+              <caret line="329" column="8" selection-start-line="329" selection-start-column="8" selection-end-line="329" selection-end-column="35" />
               <folding>
                 <element signature="e#4627#7892#0" expanded="false" />
-                <element signature="e#15062#16342#0" expanded="false" />
-                <element signature="e#16344#16585#0" expanded="false" />
-                <element signature="e#16587#17648#0" expanded="false" />
-                <element signature="e#17650#18424#0" expanded="false" />
-                <element signature="e#18426#18975#0" expanded="false" />
-                <element signature="e#18977#19232#0" expanded="false" />
-                <element signature="e#19234#19369#0" expanded="false" />
-                <element signature="e#19371#19506#0" expanded="false" />
+                <element signature="e#14957#16237#0" expanded="false" />
+                <element signature="e#16239#16480#0" expanded="false" />
+                <element signature="e#16482#17543#0" expanded="false" />
+                <element signature="e#17545#18319#0" expanded="false" />
+                <element signature="e#18321#18870#0" expanded="false" />
+                <element signature="e#18872#19127#0" expanded="false" />
+                <element signature="e#19129#19264#0" expanded="false" />
+                <element signature="e#19266#19401#0" expanded="false" />
               </folding>
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file leaf-file-name="packet.h" pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/common/packet.h">
-          <provider selected="true" editor-type-id="text-editor">
-            <state vertical-scroll-proportion="0.0">
-              <caret line="694" column="0" selection-start-line="694" selection-start-column="0" selection-end-line="694" selection-end-column="0" />
-              <folding />
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file leaf-file-name="cmu-trace.cc" pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/trace/cmu-trace.cc">
-          <provider selected="true" editor-type-id="text-editor">
-            <state vertical-scroll-proportion="0.0">
-              <caret line="1525" column="0" selection-start-line="1525" selection-start-column="0" selection-end-line="1525" selection-end-column="0" />
-              <folding />
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file leaf-file-name="elbar_packet.h" pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/wsn/elbar/elbar_packet.h">
-          <provider selected="true" editor-type-id="text-editor">
-            <state vertical-scroll-proportion="0.0">
-              <caret line="18" column="18" selection-start-line="18" selection-start-column="18" selection-end-line="18" selection-end-column="18" />
-              <folding />
             </state>
           </provider>
         </entry>
@@ -178,9 +146,9 @@
   <component name="OCFindUsagesOptions" text="false" ivars="false" properties="true" derivedClasses="false" />
   <component name="ProjectFrameBounds">
     <option name="x" value="65" />
-    <option name="y" value="-4" />
+    <option name="y" value="24" />
     <option name="width" value="1375" />
-    <option name="height" value="904" />
+    <option name="height" value="876" />
   </component>
   <component name="ProjectLevelVcsManager" settingsEditedManually="false">
     <OptionsSetting value="true" id="Add" />
@@ -452,27 +420,27 @@
     </todo-panel>
   </component>
   <component name="ToolWindowManager">
-    <frame x="65" y="-4" width="1375" height="904" extended-state="6" />
-    <editor active="false" />
+    <frame x="65" y="24" width="1375" height="876" extended-state="6" />
+    <editor active="true" />
     <layout>
       <window_info id="Project" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" weight="0.26254547" sideWeight="0.5" order="0" side_tool="false" content_ui="combo" />
       <window_info id="TODO" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.3289689" sideWeight="0.5" order="6" side_tool="false" content_ui="tabs" />
-      <window_info id="Messages" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.31257784" sideWeight="0.4850909" order="7" side_tool="false" content_ui="tabs" />
       <window_info id="CMake" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.31631383" sideWeight="0.48290908" order="11" side_tool="false" content_ui="tabs" />
       <window_info id="Event Log" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.31631383" sideWeight="0.5170909" order="8" side_tool="true" content_ui="tabs" />
-      <window_info id="Find" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.30884185" sideWeight="0.49739778" order="1" side_tool="false" content_ui="tabs" />
       <window_info id="Version Control" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.32789558" sideWeight="0.48727274" order="9" side_tool="false" content_ui="tabs" />
-      <window_info id="Run" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.32503113" sideWeight="0.5" order="2" side_tool="false" content_ui="tabs" />
       <window_info id="Structure" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.24981412" sideWeight="0.5" order="1" side_tool="false" content_ui="tabs" />
       <window_info id="Terminal" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.3289689" sideWeight="0.5" order="10" side_tool="false" content_ui="tabs" />
       <window_info id="Favorites" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="2" side_tool="true" content_ui="tabs" />
-      <window_info id="Debug" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.39975095" sideWeight="0.5" order="3" side_tool="false" content_ui="tabs" />
       <window_info id="Cvs" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.25" sideWeight="0.5" order="4" side_tool="false" content_ui="tabs" />
+      <window_info id="Messages" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.31257784" sideWeight="0.4850909" order="7" side_tool="false" content_ui="tabs" />
       <window_info id="Message" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="0" side_tool="false" content_ui="tabs" />
       <window_info id="Commander" active="false" anchor="right" auto_hide="false" internal_type="SLIDING" type="SLIDING" visible="false" weight="0.4" sideWeight="0.5" order="0" side_tool="false" content_ui="tabs" />
       <window_info id="Inspection" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.4" sideWeight="0.5" order="5" side_tool="false" content_ui="tabs" />
+      <window_info id="Run" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.32503113" sideWeight="0.5" order="2" side_tool="false" content_ui="tabs" />
       <window_info id="Hierarchy" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.25" sideWeight="0.5" order="2" side_tool="false" content_ui="combo" />
+      <window_info id="Find" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.30884185" sideWeight="0.49739778" order="1" side_tool="false" content_ui="tabs" />
       <window_info id="Ant Build" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.25" sideWeight="0.5" order="1" side_tool="false" content_ui="tabs" />
+      <window_info id="Debug" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.39975095" sideWeight="0.5" order="3" side_tool="false" content_ui="tabs" />
     </layout>
     <layout-to-restore>
       <window_info id="TODO" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.3289689" sideWeight="0.5" order="6" side_tool="false" content_ui="tabs" />
@@ -525,17 +493,17 @@
       <breakpoints>
         <line-breakpoint enabled="true" type="com.jetbrains.cidr.execution.debugger.OCBreakpointType">
           <url>file://$PROJECT_DIR$/wsn/elbar/elbar.cc</url>
-          <line>361</line>
+          <line>360</line>
           <option name="timeStamp" value="155" />
         </line-breakpoint>
         <line-breakpoint enabled="true" type="com.jetbrains.cidr.execution.debugger.OCBreakpointType">
           <url>file://$PROJECT_DIR$/wsn/elbar/elbar.cc</url>
-          <line>340</line>
+          <line>339</line>
           <option name="timeStamp" value="157" />
         </line-breakpoint>
         <line-breakpoint enabled="true" type="com.jetbrains.cidr.execution.debugger.OCBreakpointType">
           <url>file://$PROJECT_DIR$/wsn/elbar/elbar.cc</url>
-          <line>374</line>
+          <line>373</line>
           <option name="timeStamp" value="158" />
         </line-breakpoint>
         <line-breakpoint enabled="true" type="com.jetbrains.cidr.execution.debugger.OCBreakpointType">
@@ -545,7 +513,7 @@
         </line-breakpoint>
         <line-breakpoint enabled="true" type="com.jetbrains.cidr.execution.debugger.OCBreakpointType">
           <url>file://$PROJECT_DIR$/wsn/elbar/elbar.cc</url>
-          <line>379</line>
+          <line>378</line>
           <option name="timeStamp" value="172" />
         </line-breakpoint>
       </breakpoints>
@@ -663,7 +631,6 @@
       <provider selected="true" editor-type-id="text-editor">
         <state vertical-scroll-proportion="0.3079179">
           <caret line="111" column="30" selection-start-line="111" selection-start-column="30" selection-end-line="111" selection-end-column="30" />
-          <folding />
         </state>
       </provider>
     </entry>
@@ -749,7 +716,6 @@
       <provider selected="true" editor-type-id="text-editor">
         <state vertical-scroll-proportion="0.0">
           <caret line="385" column="29" selection-start-line="385" selection-start-column="25" selection-end-line="385" selection-end-column="29" />
-          <folding />
         </state>
       </provider>
     </entry>
@@ -778,7 +744,6 @@
       <provider selected="true" editor-type-id="text-editor">
         <state vertical-scroll-proportion="0.0">
           <caret line="287" column="42" selection-start-line="287" selection-start-column="42" selection-end-line="287" selection-end-column="42" />
-          <folding />
         </state>
       </provider>
     </entry>
@@ -786,7 +751,6 @@
       <provider selected="true" editor-type-id="text-editor">
         <state vertical-scroll-proportion="0.9576108">
           <caret line="463" column="2" selection-start-line="463" selection-start-column="2" selection-end-line="463" selection-end-column="2" />
-          <folding />
         </state>
       </provider>
     </entry>
@@ -794,7 +758,6 @@
       <provider selected="true" editor-type-id="text-editor">
         <state vertical-scroll-proportion="0.0">
           <caret line="0" column="0" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
-          <folding />
         </state>
       </provider>
     </entry>
@@ -802,7 +765,6 @@
       <provider selected="true" editor-type-id="text-editor">
         <state vertical-scroll-proportion="0.0">
           <caret line="80" column="0" selection-start-line="80" selection-start-column="0" selection-end-line="80" selection-end-column="0" />
-          <folding />
         </state>
       </provider>
     </entry>
@@ -810,7 +772,6 @@
       <provider selected="true" editor-type-id="text-editor">
         <state vertical-scroll-proportion="0.13294798">
           <caret line="97" column="20" selection-start-line="96" selection-start-column="24" selection-end-line="96" selection-end-column="25" />
-          <folding />
         </state>
       </provider>
     </entry>
@@ -818,7 +779,6 @@
       <provider selected="true" editor-type-id="text-editor">
         <state vertical-scroll-proportion="0.33333334">
           <caret line="21" column="0" selection-start-line="21" selection-start-column="0" selection-end-line="21" selection-end-column="0" />
-          <folding />
         </state>
       </provider>
     </entry>
@@ -826,7 +786,6 @@
       <provider selected="true" editor-type-id="text-editor">
         <state vertical-scroll-proportion="0.33333334">
           <caret line="1034" column="29" selection-start-line="1034" selection-start-column="29" selection-end-line="1034" selection-end-column="29" />
-          <folding />
         </state>
       </provider>
     </entry>
@@ -834,7 +793,6 @@
       <provider selected="true" editor-type-id="text-editor">
         <state vertical-scroll-proportion="0.6008316">
           <caret line="103" column="9" selection-start-line="103" selection-start-column="9" selection-end-line="103" selection-end-column="9" />
-          <folding />
         </state>
       </provider>
     </entry>
@@ -842,7 +800,6 @@
       <provider selected="true" editor-type-id="text-editor">
         <state vertical-scroll-proportion="0.4921875">
           <caret line="68" column="34" selection-start-line="68" selection-start-column="34" selection-end-line="68" selection-end-column="34" />
-          <folding />
         </state>
       </provider>
     </entry>
@@ -850,7 +807,6 @@
       <provider selected="true" editor-type-id="text-editor">
         <state vertical-scroll-proportion="0.87890625">
           <caret line="98" column="5" selection-start-line="98" selection-start-column="5" selection-end-line="98" selection-end-column="5" />
-          <folding />
         </state>
       </provider>
     </entry>
@@ -858,7 +814,6 @@
       <provider selected="true" editor-type-id="text-editor">
         <state vertical-scroll-proportion="0.33984375">
           <caret line="64" column="0" selection-start-line="64" selection-start-column="0" selection-end-line="64" selection-end-column="0" />
-          <folding />
         </state>
       </provider>
     </entry>
@@ -874,7 +829,6 @@
       <provider selected="true" editor-type-id="text-editor">
         <state vertical-scroll-proportion="0.3318584">
           <caret line="75" column="13" selection-start-line="75" selection-start-column="13" selection-end-line="75" selection-end-column="13" />
-          <folding />
         </state>
       </provider>
     </entry>
@@ -882,7 +836,6 @@
       <provider selected="true" editor-type-id="text-editor">
         <state vertical-scroll-proportion="1.8318584">
           <caret line="48" column="11" selection-start-line="48" selection-start-column="11" selection-end-line="48" selection-end-column="11" />
-          <folding />
         </state>
       </provider>
     </entry>
@@ -898,14 +851,13 @@
       <provider selected="true" editor-type-id="text-editor">
         <state vertical-scroll-proportion="0.0">
           <caret line="275" column="11" selection-start-line="275" selection-start-column="11" selection-end-line="275" selection-end-column="11" />
-          <folding />
         </state>
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/wsn/elbar/elbar_packet.h">
       <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="0.0">
-          <caret line="18" column="18" selection-start-line="18" selection-start-column="18" selection-end-line="18" selection-end-column="18" />
+        <state vertical-scroll-proportion="0.27943078">
+          <caret line="12" column="23" selection-start-line="12" selection-start-column="10" selection-end-line="12" selection-end-column="23" />
           <folding />
         </state>
       </provider>
@@ -928,18 +880,18 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/wsn/elbar/elbar.cc">
       <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="0.29296875">
-          <caret line="340" column="0" selection-start-line="340" selection-start-column="0" selection-end-line="340" selection-end-column="0" />
+        <state vertical-scroll-proportion="0.4786546">
+          <caret line="329" column="8" selection-start-line="329" selection-start-column="8" selection-end-line="329" selection-end-column="35" />
           <folding>
             <element signature="e#4627#7892#0" expanded="false" />
-            <element signature="e#15062#16342#0" expanded="false" />
-            <element signature="e#16344#16585#0" expanded="false" />
-            <element signature="e#16587#17648#0" expanded="false" />
-            <element signature="e#17650#18424#0" expanded="false" />
-            <element signature="e#18426#18975#0" expanded="false" />
-            <element signature="e#18977#19232#0" expanded="false" />
-            <element signature="e#19234#19369#0" expanded="false" />
-            <element signature="e#19371#19506#0" expanded="false" />
+            <element signature="e#14957#16237#0" expanded="false" />
+            <element signature="e#16239#16480#0" expanded="false" />
+            <element signature="e#16482#17543#0" expanded="false" />
+            <element signature="e#17545#18319#0" expanded="false" />
+            <element signature="e#18321#18870#0" expanded="false" />
+            <element signature="e#18872#19127#0" expanded="false" />
+            <element signature="e#19129#19264#0" expanded="false" />
+            <element signature="e#19266#19401#0" expanded="false" />
           </folding>
         </state>
       </provider>
