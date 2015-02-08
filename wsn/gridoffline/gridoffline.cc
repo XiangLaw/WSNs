@@ -368,7 +368,6 @@ GridOfflineAgent::createPolygonHole(Packet *p) {
     // add new Hole
     polygonHole *newHole = new polygonHole();
     newHole->hole_id_ = iph->saddr(); // set hole id
-    printf("holeId: %d\n", newHole->hole_id_);
     newHole->node_list_ = NULL;
     newHole->next_ = hole_list_;
     hole_list_ = newHole;

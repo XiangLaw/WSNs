@@ -111,11 +111,9 @@ void ElbarGridOfflineAgent::recvElbar(Packet *p) {
             recvHci(p);
             break;
         case ELBAR_DATA:
-            printf("%d - data recv\n", my_id_);
             routing(p);
             break;
         default:
-            printf("%d - drop\n", my_id_);
             drop(p, "UnknowType");
             break;
 
@@ -129,7 +127,6 @@ void ElbarGridOfflineAgent::recvData(Packet *p) {
     struct hdr_elbar_grid* egh = HDR_ELBAR_GRID(p);
 
     if(cmh->direction_ == hdr_cmn::UP && egh->daddr == my_id_) { // packet reach destination
-        printf("[Debug] %d - Received\n", my_id_);
         port_dmux_->recv(p,0);
         return;
     } else {// send new packet or routing recv packet
@@ -162,7 +159,6 @@ void ElbarGridOfflineAgent::configDataPacket(Packet *p) {
 
     sendGPSR(p);
 
-    printf("[Debug] %d - config ElbarData\n",my_id_);
 }
 
 /*------------------------------ Routing --------------------------*/
@@ -208,7 +204,6 @@ void ElbarGridOfflineAgent::detectParallelogram() {
                 item = item->next_;
             } while (item && item->next_ != tmp->node_list_);
 
-//            printf("[Debug] %d - Detect Parallelogram: (%f,%f) ai=(%f,%f) aj=(%f,%f)\n", my_id_, x_, y_, ai->x_, ai->y_, aj->x_, aj->y_);
 
             // detect parallelogram
             vi = tmp->node_list_;
@@ -301,15 +296,8 @@ void ElbarGridOfflineAgent::routing(Packet *p) {
     Point *anchor_point;
     int routing_mode;
 
-    if (p->time_ > 90){
-        printf("[Debug] %d - %d: (%d->%d) after broadcast\n", cmh->last_hop_, my_id_, iph->saddr(), egh->daddr);
-    }
-
     if (region_ == REGION_3 || region_ == REGION_1 || hole_list_ == NULL) {
         // greedy mode when in region3 or 1 or have no info about hole
-        if (hole_list_ != NULL){
-            printf("[Debug] The first hole: %d", hole_list_->hole_id_);
-        }
         egh->forwarding_mode_ = GREEDY_MODE;
         //node *nexthop = getNeighborByGreedy(*destination);
         node *nexthop = recvGPSR(p, *destination);
@@ -496,7 +484,6 @@ void ElbarGridOfflineAgent::broadcastHci() {
     egh->type_ = ELBAR_BROADCAST;
 
     send(p, 0);
-    printf("%d - Broadcast Hole at %f\n", my_id_, p->time_);
 }
 
 // broadcast packet again
@@ -516,7 +503,6 @@ void ElbarGridOfflineAgent::recvHci(Packet *p) {
     struct hdr_ip *iph = HDR_IP(p);
     struct hdr_cmn *cmh = HDR_CMN(p);
 
-    printf("[Debug] %d - recv Hci from %d\n", my_id_, cmh->last_hop_);
     // if the hci packet has came back to the initial node
     if (iph->saddr() == my_id_) {
         drop(p, "ElbarGridOfflineLoopHCI");
@@ -532,7 +518,6 @@ void ElbarGridOfflineAgent::recvHci(Packet *p) {
     for (polygonHole *h = hole_list_; h; h = h->next_) {
         if (h->hole_id_ == iph->saddr())    // already received
         {
-            printf("[Debug] %d - drop because HciReceived\n", my_id_);
             drop(p, "HciReceived");
             return;
         }
