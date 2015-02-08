@@ -36,25 +36,8 @@ struct parallelogram {
 
 class ElbarGridOfflineAgent;
 
-typedef void(ElbarGridOfflineAgent::*firefunc)(void);
-
-class ElbarGridOfflineTimer : public TimerHandler {
-public:
-    ElbarGridOfflineTimer(ElbarGridOfflineAgent *a, firefunc f) : TimerHandler() {
-        a_ = a;
-        firing_ = f;
-    }
-
-protected:
-    virtual void expire(Event *e);
-
-    ElbarGridOfflineAgent *a_;
-    firefunc firing_;
-};
-
 class ElbarGridOfflineAgent : public GridOfflineAgent {
 private:
-    friend class ElbarGridOfflineTimer;
 
     // detect covering parallelogram and view angle
     void detectParallelogram();
@@ -93,8 +76,6 @@ private:
     int routing_mode_;
     Elbar_Region region_;   // region to a specific hole
                             // convert to struct array for multi hole
-
-    ElbarGridOfflineTimer broadcast_timer_;
 };
 
 #endif

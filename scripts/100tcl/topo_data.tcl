@@ -118,3 +118,4 @@ $mnode_(115) set X_ 79 ;	$mnode_(115) set Y_ 194 ;	$mnode_(115) set Z_ 0
 $mnode_(116) set X_ 81 ;	$mnode_(116) set Y_ 142 ;	$mnode_(116) set Z_ 0
 $mnode_(117) set X_ 38 ;	$mnode_(117) set Y_ 113 ;	$mnode_(117) set Z_ 0
 $mnode_(118) set X_ 36 ;	$mnode_(118) set Y_ 137 ;	$mnode_(118) set Z_ 0
+$mnode_(119) set X_ 69 ;	$mnode_(119) set Y_ 99 ;	$mnode_(119) set Z_ 0
