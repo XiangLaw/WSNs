@@ -76,6 +76,7 @@ private:
     int routing_mode_;
     Elbar_Region region_;   // region to a specific hole
                             // convert to struct array for multi hole
+    neighbor *getNeighborByPerimeter(Point p);
 };
 
 #endif

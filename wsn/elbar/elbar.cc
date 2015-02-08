@@ -336,7 +336,6 @@ void ElbarGridOfflineAgent::routing(Packet *p) {
         routing_mode = egh->forwarding_mode_;
 
         //if (dest->x_ || dest->y_)
-        {
             if (cmh->direction() == hdr_cmn::UP &&
                     (this->x_ == destionation->x_ && this->y_ == destionation->y_))    // up to destination
             {
@@ -353,8 +352,12 @@ void ElbarGridOfflineAgent::routing(Packet *p) {
                     // set nexthop to neighbor being closest to D
                     node *nexthop = getNeighborByGreedy(*destionation);
                     if (nexthop == NULL) {
-                        drop(p, DROP_RTR_NO_ROUTE);
-                        return;
+                        nexthop = getNeighborByPerimeter(*destionation);
+                        if (nexthop == NULL)
+                        {
+                            drop(p, DROP_RTR_NO_ROUTE);
+                            return;
+                        }
                     }
                     cmh->direction() = hdr_cmn::DOWN;
                     cmh->addr_type() = NS_AF_INET;
@@ -368,8 +371,13 @@ void ElbarGridOfflineAgent::routing(Packet *p) {
                     // set nexthop to neighbor being closest to L
                     node *nexthop = getNeighborByGreedy(*anchor_point);
                     if (nexthop == NULL) {
-                        drop(p, DROP_RTR_NO_ROUTE);
-                        return;
+                        nexthop = getNeighborByPerimeter(*destionation);
+                        if (nexthop == NULL)
+                        {
+                            drop(p, DROP_RTR_NO_ROUTE);
+                            return;
+                        }
+
                     }
                     cmh->direction() = hdr_cmn::DOWN;
                     cmh->addr_type() = NS_AF_INET;
@@ -412,8 +420,12 @@ void ElbarGridOfflineAgent::routing(Packet *p) {
                         egh->forwarding_mode_ = HOLE_AWARE_MODE;
                         node *nexthop = getNeighborByGreedy(*anchor_point);
                         if (nexthop == NULL) {
-                            drop(p, DROP_RTR_NO_ROUTE);
-                            return;
+                            nexthop = getNeighborByPerimeter(*destionation);
+                            if (nexthop == NULL)
+                            {
+                                drop(p, DROP_RTR_NO_ROUTE);
+                                return;
+                            }
                         }
                         cmh->direction() = hdr_cmn::DOWN;
                         cmh->addr_type() = NS_AF_INET;
@@ -424,8 +436,13 @@ void ElbarGridOfflineAgent::routing(Packet *p) {
                     else {
                         node *nexthop = getNeighborByGreedy(*destionation);
                         if (nexthop == NULL) {
-                            drop(p, DROP_RTR_NO_ROUTE);
-                            return;
+                            nexthop = getNeighborByPerimeter(*destionation);
+                            if (nexthop == NULL)
+                            {
+                                drop(p, DROP_RTR_NO_ROUTE);
+                                return;
+                            }
+
                         }
                         cmh->direction() = hdr_cmn::DOWN;
                         cmh->addr_type() = NS_AF_INET;
@@ -437,8 +454,12 @@ void ElbarGridOfflineAgent::routing(Packet *p) {
                 else { // alpha does not contains D
                     node *nexthop = getNeighborByGreedy(*destionation);
                     if (nexthop == NULL) {
-                        drop(p, DROP_RTR_NO_ROUTE);
-                        return;
+                        nexthop = getNeighborByPerimeter(*destionation);
+                        if (nexthop == NULL)
+                        {
+                            drop(p, DROP_RTR_NO_ROUTE);
+                            return;
+                        }
                     }
                     cmh->direction() = hdr_cmn::DOWN;
                     cmh->addr_type() = NS_AF_INET;
@@ -446,7 +467,6 @@ void ElbarGridOfflineAgent::routing(Packet *p) {
                     cmh->next_hop_ = nexthop->id_;
                     send(p, 0);
                 }
-            }
         }
     }
 }
@@ -586,6 +606,28 @@ void ElbarGridOfflineAgent::createGrid(Packet *p) {
     hole_item->node_list_ = head;
     hole_item->next_ = hole_list_;
     hole_list_ = hole_item;
+}
+
+neighbor*
+ElbarGridOfflineAgent::getNeighborByPerimeter(Point p)
+{
+    Angle max_angle = -1;
+    neighbor * nb = NULL;
+
+    for (node* temp = neighbor_list_; temp; temp = temp->next_)
+    {
+        //if (temp->planar_)
+        {
+            Angle a = G::angle(this, &p, this, temp);
+            if (a > max_angle)
+            {
+                max_angle = a;
+                nb = (neighbor*)temp;
+            }
+        }
+    }
+
+    return nb;
 }
 
 /*---------------------- Dump --------------------------------*/
