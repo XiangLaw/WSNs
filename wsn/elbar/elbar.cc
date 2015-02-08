@@ -36,17 +36,11 @@ public:
     }
 } class_elbargridoffline;
 
-void
-ElbarGridOfflineTimer::expire(Event *e) {
-    (a_->*firing_)();
-}
-
 /**
 * Agent implementation
 */
 ElbarGridOfflineAgent::ElbarGridOfflineAgent()
-        : GridOfflineAgent(),
-          broadcast_timer_(this, &ElbarGridOfflineAgent::broadcastHci) {
+        : GridOfflineAgent(){
     this->alpha_max_ = M_PI * 2/3;
     this->alpha_min_ = M_PI / 16;
 
@@ -150,13 +144,27 @@ void ElbarGridOfflineAgent::configDataPacket(Packet *p) {
     hdr_ip*			iph = HDR_IP(p);
     hdr_elbar_grid* egh = HDR_ELBAR_GRID(p);
 
+    int s0 = cmh->size();
+    int s1 = IP_HDR_LEN;
+    int s3 = egh->size();
+    int s4 = sizeof(double);
+    int s5 = sizeof(Point);
+    int s6 = sizeof(int);
+    int s8 = sizeof(nsaddr_t);
+
     cmh->size() += IP_HDR_LEN + egh->size();
+
     cmh->direction() = hdr_cmn::DOWN;
 
     egh->type_ = ELBAR_DATA;
     egh->daddr = iph->daddr(); // save destionation address
     egh->forwarding_mode_ = GREEDY_MODE;
     egh->destionation_ = *(this->dest); // save destionation node and broadcast
+    Point *anchor = new Point();
+    anchor->y_ = 0;
+    anchor->x_ = 0;
+
+    egh->anchor_point_ = *(anchor);
 
     iph->saddr() = my_id_;
     iph->daddr() = -1;

@@ -9,11 +9,11 @@
 #define HDR_ELBAR_GRID(p) hdr_elbar_grid::access(p)
 
 struct hdr_elbar_grid {
-    Point anchor_point_;
-    Point destionation_;    // destionantion node of simulation
-    nsaddr_t daddr; // destination address
     int forwarding_mode_;
     int type_;
+    nsaddr_t daddr; // destination address
+    Point anchor_point_;
+    Point destionation_;    // destionantion node of simulation
 
     inline int size() {
         return ( 2 * sizeof(Point) + 2*sizeof(int) + sizeof(nsaddr_t));
