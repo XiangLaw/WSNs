@@ -10,14 +10,13 @@
 
 struct hdr_elbar_grid {
     Point anchor_point_;
-    Point last_;    // Pre-previews node
-    Point prev_;    // Previews node
+    Point destionation_;    // destionantion node of simulation
     nsaddr_t daddr; // destination address
     int forwarding_mode_;
     int type_;
 
     inline int size() {
-        return ( 3 * sizeof(Point) + 2*sizeof(int));
+        return ( 2 * sizeof(Point) + 2*sizeof(int) + sizeof(nsaddr_t));
     }
 
     static int offset_;

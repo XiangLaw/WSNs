@@ -48,7 +48,7 @@ ElbarGridOfflineAgent::ElbarGridOfflineAgent()
         : GridOfflineAgent(),
           broadcast_timer_(this, &ElbarGridOfflineAgent::broadcastHci) {
     this->alpha_max_ = M_PI * 2/3;
-    this->alpha_min_ = M_PI / 8;
+    this->alpha_min_ = M_PI / 16;
 
     hole_list_ = NULL;
     parallelogram_ = NULL;
@@ -156,6 +156,7 @@ void ElbarGridOfflineAgent::configDataPacket(Packet *p) {
     egh->type_ = ELBAR_DATA;
     egh->daddr = iph->daddr(); // save destionation address
     egh->forwarding_mode_ = GREEDY_MODE;
+    egh->destionation_ = *(this->dest); // save destionation node and broadcast
 
     iph->saddr() = my_id_;
     iph->daddr() = -1;
@@ -296,8 +297,8 @@ void ElbarGridOfflineAgent::routing(Packet *p) {
     struct hdr_ip *iph = HDR_IP(p);
     struct hdr_elbar_grid *egh = HDR_ELBAR_GRID(p);
 
-    Point *destionantion;
-    Point *anchor_point;
+    Point destionation = (egh->destionation_);
+    Point anchor_point;
     int routing_mode;
 
     if (p->time_ > 90){
@@ -310,7 +311,7 @@ void ElbarGridOfflineAgent::routing(Packet *p) {
             printf("[Debug] The first hole: %d", hole_list_->hole_id_);
         }
         egh->forwarding_mode_ = GREEDY_MODE;
-        node *nexthop = getNeighborByGreedy(*dest);
+        node *nexthop = getNeighborByGreedy(destionation);
         if (nexthop == NULL) {
             drop(p, DROP_RTR_NO_ROUTE);
             return;
@@ -322,22 +323,28 @@ void ElbarGridOfflineAgent::routing(Packet *p) {
         send(p, 0);
     }
     else if (region_ == REGION_2) { // elbar routing when in region 2 and have info about hole
-        destionantion = dest;
-        anchor_point = &(egh->anchor_point_);
+        destionation = (egh->destionation_);
+        anchor_point = (egh->anchor_point_);
         routing_mode = egh->forwarding_mode_;
 
-        if (dest->x_ || dest->y_) {
+        //if (dest->x_ || dest->y_)
+        {
             if (cmh->direction() == hdr_cmn::UP &&
-                    (this->x_ == destionantion->x_ && this->y_ == destionantion->y_))    // up to destination
+                    //(this->x_ == destionation->x_ && this->y_ == destionation->y_))    // up to destination
+                    (this->x_ == destionation.x_ && this->y_ == destionation.y_))    // up to destination
             {
                 dumpHopcount(p);
                 port_dmux_->recv(p, 0);
                 return;
             }
-            if (routing_mode == HOLE_AWARE_MODE) {
-                if (G::directedAngle(destionantion, this, &(parallelogram_->a_)) * G::directedAngle(destionantion, this, &(parallelogram_->c_)) >= 0) { // alpha does not contain D
+            if (routing_mode == HOLE_AWARE_MODE) { // if hole aware mode
+                if (G::directedAngle(&destionation, this, &(parallelogram_->a_)) * G::directedAngle(&destionation, this, &(parallelogram_->c_)) >= 0) {
+                    // alpha does not contain D
+
+                    // routing by greedy
                     egh->forwarding_mode_ = GREEDY_MODE;
-                    node *nexthop = getNeighborByGreedy(*destionantion);
+                    // set nexthop to neighbor being closest to D
+                    node *nexthop = getNeighborByGreedy(destionation);
                     if (nexthop == NULL) {
                         drop(p, DROP_RTR_NO_ROUTE);
                         return;
@@ -349,7 +356,10 @@ void ElbarGridOfflineAgent::routing(Packet *p) {
                     send(p, 0);
                 }
                 else {
-                    node *nexthop = getNeighborByGreedy(*anchor_point);
+                    // alpha contains D
+
+                    // set nexthop to neighbor being closest to L
+                    node *nexthop = getNeighborByGreedy(anchor_point);
                     if (nexthop == NULL) {
                         drop(p, DROP_RTR_NO_ROUTE);
                         return;
@@ -361,17 +371,19 @@ void ElbarGridOfflineAgent::routing(Packet *p) {
                     send(p, 0);
                 }
             }
-            else {
+            else { // is in greedy mode
                 if (alpha_ &&
-                        G::directedAngle(destionantion, this, &(parallelogram_->a_)) * G::directedAngle(destionantion, this, &(parallelogram_->c_)) < 0) {
+                        G::directedAngle(&destionation, this, &(parallelogram_->a_)) *
+                                G::directedAngle(&destionation, this, &(parallelogram_->c_)) < 0) {
                     // alpha contains D
+
                     routing_mode_ = holeAvoidingProb();
                     if (routing_mode_ == HOLE_AWARE_MODE) {
                         if (G::distance(parallelogram_->p_, parallelogram_->c_) <=
                                 G::distance(parallelogram_->p_, parallelogram_->a_)) {
                             // pc <= pa
-                            if (G::directedAngle(destionantion, &(parallelogram_->c_), &(parallelogram_->p_)) *
-                                    G::directedAngle(destionantion, &(parallelogram_->c_), &(parallelogram_->b_))
+                            if (G::directedAngle(&destionation, &(parallelogram_->c_), &(parallelogram_->p_)) *
+                                    G::directedAngle(&destionation, &(parallelogram_->c_), &(parallelogram_->b_))
                                     >= 0) { // cd does not intersect with the hole
                                 egh->anchor_point_ = (parallelogram_->c_);
                             }
@@ -380,8 +392,8 @@ void ElbarGridOfflineAgent::routing(Packet *p) {
                             }
                         }
                         else {
-                            if (G::directedAngle(destionantion, &(parallelogram_->a_), &(parallelogram_->p_)) *
-                                    G::directedAngle(destionantion, &(parallelogram_->a_), &(parallelogram_->b_))
+                            if (G::directedAngle(&destionation, &(parallelogram_->a_), &(parallelogram_->p_)) *
+                                    G::directedAngle(&destionation, &(parallelogram_->a_), &(parallelogram_->b_))
                                     >= 0) {
                                 egh->anchor_point_ = (parallelogram_->a_);
                             }
@@ -391,7 +403,7 @@ void ElbarGridOfflineAgent::routing(Packet *p) {
                         }
 
                         egh->forwarding_mode_ = HOLE_AWARE_MODE;
-                        node *nexthop = getNeighborByGreedy(*anchor_point);
+                        node *nexthop = getNeighborByGreedy(anchor_point);
                         if (nexthop == NULL) {
                             drop(p, DROP_RTR_NO_ROUTE);
                             return;
@@ -403,7 +415,7 @@ void ElbarGridOfflineAgent::routing(Packet *p) {
                         send(p, 0);
                     }
                     else {
-                        node *nexthop = getNeighborByGreedy(*destionantion);
+                        node *nexthop = getNeighborByGreedy(destionation);
                         if (nexthop == NULL) {
                             drop(p, DROP_RTR_NO_ROUTE);
                             return;
@@ -415,8 +427,8 @@ void ElbarGridOfflineAgent::routing(Packet *p) {
                         send(p, 0);
                     }
                 }
-                else {
-                    node *nexthop = getNeighborByGreedy(*destionantion);
+                else { // alpha does not contains D
+                    node *nexthop = getNeighborByGreedy(destionation);
                     if (nexthop == NULL) {
                         drop(p, DROP_RTR_NO_ROUTE);
                         return;
