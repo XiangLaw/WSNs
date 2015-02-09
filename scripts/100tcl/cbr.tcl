@@ -3,7 +3,7 @@
 set opt(tn) 1
 set opt(interval) 50.0
 
-set s(0)	20	;	set d(0)	44
+set s(0)	82	;	set d(0)	44
 
 for {set i 0} {$i < $opt(tn)} {incr i} {
 	$mnode_($s($i)) setdest [$mnode_($d($i)) set X_] [$mnode_($d($i)) set Y_] 0

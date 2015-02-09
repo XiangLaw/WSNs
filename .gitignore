@@ -30,4 +30,7 @@
 # Makefile
 Makefile
 
+# trace file
+*.tr
+
 .idea/

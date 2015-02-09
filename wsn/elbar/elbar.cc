@@ -127,6 +127,7 @@ void ElbarGridOfflineAgent::recvData(Packet *p) {
     struct hdr_elbar_grid* egh = HDR_ELBAR_GRID(p);
 
     if(cmh->direction_ == hdr_cmn::UP && egh->daddr == my_id_) { // packet reach destination
+        printf("[Debug] %d - Received\n", my_id_);
         port_dmux_->recv(p,0);
         return;
     } else {// send new packet or routing recv packet
@@ -299,8 +300,8 @@ void ElbarGridOfflineAgent::routing(Packet *p) {
     if (region_ == REGION_3 || region_ == REGION_1 || hole_list_ == NULL) {
         // greedy mode when in region3 or 1 or have no info about hole
         egh->forwarding_mode_ = GREEDY_MODE;
-        //node *nexthop = getNeighborByGreedy(*destination);
-        node *nexthop = recvGPSR(p, *destination);
+        node *nexthop = getNeighborByGreedy(*destination);
+        //node *nexthop = recvGPSR(p, *destination);
         if (nexthop == NULL) {
             drop(p, DROP_RTR_NO_ROUTE);
             return;
@@ -331,7 +332,8 @@ void ElbarGridOfflineAgent::routing(Packet *p) {
                     // routing by greedy
                     egh->forwarding_mode_ = GREEDY_MODE;
                     // set nexthop to neighbor being closest to D
-                    node *nexthop = recvGPSR(p, *destination);
+                    node *nexthop = getNeighborByGreedy(*destination);
+                    //node *nexthop = recvGPSR(p, *destination);
                     if (nexthop == NULL) {
                             drop(p, DROP_RTR_NO_ROUTE);
                             return;
@@ -346,7 +348,8 @@ void ElbarGridOfflineAgent::routing(Packet *p) {
                     // alpha contains D
 
                     // set nexthop to neighbor being closest to L
-                    node *nexthop = recvGPSR(p, *anchor_point);
+                    //node *nexthop = recvGPSR(p, *anchor_point);
+                    node *nexthop = getNeighborByGreedy(*anchor_point);
                     if (nexthop == NULL) {
                             drop(p, DROP_RTR_NO_ROUTE);
                             return;
@@ -390,7 +393,8 @@ void ElbarGridOfflineAgent::routing(Packet *p) {
                         }
 
                         egh->forwarding_mode_ = HOLE_AWARE_MODE;
-                        node *nexthop = recvGPSR(p, *anchor_point);
+                        //node *nexthop = recvGPSR(p, *anchor_point);
+                        node *nexthop = getNeighborByGreedy(*anchor_point);
                         if (nexthop == NULL) {
                                 drop(p, DROP_RTR_NO_ROUTE);
                                 return;
@@ -402,8 +406,9 @@ void ElbarGridOfflineAgent::routing(Packet *p) {
                         send(p, 0);
                     }
                     else {
-                        node *nexthop = recvGPSR(p, *destination);
-                            if (nexthop == NULL)
+                        //node *nexthop = recvGPSR(p, *destination);
+                        node *nexthop = getNeighborByGreedy(*destination);
+                        if (nexthop == NULL)
                             {
                                 drop(p, DROP_RTR_NO_ROUTE);
                                 return;
@@ -416,7 +421,8 @@ void ElbarGridOfflineAgent::routing(Packet *p) {
                     }
                 }
                 else { // alpha does not contains D
-                    node *nexthop = recvGPSR(p, *destination);
+                    //node *nexthop = recvGPSR(p, *destination);
+                    node *nexthop = getNeighborByGreedy(*destination);
                     if (nexthop == NULL) {
                             drop(p, DROP_RTR_NO_ROUTE);
                             return;
