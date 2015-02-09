@@ -80,6 +80,10 @@ private:
     int routing_mode_;
     Elbar_Region region_;   // region to a specific hole
                             // convert to struct array for multi hole
+    void dumpParallelogram();
+
+    node *ai;
+    node *aj;
 };
 
 #endif

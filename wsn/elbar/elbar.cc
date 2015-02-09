@@ -41,7 +41,7 @@ public:
 */
 ElbarGridOfflineAgent::ElbarGridOfflineAgent()
         : GridOfflineAgent(){
-    this->alpha_max_ = M_PI * 2/3;
+    this->alpha_max_ = M_PI;
     this->alpha_min_ = M_PI / 16;
 
     hole_list_ = NULL;
@@ -168,8 +168,6 @@ void ElbarGridOfflineAgent::configDataPacket(Packet *p) {
  */
 void ElbarGridOfflineAgent::detectParallelogram() {
     struct polygonHole *tmp;
-    struct node *ai;
-    struct node *aj;
 
     struct node *vi;
     struct node *vj;
@@ -255,6 +253,7 @@ void ElbarGridOfflineAgent::detectParallelogram() {
                 parallel->p_.y_ = this->y_;
                 parallel->next_ = this->parallelogram_;
                 this->parallelogram_ = parallel;
+
             }
         } else {
             angle = alpha_max_;
@@ -274,6 +273,7 @@ void ElbarGridOfflineAgent::detectParallelogram() {
 
 int ElbarGridOfflineAgent::holeAvoidingProb() {
     srand(time(NULL));
+    return HOLE_AWARE_MODE;
     if (rand() % 2 == 0)
         return HOLE_AWARE_MODE;
     return GREEDY_MODE;
@@ -297,6 +297,9 @@ void ElbarGridOfflineAgent::routing(Packet *p) {
     Point *anchor_point;
     int routing_mode;
 
+    if (my_id_ == 549){
+        int a = 1;
+    }
     if (region_ == REGION_3 || region_ == REGION_1 || hole_list_ == NULL) {
         // greedy mode when in region3 or 1 or have no info about hole
         egh->forwarding_mode_ = GREEDY_MODE;
@@ -326,7 +329,8 @@ void ElbarGridOfflineAgent::routing(Packet *p) {
                 return;
             }
             if (routing_mode == HOLE_AWARE_MODE) { // if hole aware mode
-                if (G::directedAngle(destination, this, &(parallelogram_->a_)) * G::directedAngle(destination, this, &(parallelogram_->c_)) >= 0) {
+//                if (G::directedAngle(destination, this, &(parallelogram_->b_)) * G::directedAngle(destination, this, &(parallelogram_->c_)) >= 0) {
+                    if (G::directedAngle(destination, this,ai) * G::directedAngle(destination, this, aj) >= 0) {
                     // alpha does not contain D
 
                     // routing by greedy
@@ -363,8 +367,8 @@ void ElbarGridOfflineAgent::routing(Packet *p) {
             }
             else { // is in greedy mode
                 if (alpha_ &&
-                        G::directedAngle(destination, this, &(parallelogram_->a_)) *
-                                G::directedAngle(destination, this, &(parallelogram_->c_)) < 0) {
+                        G::directedAngle(destination, this, ai) *
+                                G::directedAngle(destination, this, aj) < 0) {
                     // alpha contains D
 
                     routing_mode_ = holeAvoidingProb();
@@ -391,6 +395,7 @@ void ElbarGridOfflineAgent::routing(Packet *p) {
                                 egh->anchor_point_ = (parallelogram_->c_);
                             }
                         }
+                        dumpParallelogram();
 
                         egh->forwarding_mode_ = HOLE_AWARE_MODE;
                         //node *nexthop = recvGPSR(p, *anchor_point);
@@ -591,6 +596,8 @@ void ElbarGridOfflineAgent::initTraceFile() {
     fclose(fp);
     fp = fopen("ElbarGridOnline.tr", "w");
     fclose(fp);
+    fp = fopen("Parallelogram.tr", "w");
+    fclose(fp);
 }
 
 void ElbarGridOfflineAgent::dumpAngle() {
@@ -672,4 +679,14 @@ node* ElbarGridOfflineAgent::recvGPSR(Packet *p, Point destionation) {
     egh->prev_ = *this;
 
     return nb;
+}
+
+void ElbarGridOfflineAgent::dumpParallelogram() {
+    FILE* fp = fopen("Parallelogram.tr", "a+");
+    fprintf(fp, "%f\t%f\n", this->parallelogram_->p_.x_, this->parallelogram_->p_.y_);
+    fprintf(fp, "%f\t%f\n", this->parallelogram_->a_.x_, this->parallelogram_->a_.y_);
+    fprintf(fp, "%f\t%f\n", this->parallelogram_->b_.x_, this->parallelogram_->b_.y_);
+    fprintf(fp, "%f\t%f\n", this->parallelogram_->c_.x_, this->parallelogram_->c_.y_);
+    fprintf(fp, "\n");
+    fclose(fp);
 }
