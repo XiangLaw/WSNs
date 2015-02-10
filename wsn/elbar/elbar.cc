@@ -173,7 +173,7 @@ void ElbarGridOfflineAgent::detectParallelogram() {
         Line lj;
 
         // check if node is inside grid
-        if (!isPointInsidePolygon(this, tmp->node_list_)){
+        if (!G::isPointInPolygon(this, tmp->node_list_)){
             // detect view angle
             ai = tmp->node_list_;
             aj = tmp->node_list_;
@@ -710,9 +710,9 @@ bool ElbarGridOfflineAgent::isPointInsidePolygon(Point *d, node *hole) {
         else
             edge = G::line(tmp, hole);
         if (G::intersection(dy, edge, &intersect) && (intersect.x_ >= 0 && intersect.y_ >= 0)) {
-            if (intersect.x_ > d->x_) oddNodes != oddNodes;
-            else if (intersect.x_ == d->x_)
-            return true;
+            if (intersect.x_ >= d->x_) oddNodes != oddNodes;
+//            else if (intersect.x_ == d->x_)
+//            return true;
         }
     }
 
