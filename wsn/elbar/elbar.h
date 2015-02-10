@@ -86,6 +86,8 @@ private:
     node *aj;
 
     bool isIntersectWithHole(Point *anchor, Point *dest, node* node_list);
+
+    bool isBetweenAngle(Point *pPoint, Point *pNode, Point *pMid, Point *pNode1);
 };
 
 #endif

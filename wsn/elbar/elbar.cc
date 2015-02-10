@@ -240,7 +240,7 @@ void ElbarGridOfflineAgent::detectParallelogram() {
         save Hole information into local memory if this node is in region 2
          */
             angle = G::directedAngle(aj, this, ai);
-            angle = angle > 0 ? angle : -angle; //abs
+            angle = angle > 0 ? angle : angle + M_PI; //change angle from rang -180;180 to 0;360
 
             region_ = regionDetermine(angle);
             if (REGION_2 == region_) {
@@ -296,6 +296,10 @@ void ElbarGridOfflineAgent::routing(Packet *p) {
     Point *destination = &(egh->destination_);
     Point *anchor_point;
     int routing_mode;
+
+    if (my_id_ == 549){
+        int i = 1;
+    }
     
     if (region_ == REGION_3 || region_ == REGION_1 || hole_list_ == NULL) {
         // greedy mode when in region3 or 1 or have no info about hole
@@ -326,10 +330,7 @@ void ElbarGridOfflineAgent::routing(Packet *p) {
                 return;
             }*/
             if (routing_mode == HOLE_AWARE_MODE) { // if hole aware mode
-                double  d1 = G::directedAngle(destination, this, &(parallelogram_->a_)) ;
-                double d2 = G::directedAngle(destination, this, &(parallelogram_->c_));
-                if (G::directedAngle(destination, this, &(parallelogram_->a_)) * G::directedAngle(destination, this, &(parallelogram_->c_)) >= 0) {
-//                    if (G::directedAngle(destination, this,ai) * G::directedAngle(destination, this, aj) >= 0) {
+                    if (!isBetweenAngle(destination, &(parallelogram_->a_), this, &(parallelogram_->c_))) {
                     // alpha does not contain D
 
                     // routing by greedy
@@ -349,7 +350,6 @@ void ElbarGridOfflineAgent::routing(Packet *p) {
                 }
                 else {
                     // alpha contains D
-
                     // set nexthop to neighbor being closest to L
                     //node *nexthop = recvGPSR(p, *anchor_point);
                     node *nexthop = getNeighborByGreedy(*anchor_point);
@@ -365,43 +365,31 @@ void ElbarGridOfflineAgent::routing(Packet *p) {
                 }
             }
             else { // is in greedy mode
-                double  d1 = G::directedAngle(destination, this, &(parallelogram_->a_)) ;
-                double d2 = G::directedAngle(destination, this, &(parallelogram_->c_));
-                if (alpha_ &&
-                        G::directedAngle(destination, this, &(parallelogram_->a_)) *
-                                G::directedAngle(destination, this, &(parallelogram_->c_)) < 0) {
+                if (isBetweenAngle(destination, &(parallelogram_->a_), this, &(parallelogram_->c_))) {
                     // alpha contains D
 
                     routing_mode_ = holeAvoidingProb();
                     if (routing_mode_ == HOLE_AWARE_MODE) {
                         if (G::distance(parallelogram_->p_, parallelogram_->c_) <=
                                 G::distance(parallelogram_->p_, parallelogram_->a_)) {
+                            double d1 = G::directedAngle(destination, &(parallelogram_->c_), &(parallelogram_->p_));
+                            double  d2 = G::directedAngle(destination, &(parallelogram_->c_), &(parallelogram_->b_));
                             // pc <= pa
-                            if (G::directedAngle(destination, &(parallelogram_->c_), &(parallelogram_->p_)) *
-                                    G::directedAngle(destination, &(parallelogram_->c_), &(parallelogram_->b_))
-                                    >= 0) { // cd does not intersect with the hole
+                            if (!isIntersectWithHole(&(parallelogram_->c_), destination, hole_list_->node_list_)){ // cd does not intersect with the hole
                                 egh->anchor_point_ = (parallelogram_->c_);
                             }
                             else {
                                 egh->anchor_point_ = (parallelogram_->a_);
                             }
-//                            else {
-//                                egh->anchor_point_ = (parallelogram_->c_);
-//                            }
 
                         }
                         else {
-                            if (G::directedAngle(destination, &(parallelogram_->a_), &(parallelogram_->p_)) *
-                                    G::directedAngle(destination, &(parallelogram_->a_), &(parallelogram_->b_))
-                                    >= 0) {
+                            if (!isIntersectWithHole(&(parallelogram_->a_), destination, hole_list_->node_list_)) {
                                 egh->anchor_point_ = (parallelogram_->a_);
                             }
                             else{
                                 egh->anchor_point_ = (parallelogram_->c_);
                             }
-//                            else {
-//                                egh->anchor_point_ = (parallelogram_->a_);
-//                            }
                         }
                         dumpParallelogram();
 
@@ -709,4 +697,18 @@ bool ElbarGridOfflineAgent::isIntersectWithHole(Point *anchor, Point *dest, node
     }
     return false;
 
+}
+
+bool ElbarGridOfflineAgent::isBetweenAngle(Point *pDes, Point *pNode, Point *pMid, Point *pNode1) {
+    double a1 = G::directedAngle(pDes, pMid, pNode);
+    double a2 = G::directedAngle(pDes, pMid, pNode1);
+    double  a3;
+
+    if ( a1 * a2 < 0){
+        a3 = G::directedAngle(pNode, pMid, pNode1);
+        if (fabs(a1) + fabs(a2) - fabs(a3) < 0.000001){ // check if |a1| + |a2| = |a3|
+            return true;
+        }
+    }
+    return false;
 }
