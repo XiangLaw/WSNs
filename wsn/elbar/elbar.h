@@ -84,6 +84,8 @@ private:
 
     node *ai;
     node *aj;
+
+    bool isIntersectWithHole(Point *anchor, Point *dest, node* node_list);
 };
 
 #endif

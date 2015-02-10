@@ -296,10 +296,7 @@ void ElbarGridOfflineAgent::routing(Packet *p) {
     Point *destination = &(egh->destination_);
     Point *anchor_point;
     int routing_mode;
-
-    if (my_id_ == 549){
-        int a = 1;
-    }
+    
     if (region_ == REGION_3 || region_ == REGION_1 || hole_list_ == NULL) {
         // greedy mode when in region3 or 1 or have no info about hole
         egh->forwarding_mode_ = GREEDY_MODE;
@@ -321,16 +318,18 @@ void ElbarGridOfflineAgent::routing(Packet *p) {
         routing_mode = egh->forwarding_mode_;
 
         //if (dest->x_ || dest->y_)
-            if (cmh->direction() == hdr_cmn::UP &&
+            /*if (cmh->direction() == hdr_cmn::UP &&
                     (this->x_ == destination->x_ && this->y_ == destination->y_))    // up to destination
             {
                 dumpHopcount(p);
                 port_dmux_->recv(p, 0);
                 return;
-            }
+            }*/
             if (routing_mode == HOLE_AWARE_MODE) { // if hole aware mode
-//                if (G::directedAngle(destination, this, &(parallelogram_->b_)) * G::directedAngle(destination, this, &(parallelogram_->c_)) >= 0) {
-                    if (G::directedAngle(destination, this,ai) * G::directedAngle(destination, this, aj) >= 0) {
+                double  d1 = G::directedAngle(destination, this, &(parallelogram_->a_)) ;
+                double d2 = G::directedAngle(destination, this, &(parallelogram_->c_));
+                if (G::directedAngle(destination, this, &(parallelogram_->a_)) * G::directedAngle(destination, this, &(parallelogram_->c_)) >= 0) {
+//                    if (G::directedAngle(destination, this,ai) * G::directedAngle(destination, this, aj) >= 0) {
                     // alpha does not contain D
 
                     // routing by greedy
@@ -366,9 +365,11 @@ void ElbarGridOfflineAgent::routing(Packet *p) {
                 }
             }
             else { // is in greedy mode
+                double  d1 = G::directedAngle(destination, this, &(parallelogram_->a_)) ;
+                double d2 = G::directedAngle(destination, this, &(parallelogram_->c_));
                 if (alpha_ &&
-                        G::directedAngle(destination, this, ai) *
-                                G::directedAngle(destination, this, aj) < 0) {
+                        G::directedAngle(destination, this, &(parallelogram_->a_)) *
+                                G::directedAngle(destination, this, &(parallelogram_->c_)) < 0) {
                     // alpha contains D
 
                     routing_mode_ = holeAvoidingProb();
@@ -384,6 +385,10 @@ void ElbarGridOfflineAgent::routing(Packet *p) {
                             else {
                                 egh->anchor_point_ = (parallelogram_->a_);
                             }
+//                            else {
+//                                egh->anchor_point_ = (parallelogram_->c_);
+//                            }
+
                         }
                         else {
                             if (G::directedAngle(destination, &(parallelogram_->a_), &(parallelogram_->p_)) *
@@ -391,9 +396,12 @@ void ElbarGridOfflineAgent::routing(Packet *p) {
                                     >= 0) {
                                 egh->anchor_point_ = (parallelogram_->a_);
                             }
-                            else {
+                            else{
                                 egh->anchor_point_ = (parallelogram_->c_);
                             }
+//                            else {
+//                                egh->anchor_point_ = (parallelogram_->a_);
+//                            }
                         }
                         dumpParallelogram();
 
@@ -689,4 +697,16 @@ void ElbarGridOfflineAgent::dumpParallelogram() {
     fprintf(fp, "%f\t%f\n", this->parallelogram_->c_.x_, this->parallelogram_->c_.y_);
     fprintf(fp, "\n");
     fclose(fp);
+}
+
+bool ElbarGridOfflineAgent::isIntersectWithHole(Point *anchor, Point *dest, node *node_list) {
+
+    node *tmp = node_list;
+
+    for(tmp = node_list; tmp->next_ != NULL; tmp = tmp->next_) {
+        if (G::is_intersect(anchor, dest, tmp, tmp->next_))
+            return true;
+    }
+    return false;
+
 }

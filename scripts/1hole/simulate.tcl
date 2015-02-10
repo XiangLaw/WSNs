@@ -15,7 +15,7 @@ set opt(mac)	Mac/802_11
 set opt(ifq)	Queue/DropTail/PriQueue
 set opt(ll)	LL
 set opt(ant)	Antenna/OmniAntenna
-set opt(rp)	ELBARGRIDOFFLINE
+set opt(rp)	GPSR
 set opt(trans)	UDP
 set opt(apps)	CBR
 
@@ -54,8 +54,8 @@ Antenna/OmniAntenna set Z_ 1.5
 Antenna/OmniAntenna set Gt_ 1
 Antenna/OmniAntenna set Gr_ 1
 
-Agent/ELBARGRIDOFFLINE set energy_checkpoint_ 995
-Agent/ELBARGRIDOFFLINE set hello_period_ 0
+Agent/GPSR set energy_checkpoint_ 995
+Agent/GPSR set hello_period_ 0
 
 Agent/UDP set fid_ 2
 
