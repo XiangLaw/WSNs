@@ -91,6 +91,8 @@ private:
 
     bool isPointInsidePolygon(Point *d, node *hole);
 
+
+    bool isBetweenAngle(Point *pPoint, Point *pNode, Point *pMid, Point *pNode1);
 };
 
 #endif

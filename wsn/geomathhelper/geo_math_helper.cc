@@ -677,50 +677,30 @@ double	G::area(node* n)
 /*
  * Extension function
  */
-// angle from vector (p0,p1) -> (p2,p3)
-Angle G::rawAngle(Point* p0, Point* p1, Point* p2, Point* p3){
-
-    Angle  re = atan2(p1->y_ - p0->y_, p1->x_ - p0->x_) - atan2(p3->y_ - p2->y_, p3->x_ - p2->x_);
-    return re;
-}
 
 /**
-* directed angle (pa, pb) clockwise
+* directed angle (pb, pa) in clockwise (between [-180;180))
 * */
-Angle G::directedAngle(Point* a, Point* p, Point* b)
+Angle G::directedAngle(Point* b, Point* p, Point* a)
 {
-    if (*a == *p || *a == *b) return 0;
-    double alpha = (atan2(a->y_ - p->y_, a->x_ - p->x_) - atan2(b->y_ - p->y_, b->x_ - p->x_));
-    return alpha;
-    // reduce if |alpha| > PI
-    if (alpha > M_PI){
-        alpha -= M_PI;
-    } else if (alpha < -M_PI){
-        alpha += M_PI;
-    }
-    return alpha;
-    double  x1 = a->x_ - p->x_;
-    double  x2 = b->x_ - p->x_;
-    double  y1 = a->y_ - p->y_;
-    double  y2 = b->y_ - p->y_;
+//    if (*a == *p || *a == *b) return 0;
+//    double alpha = (atan2(a->y_ - p->y_, a->x_ - p->x_) - atan2(b->y_ - p->y_, b->x_ - p->x_));
+//    return alpha;
+//    // reduce if |alpha| > PI
+//    if (alpha > M_PI){
+//        alpha -= M_PI;
+//    } else if (alpha < -M_PI){
+//        alpha += M_PI;
+//    }
+//    return alpha;
+    double x1, y1, x2, y2;
+    x1 = a->x_ - p->x_;
+    x2 = b->x_ - p->x_;
+    y1 = a->y_ - p->y_;
+    y2 = b->y_ - p->y_;
     double dot = x1*x2 + y1*y2;      // dot product
     double det = x1*y2 - y1*x2;      // determinant
     double angle = atan2(det, dot);  // atan2(y, x) or atan2(sin, cos)
-    return angle;
-}
 
-// check if a point in a polygon
-bool G::isPointInPolygon(Point* a, node* poly){
-    Point inf, temp;
-    int countRaycast = 0;
-    inf.x_ = a->x_;
-    inf.y_ = 1000000; // infinity
-    Line l = G::line(a, inf);
-    node* n1 = poly;
-    do{
-        node* n2 = n1->next_ != NULL ? n1->next_ : poly;
-        if (G::is_intersect(a, &inf, n1, n2)) countRaycast++;
-        n1 = n1->next_;
-    } while (n1 && n1->next_ != poly);
-    return countRaycast % 2 != 0;
+    return angle;
 }
