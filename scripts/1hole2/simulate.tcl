@@ -54,9 +54,9 @@ Antenna/OmniAntenna set Z_ 1.5
 Antenna/OmniAntenna set Gt_ 1
 Antenna/OmniAntenna set Gr_ 1
 
-Agent/ELBARGRIDOFFLINE set energy_checkpoint_ 995
-Agent/ELBARGRIDOFFLINE set hello_period_ 0
-Agent/ELBARGRIDOFFLINE set limit_boundhole_hop_ 40
+#Agent/ELBARGRIDOFFLINE set energy_checkpoint_ 995
+#Agent/ELBARGRIDOFFLINE set hello_period_ 0
+#Agent/ELBARGRIDOFFLINE set limit_boundhole_hop_ 40
 
 Agent/UDP set fid_ 2
 

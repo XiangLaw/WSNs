@@ -86,6 +86,11 @@ private:
     node *aj;
 
     bool isIntersectWithHole(Point *anchor, Point *dest, node* node_list);
+    bool isAlphaContainsPoint(Point *x, Point *o, Point *y, Point *d); // check if D is inside xOy
+    bool isPointLiesInTriangle(Point *d, Point *a, Point *b, Point *c);
+
+    bool isPointInsidePolygon(Point *d, node *hole);
+
 };
 
 #endif
