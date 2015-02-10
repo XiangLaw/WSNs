@@ -695,8 +695,7 @@ bool ElbarGridOfflineAgent::isPointInsidePolygon(Point *d, node *hole) {
     y.x_ = 0;
     y.y_ = d->y_;
 
-    int greater_horizontal = 0;
-    int less_horizontal = 0;
+    bool oddNodes = false;
     Line dy = G::line(d, y);
     Line edge;
 
@@ -704,18 +703,20 @@ bool ElbarGridOfflineAgent::isPointInsidePolygon(Point *d, node *hole) {
     intersect.x_ = -1;
     intersect.y_ = -1;
 
-    // count horizontal
-    for (tmp = hole; tmp->next_ != NULL; tmp = tmp->next_) {
-        edge = G::line(tmp, tmp->next_);
+    // detect number of intersect node
+    for (tmp = hole; tmp != NULL; tmp = tmp->next_) {
+        if (tmp->next_ != NULL)
+            edge = G::line(tmp, tmp->next_);
+        else
+            edge = G::line(tmp, hole);
         if (G::intersection(dy, edge, &intersect) && (intersect.x_ >= 0 && intersect.y_ >= 0)) {
-            if (intersect.x_ > d->x_) greater_horizontal++;
-            else if (intersect.x_ < d->x_) less_horizontal++;
-            else return true;
+            if (intersect.x_ > d->x_) oddNodes != oddNodes;
+            else if (intersect.x_ == d->x_)
+            return true;
         }
     }
 
-    if (greater_horizontal % 2 == 0 && less_horizontal % 2 == 0) return false;
-    else return true;
+    return oddNodes;
 }
 
 bool ElbarGridOfflineAgent::isBetweenAngle(Point *pDes, Point *pNode, Point *pMid, Point *pNode1) {
