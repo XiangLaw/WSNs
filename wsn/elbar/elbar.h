@@ -52,27 +52,22 @@ private:
     // gpsr
     void sendGPSR(Packet *p);
     node* recvGPSR(Packet *p, Point destination);
+    neighbor* getNeighborByPerimeter(Point);
+    neighbor* getNeighborByGreedy(Point d, Point s);
+    neighbor* getNeighborByGreedy(Point d) { return getNeighborByGreedy(d, *this); }
 
     void broadcastHci();            // hole core information broadcast
     void recvHci(Packet *p);        // recv hole core information
     void routing(Packet *p);        // elbar routing algorithm
 
     virtual char const *getAgentName();
+    void dumpParallelogram();
     void dumpAngle();
     void dumpNodeInfoX();
     void dumpNodeInfoY();
+
     void createGrid(Packet *pPacket); // re-create grid bound hole
 
-protected:
-    virtual void initTraceFile();
-
-public:
-    ElbarGridOfflineAgent();
-
-    int command(int, const char *const *);
-    void recv(Packet *, Handler *);
-
-private:
     double alpha_max_;
     double alpha_min_;
     angleView *alpha_;          // alpha angle
@@ -80,10 +75,8 @@ private:
     int routing_mode_;
     Elbar_Region region_;   // region to a specific hole
                             // convert to struct array for multi hole
-    void dumpParallelogram();
 
-    node *ai;
-    node *aj;
+    bool isInsideGrid_;
 
     bool isIntersectWithHole(Point *anchor, Point *dest, node* node_list);
     bool isAlphaContainsPoint(Point *x, Point *o, Point *y, Point *d); // check if D is inside xOy
@@ -93,6 +86,16 @@ private:
 
 
     bool isBetweenAngle(Point *pPoint, Point *pNode, Point *pMid, Point *pNode1);
+
+
+protected:
+    virtual void initTraceFile();
+
+public:
+    ElbarGridOfflineAgent();
+
+    int command(int, const char *const *);
+    void recv(Packet *, Handler *);
 };
 
 #endif

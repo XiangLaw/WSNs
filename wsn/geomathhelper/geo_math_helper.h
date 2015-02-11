@@ -295,6 +295,8 @@ public:
 
     // extenstion
     static Angle directedAngle(Point *a, Point* p, Point* b);
+
+    static bool	lineSegmentIntersection(Point *a, Point *b, Line l, Point& p);
 };
 
 #endif /* GEO_MATH_HELPER_H_ */

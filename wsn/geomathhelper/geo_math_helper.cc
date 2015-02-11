@@ -704,3 +704,16 @@ Angle G::directedAngle(Point* b, Point* p, Point* a)
 
     return angle;
 }
+
+bool G::lineSegmentIntersection(Point *a, Point *b, Line l, Point &intersection) {
+    intersection.x_ = -1;
+    intersection.y_ = -1;
+    Line edge = G::line(a, b);
+
+    if (G::intersection(edge, l, &intersection) && (intersection.x_ >= 0 && intersection.y_ >= 0)) {
+        if(
+                (intersection.y_ - a->y_) * (intersection.y_ - b->y_) <= 0)
+            return true;
+    }
+    return false;
+}

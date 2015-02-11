@@ -153,6 +153,8 @@ void ElbarGridOfflineAgent::configDataPacket(Packet *p) {
  */
 void ElbarGridOfflineAgent::detectParallelogram() {
     struct polygonHole *tmp;
+    struct node *ai;
+    struct node *aj;
 
     struct node *vi;
     struct node *vj;
@@ -173,7 +175,8 @@ void ElbarGridOfflineAgent::detectParallelogram() {
         Line lj;
 
         // check if node is inside grid
-        if (!G::isPointInPolygon(this, tmp->node_list_)){
+        isInsideGrid_ = isPointInsidePolygon(this, tmp->node_list_);
+        if (!isInsideGrid_){
             // detect view angle
             ai = tmp->node_list_;
             aj = tmp->node_list_;
@@ -240,7 +243,9 @@ void ElbarGridOfflineAgent::detectParallelogram() {
                 this->parallelogram_ = parallel;
 
             }
-        } else {
+        } else { // for backup purpose only - we never go to such points
+            dumpNodeInfoX();
+            dumpNodeInfoY();
             angle = alpha_max_;
             region_ = REGION_1;
         }
@@ -281,6 +286,11 @@ void ElbarGridOfflineAgent::routing(Packet *p) {
     Point *anchor_point;
     int routing_mode;
 
+    if(my_id_ == 51 || my_id_ == 215 || my_id_  == 125)
+    {
+        int a = 1;
+    }
+
     if (region_ == REGION_3 || region_ == REGION_1 || hole_list_ == NULL) {
         // greedy mode when in region3 or 1 or have no info about hole
         egh->forwarding_mode_ = GREEDY_MODE;
@@ -299,6 +309,8 @@ void ElbarGridOfflineAgent::routing(Packet *p) {
         destination = &(egh->destination_);
         anchor_point = &(egh->anchor_point_);
         routing_mode = egh->forwarding_mode_;
+
+        dumpParallelogram();
 
             if (routing_mode == HOLE_AWARE_MODE) { // if hole aware mode
                 if(!isAlphaContainsPoint(&(parallelogram_->a_), this, &(parallelogram_->c_), destination)) {
@@ -587,6 +599,63 @@ void ElbarGridOfflineAgent::sendGPSR(Packet *p) {
 }
 
 node* ElbarGridOfflineAgent::recvGPSR(Packet *p, Point destionation) {
+    if(my_id_ == 51 || my_id_ == 215 || my_id_  == 125)
+    {
+        int a = 1;
+        struct hdr_elbar_grid *egh = HDR_ELBAR_GRID(p);
+
+        node * nb = NULL;
+
+        switch (egh->gprs_type_)
+        {
+            case GPSR_GPSR:
+                nb = this->getNeighborByGreedy(destionation, *this);
+
+                if (nb == NULL)
+                {
+                    nb = getNeighborByPerimeter(destionation);
+
+                    if (nb == NULL)
+                    {
+                        drop(p, DROP_RTR_NO_ROUTE);
+                        return NULL;
+                    }
+                    else
+                    {
+                        egh->gprs_type_	= GPSR_PERIME;
+                        egh->peri_	= *this;
+                    }
+                }
+                break;
+
+            case GPSR_PERIME:
+                // try to get back to greedy mode
+                nb = this->getNeighborByGreedy(destionation, egh->peri_);
+                if (nb)
+                {
+                    egh->gprs_type_ = GPSR_GPSR;
+                }
+                else
+                {
+                    nb = getNeighborByPerimeter(egh->prev_);
+                    if (nb == NULL)
+                    {
+                        drop(p, DROP_RTR_NO_ROUTE);
+                        return NULL;
+                    }
+                }
+                break;
+
+            default:
+                drop(p, " UnknowType");
+                return NULL;
+        }
+
+        egh->prev_ = *this;
+
+        return nb;
+    }
+
     struct hdr_elbar_grid *egh = HDR_ELBAR_GRID(p);
 
     node * nb = NULL;
@@ -594,7 +663,7 @@ node* ElbarGridOfflineAgent::recvGPSR(Packet *p, Point destionation) {
     switch (egh->gprs_type_)
     {
         case GPSR_GPSR:
-            nb = getNeighborByGreedy(destionation, *this);
+            nb = this->getNeighborByGreedy(destionation, *this);
 
             if (nb == NULL)
             {
@@ -615,7 +684,7 @@ node* ElbarGridOfflineAgent::recvGPSR(Packet *p, Point destionation) {
 
         case GPSR_PERIME:
             // try to get back to greedy mode
-            nb = getNeighborByGreedy(destionation, egh->peri_);
+            nb = this->getNeighborByGreedy(destionation, egh->peri_);
             if (nb)
             {
                 egh->gprs_type_ = GPSR_GPSR;
@@ -695,7 +764,8 @@ bool ElbarGridOfflineAgent::isPointInsidePolygon(Point *d, node *hole) {
     y.x_ = 0;
     y.y_ = d->y_;
 
-    bool oddNodes = false;
+    int greater_horizontal = 0;
+    int less_horizontal = 0;
     Line dy = G::line(d, y);
     Line edge;
 
@@ -703,20 +773,28 @@ bool ElbarGridOfflineAgent::isPointInsidePolygon(Point *d, node *hole) {
     intersect.x_ = -1;
     intersect.y_ = -1;
 
-    // detect number of intersect node
-    for (tmp = hole; tmp != NULL; tmp = tmp->next_) {
-        if (tmp->next_ != NULL)
-            edge = G::line(tmp, tmp->next_);
-        else
-            edge = G::line(tmp, hole);
-        if (G::intersection(dy, edge, &intersect) && (intersect.x_ >= 0 && intersect.y_ >= 0)) {
-            if (intersect.x_ >= d->x_) oddNodes != oddNodes;
-//            else if (intersect.x_ == d->x_)
-//            return true;
+    // count horizontal
+    for (tmp = hole; tmp->next_ != NULL; tmp = tmp->next_) {
+        if (tmp->next_ != NULL) {
+            if(G::lineSegmentIntersection(tmp, tmp->next_, dy, intersect)) {
+                if (intersect.x_ > d->x_) greater_horizontal++;
+                else if (intersect.x_ < d->x_) less_horizontal++;
+                else return true;
+            }
+
+        }
+        else {
+            if(G::lineSegmentIntersection(tmp, hole, dy, intersect)){
+                if (intersect.x_ > d->x_) greater_horizontal++;
+                else if (intersect.x_ < d->x_) less_horizontal++;
+                else return true;
+            }
+
         }
     }
 
-    return oddNodes;
+    if (greater_horizontal % 2 == 0 && less_horizontal % 2 == 0) return false;
+    else return true;
 }
 
 bool ElbarGridOfflineAgent::isBetweenAngle(Point *pDes, Point *pNode, Point *pMid, Point *pNode1) {
@@ -731,4 +809,50 @@ bool ElbarGridOfflineAgent::isBetweenAngle(Point *pDes, Point *pNode, Point *pMi
         }
     }
     return false;
+}
+
+neighbor *ElbarGridOfflineAgent::getNeighborByGreedy(Point d, Point s) {
+    if(hole_list_ == NULL) {
+        return GPSRAgent::getNeighborByGreedy(d, s);
+    }
+
+    double mindis = G::distance(s, d);
+    neighbor* re = NULL;
+
+    for (node* temp = neighbor_list_; temp; temp = temp->next_)
+    {
+        if(isPointInsidePolygon(temp, this->hole_list_->node_list_)) continue;
+        double dis = G::distance(temp, d);
+        if (dis < mindis)
+        {
+            mindis = dis;
+            re = (neighbor*)temp;
+        }
+    }
+    return re;
+}
+
+neighbor *ElbarGridOfflineAgent::getNeighborByPerimeter(Point point) {
+    if(hole_list_ == NULL) {
+        return GPSRAgent::getNeighborByPerimeter(point);
+    }
+
+    Angle max_angle = -1;
+    neighbor * nb = NULL;
+
+    for (node* temp = neighbor_list_; temp; temp = temp->next_)
+    {
+        if(isPointInsidePolygon(temp, this->hole_list_->node_list_)) continue;
+        //if (temp->planar_)
+        {
+            Angle a = G::angle(this, &point, this, temp);
+            if (a > max_angle)
+            {
+                max_angle = a;
+                nb = (neighbor*)temp;
+            }
+        }
+    }
+
+    return nb;
 }
