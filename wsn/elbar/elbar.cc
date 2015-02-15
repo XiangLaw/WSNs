@@ -593,14 +593,6 @@ void ElbarGridOfflineAgent::initTraceFile() {
     fclose(fp);
     fp = fopen("AngleView.tr", "w");
     fclose(fp);
-    fp = fopen("NodeInfoX.tr", "w");
-    fclose(fp);
-    fp = fopen("NoteInfoY.tr", "w");
-    fclose(fp);
-    fp = fopen("Time.tr", "w");
-    fclose(fp);
-    fp = fopen("ElbarGridOnline.tr", "w");
-    fclose(fp);
     fp = fopen("Parallelogram.tr", "w");
     fclose(fp);
 }
