@@ -101,9 +101,9 @@ ns will fall back on running the first perl in your path.\\\n\
 The wrong version of perl may break the test suites.\\\n\
 Reconfigure and rebuild ns if this is a problem.\\\n\
 \"\n\
-checkout_executable TCLSH \"/usr/share/ns-allinone-2.35/bin/tclsh8.5\" tclsh \"\\\n\
+checkout_executable TCLSH \"/home/huyvq/workspace/thesis/NS2/bin/tclsh8.5\" tclsh \"\\\n\
 When configured, ns found the right version of tclsh in\\\n\
-/usr/share/ns-allinone-2.35/bin/tclsh8.5\n\
+/home/huyvq/workspace/thesis/NS2/bin/tclsh8.5\n\
 but it doesn't seem to be there anymore, so\\\n\
 ns will fall back on running the first tclsh in your path.\\\n\
 The wrong version of tclsh may break the test suites.\\\n\
@@ -1736,6 +1736,22 @@ SRNodeNew instproc reset args {\n\
 $self instvar dsr_agent_\n\
 eval $self next $args\n\
 $dsr_agent_ reset\n\
+}\n\
+\n\
+\n\
+Node/MobileNode instproc get-ragent {} {\n\
+$self instvar ragent_\n\
+return $ragent_\n\
+}\n\
+\n\
+Node/MobileNode instproc set-flow-data {dest x y} {\n\
+$self instvar ragent_\n\
+$ragent_ set-flow-data $dest $x $y\n\
+}\n\
+\n\
+Node/MobileNode instproc set-nbr {n x y} {\n\
+$self instvar ragent_\n\
+$ragent_ set-nbr $n $x $y\n\
 }\n\
 \n\
 \n\
@@ -3455,6 +3471,7 @@ SCALEGOAL\n\
 GRID	\n\
 GRIDDYNAMIC\n\
 DYNAMICPOLYGON\n\
+ELBARGRIDOFFLINE\n\
 GREEDY\n\
 Encap 	# common/encap.cc\n\
 IPinIP 	# IP encapsulation \n\
@@ -20172,7 +20189,7 @@ Agent/GRIDOFFLINE set hello_period_ 0\n\
 Agent/GRIDOFFLINE set energy_checkpoint_ 995\n\
 Agent/GRIDOFFLINE set limit_ 0\n\
 Agent/GRIDOFFLINE set range_ 40\n\
-Agent/GRIDOFFLINE set r_ 100\n\
+Agent/GRIDOFFLINE set r_ 20\n\
 Agent/GRIDOFFLINE set limit_boundhole_hop_ 80\n\
 \n\
 Agent/GRIDONLINE set hello_period_ 0\n\
@@ -20203,6 +20220,13 @@ Agent/DYNAMICPOLYGON set range_ 40\n\
 Agent/DYNAMICPOLYGON set r_ 100\n\
 Agent/DYNAMICPOLYGON set limit_boundhole_hop_ 80\n\
 \n\
+\n\
+Agent/ELBARGRIDOFFLINE set hello_period_ 0\n\
+Agent/ELBARGRIDOFFLINE set energy_checkpoint_ 995\n\
+Agent/ELBARGRIDOFFLINE set limit_ 0\n\
+Agent/ELBARGRIDOFFLINE set range_ 40\n\
+Agent/ELBARGRIDOFFLINE set r_ 20\n\
+Agent/ELBARGRIDOFFLINE set limit_boundhole_hop_ 80\n\
 if [TclObject is-class Network/Pcap/Live] {\n\
 Network/Pcap/Live set snaplen_ 4096;# bpf snap len\n\
 Network/Pcap/Live set promisc_ false;\n\
@@ -21264,6 +21288,9 @@ set ragent [$self create-dynamicpolygon-agent $node]\n\
 GREEDY {\n\
 set ragent [$self create-greedy-agent $node]\n\
 }\n\
+ELBARGRIDOFFLINE {\n\
+set ragent [$self create-elbar-gridoffline-agent $node]\n\
+}\n\
 MDART {\n\
 set ragent [$self create-mdart-agent $node]\n\
 }\n\
@@ -21691,6 +21718,23 @@ $node set ragent_ $ragent\n\
 \n\
 $self at 0.0 \"$ragent set-location\"\n\
 $self at 0.0 \"$ragent start\"\n\
+return $ragent\n\
+}\n\
+\n\
+Simulator instproc create-elbar-gridoffline-agent { node } {\n\
+set ragent [new Agent/ELBARGRIDOFFLINE]\n\
+set addr [$node node-addr]\n\
+$ragent addr $addr\n\
+$ragent node $node\n\
+if [Simulator set mobile_ip_] {\n\
+$ragent port-dmux [$node demux]\n\
+}\n\
+$node addr $addr\n\
+$node set ragent_ $ragent\n\
+$self at 0.0 	\"$ragent start\"    ;# start updates\n\
+$self at 30	\"$ragent boundhole\"\n\
+$self at 90 \"$ragent broadcast\"\n\
+$self at 120 \"$ragent routing\"\n\
 return $ragent\n\
 }\n\
 \n\
@@ -22914,6 +22958,13 @@ $self instvar lagent\n\
 foreach i $lagent {\n\
 $i stop\n\
 }\n\
+}\n\
+\n\
+Simulator instproc create-greedy-agent { node } {\n\
+set ragent [new Agent/Greedy [$node node-addr]]\n\
+$self at 0.0 \"$ragent start\"\n\
+$node set ragent_ $ragent\n\
+return $ragent\n\
 }\n\
 \n\
 Simulator instproc attach-diffapp { node diffapp } {\n\

@@ -39,6 +39,7 @@ BoundHoleAgent::BoundHoleAgent() : GPSRAgent(),
 	bind("range_", &range_);
 	bind("storage_opt_", &storage_opt_);
 	bind("limit_boundhole_hop_", &limit_hop);
+	//bind("limit_min_boundhole_hop_", &limit_min_hop_);
 }
 
 int
@@ -141,15 +142,15 @@ BoundHoleAgent::findStuckAngle()
 		return;
 	}
 
-	node *nb1 = neighbor_list_;
-	node *nb2 = neighbor_list_->next_;
+	node *nb1 = neighbor_list_; //u
+	node *nb2 = neighbor_list_->next_; //v
 
 	while (nb2)
 	{
 		Circle circle = G::circumcenter(this, nb1, nb2);
-		Angle a = G::angle(this, nb1, this, &circle);
-		Angle b = G::angle(this, nb1, this, nb2);
-		Angle c = G::angle(this, &circle, this, nb2);
+		Angle a = G::angle(this, nb1, this, &circle); // upO
+		Angle b = G::angle(this, nb1, this, nb2); // upv
+		Angle c = G::angle(this, &circle, this, nb2); //Opv
 
 		// if O is outside range of node, nb1 and nb2 create a stuck angle with node
 		if (b >= M_PI || (fabs(a) + fabs(c) == fabs(b) && G::distance(this, circle) > range_))
@@ -235,7 +236,7 @@ void BoundHoleAgent::recvBoundHole(Packet *p)
 	// if the boundhole packet has came back to the initial node
 	if (iph->saddr() == my_id_)
 	{
-		if (iph->ttl_ > (limit_hop - 5))
+		if (iph->ttl_ > (limit_hop - 5)) // replace 5 = limit_min_hop_
 		{
 			drop(p, " SmallHole");	// drop hole that have less than 5 hop
 		}
@@ -430,8 +431,14 @@ polygonHole* BoundHoleAgent::createPolygonHole(Packet *p)
 	return hole_item;
 }
 
+//TODO: considering?
 node* BoundHoleAgent::getNeighborByBoundHole(Point * p, Point * prev)
 {
+	// p = p
+	// prev = s
+	// this = t1
+
+	/*
 	Angle max_angle = -1;
 	node* nb = NULL;
 
@@ -446,6 +453,29 @@ node* BoundHoleAgent::getNeighborByBoundHole(Point * p, Point * prev)
 	}
 
 	return nb;
+	*/
+
+	FILE *fp;
+	fp = fopen("debug.tr", "a+");
+	fprintf(fp, "%d \t %f \t %f \t %f \t %f \n", my_id_, p->x_, p->y_, prev->x_, prev->y_);
+	fclose(fp);
+	for(node *tmp = neighbor_list_; tmp; tmp = tmp->next_) {
+		// if tmp is right hand side
+		if(G::directedAngle2(tmp, p, this) > M_PI) {
+			continue;
+		}
+
+		if(G::directedAngle2(prev, p, this) > M_PI) { // if (spt1) > pi => return t2
+			return tmp;
+		}
+		else { // else check if t2 is inside forbidden region
+			if(G::distance(this, tmp) < this->range_ && G::directedAngle2(tmp, p, this) > G::directedAngle2(tmp, p, prev)) {
+				continue;
+			}
+		}
+	}
+
+	return NULL;
 }
 
 // ------------------------ Dump ------------------------ //

@@ -88,7 +88,8 @@ private:
 protected:
 	double storage_opt_;
 	double range_;
-	int limit_hop;
+	int limit_hop; // limit_max_hop_
+	int limit_min_hop_;
 
 	stuckangle* stuck_angle_;
 

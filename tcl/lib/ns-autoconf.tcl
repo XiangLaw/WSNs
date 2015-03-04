@@ -40,9 +40,9 @@ checkout_executable PERL "/usr/bin/perl" perl "\
 	The wrong version of perl may break the test suites.\
 	Reconfigure and rebuild ns if this is a problem.\
 "
-checkout_executable TCLSH "/usr/share/ns-allinone-2.35/bin/tclsh8.5" tclsh "\
+checkout_executable TCLSH "/home/huyvq/workspace/thesis/NS2/bin/tclsh8.5" tclsh "\
 	When configured, ns found the right version of tclsh in\
-	/usr/share/ns-allinone-2.35/bin/tclsh8.5
+	/home/huyvq/workspace/thesis/NS2/bin/tclsh8.5
 	but it doesn't seem to be there anymore, so\
 	ns will fall back on running the first tclsh in your path.\
 	The wrong version of tclsh may break the test suites.\

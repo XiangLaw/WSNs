@@ -33,7 +33,7 @@ void ElbarGridOfflinePacketData::add_data(double x, double y) {
 }
 
 void ElbarGridOfflinePacketData::dump() {
-    FILE *fp = fopen("ElbarGridOnline.tr", "a+");
+    FILE *fp = fopen("ElbarGridOffline.tr", "a+");
 
     for (int i = 1; i <= data_len_ / element_size_; i++) {
         node n = get_data(i);

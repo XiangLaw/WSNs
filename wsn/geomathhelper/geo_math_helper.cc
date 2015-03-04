@@ -4,7 +4,7 @@
  * 		Last edited on Nov 3, 2013
  * 		by Trong Nguyen
  * 		trongdnguyen@hotmail.com
- *
+ *		http://www.ltcconline.net/greenl/courses/107/vectors/dotcros.htm
  */
 
 #include "geo_math_helper.h"
@@ -716,4 +716,23 @@ bool G::lineSegmentIntersection(Point *a, Point *b, Line l, Point &intersection)
             return true;
     }
     return false;
+}
+
+
+// directed angle between vector (pa, pb) = (apb) in counterclockwise
+Angle G::directedAngle2(Point *a, Point *p, Point *b) {
+	double x1, x2, y1, y2;
+	x1 = a->x_ - p->x_;
+	y1 = a->y_ - p->y_;
+
+	x2 = b->x_ - p->x_;
+	y2 = b->y_ - p->y_;
+
+	double a1 = atan2(y1, x1);
+	double a2 = atan2(y2, x2);
+
+	a1 = a1 > 0 ? a1 : a1 + 2 * M_PI;
+	a2 = a2 > 0 ? a2 : a2 + 2 * M_PI;
+
+	return a2 - a1 > 0 ? a2 - a1 : a2 - a1 + 2 * M_PI;
 }
