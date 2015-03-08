@@ -16,7 +16,7 @@ set opt(ifq)	Queue/DropTail/PriQueue
 set opt(ll)	LL
 set opt(ant)	Antenna/OmniAntenna
 set opt(rp)	GOAL
-set opt(trans)	UDP
+set opt(trans)	UDPplo
 set opt(apps)	CBR
 
 set opt(energymodel)	EnergyModel

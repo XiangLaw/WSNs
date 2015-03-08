@@ -944,7 +944,7 @@ $mnode_(941) set X_ 185 ;	$mnode_(941) set Y_ 557 ;	$mnode_(941) set Z_ 0
 $mnode_(942) set X_ 165 ;	$mnode_(942) set Y_ 812 ;	$mnode_(942) set Z_ 0
 $mnode_(943) set X_ 127 ;	$mnode_(943) set Y_ 654 ;	$mnode_(943) set Z_ 0
 $mnode_(944) set X_ 285 ;	$mnode_(944) set Y_ 676 ;	$mnode_(944) set Z_ 0
-$mnode_(945) set X_ 597 ;	$mnode_(945) set Y_ 620 ;	$mnode_(945) set Z_ 0
+$mnode_(945) set X_ 97 ;	$mnode_(945) set Y_ 20 ;	$mnode_(945) set Z_ 0
 $mnode_(946) set X_ 206 ;	$mnode_(946) set Y_ 419 ;	$mnode_(946) set Z_ 0
 $mnode_(947) set X_ 439 ;	$mnode_(947) set Y_ 815 ;	$mnode_(947) set Z_ 0
 $mnode_(948) set X_ 276 ;	$mnode_(948) set Y_ 994 ;	$mnode_(948) set Z_ 0

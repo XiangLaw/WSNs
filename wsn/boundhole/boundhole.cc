@@ -438,14 +438,16 @@ node* BoundHoleAgent::getNeighborByBoundHole(Point * p, Point * prev)
 	// prev = s
 	// this = t1
 
-	/*
 	Angle max_angle = -1;
 	node* nb = NULL;
 
 	for (node * temp = neighbor_list_; temp; temp = temp->next_)
 	{
+		int i = temp->id_;
 		Angle a = G::angle(this, p, this, temp);
-		if (a > max_angle && !G::is_intersect(this, temp, p, prev))
+		if (a > max_angle && (!G::is_intersect(this, temp, p, prev) ||
+				(temp->x_ == p->x_ && temp->y_ == p->y_) ||
+				(this->x_ == prev->x_ && this->y_ == prev->y_)))
 		{
 			max_angle = a;
 			nb = temp;
@@ -453,29 +455,28 @@ node* BoundHoleAgent::getNeighborByBoundHole(Point * p, Point * prev)
 	}
 
 	return nb;
-	*/
 
-	FILE *fp;
-	fp = fopen("debug.tr", "a+");
-	fprintf(fp, "%d \t %f \t %f \t %f \t %f \n", my_id_, p->x_, p->y_, prev->x_, prev->y_);
-	fclose(fp);
-	for(node *tmp = neighbor_list_; tmp; tmp = tmp->next_) {
-		// if tmp is right hand side
-		if(G::directedAngle2(tmp, p, this) > M_PI) {
-			continue;
-		}
-
-		if(G::directedAngle2(prev, p, this) > M_PI) { // if (spt1) > pi => return t2
-			return tmp;
-		}
-		else { // else check if t2 is inside forbidden region
-			if(G::distance(this, tmp) < this->range_ && G::directedAngle2(tmp, p, this) > G::directedAngle2(tmp, p, prev)) {
-				continue;
-			}
-		}
-	}
-
-	return NULL;
+//	FILE *fp;
+//	fp = fopen("debug.tr", "a+");
+//	fprintf(fp, "%d \t %f \t %f \t %f \t %f \n", my_id_, p->x_, p->y_, prev->x_, prev->y_);
+//	fclose(fp);
+//	for(node *tmp = neighbor_list_; tmp; tmp = tmp->next_) {
+//		// if tmp is right hand side
+//		if(G::directedAngle2(tmp, p, this) > M_PI) {
+//			continue;
+//		}
+//
+//		if(G::directedAngle2(prev, p, this) > M_PI) { // if (spt1) > pi => return t2
+//			return tmp;
+//		}
+//		else { // else check if t2 is inside forbidden region
+//			if(G::distance(this, tmp) < this->range_ && G::directedAngle2(tmp, p, this) > G::directedAngle2(tmp, p, prev)) {
+//				continue;
+//			}
+//		}
+//	}
+//
+//	return NULL;
 }
 
 // ------------------------ Dump ------------------------ //
