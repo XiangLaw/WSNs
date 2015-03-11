@@ -33,7 +33,7 @@ ElbarGridOfflineAgent::ElbarGridOfflineAgent()
 
     hole_list_ = NULL;
     parallelogram_ = NULL;
-    alpha_ = NULL;
+    alpha_ = 0;
 }
 
 char const *ElbarGridOfflineAgent::getAgentName() {
@@ -248,7 +248,12 @@ void ElbarGridOfflineAgent::detectParallelogram() {
 }
 
 int ElbarGridOfflineAgent::holeAvoidingProb() {
-    return HOLE_AWARE_MODE;
+    RNG rand_;
+    if (rand_.uniform(0, 1) < alpha_/ M_PI){
+        return HOLE_AWARE_MODE;
+    } else {
+        return GREEDY_MODE;
+    }
 }
 
 Elbar_Region ElbarGridOfflineAgent::regionDetermine(double angle) {

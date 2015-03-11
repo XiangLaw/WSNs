@@ -282,7 +282,10 @@ GridOfflineAgent::getNeighborByBoundhole(Point *p, Point *prev) {
 
     for (node *temp = neighbor_list_; temp; temp = temp->next_) {
         Angle a = G::angle(this, p, this, temp);
-        if (a > max_angle && !G::is_intersect(this, temp, p, prev)) {
+        if (a > max_angle && (!G::is_intersect(this, temp, p, prev) ||
+                (temp->x_ == p->x_ && temp->y_ == p->y_) ||
+                (this->x_ == prev->x_ && this->y_ == prev->y_)))
+        {
             max_angle = a;
             nb = temp;
         }
