@@ -269,7 +269,6 @@ set(OBJ_CC
   wsn/octagon/octagon.cc
   wsn/scalegoal/scalegoal.cc
   wsn/scalehexagon/scalehexagon.cc
-  wsn/greedy/greedy.cc wsn/greedy/greedy_nbr.cc wsn/greedy/greedy_flow.cc
   wsn/elbar/elbar.cc wsn/elbar/elbar_packet_data.cc
   ${OBJ_STL}
 )

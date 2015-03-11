@@ -172,10 +172,8 @@ set ptype(griddynamic) 83\n\
 set pvals(83) GRIDDYNAMIC\n\
 set ptype(dynamicpolygon) 84\n\
 set pvals(84) DYNAMICPOLYGON\n\
-set ptype(greedy) 85\n\
-set pvals(85) Greedy\n\
-set ptype(elbargridoffline) 86\n\
-set pvals(86) ELBARGRIDOFFLINE\n\
+set ptype(elbargridoffline) 85\n\
+set pvals(85) ELBARGRIDOFFLINE\n\
 proc ptype2val {str} {\n\
 global ptype\n\
 set str [string tolower $str]\n\

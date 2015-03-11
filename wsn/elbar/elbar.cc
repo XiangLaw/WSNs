@@ -101,7 +101,6 @@ void ElbarGridOfflineAgent::recvElbar(Packet *p) {
         default:
             drop(p, "UnknowType");
             break;
-
     }
 }
 
@@ -242,7 +241,7 @@ void ElbarGridOfflineAgent::detectParallelogram() {
         } else {
             alpha_ = -1;
             parallelogram_ = NULL;
-            region_ = REGION_0;
+            region_ = REGION_1;
         }
     }
 }
@@ -276,7 +275,13 @@ void ElbarGridOfflineAgent::routing(Packet *p) {
     if (region_ == REGION_3 || region_ == REGION_1 || hole_list_ == NULL) {
         // greedy mode when in region3 or 1 or have no info about hole
         egh->forwarding_mode_ = GREEDY_MODE;
-        node *nexthop = recvGPSR(p, *destination);
+        node* nexthop = NULL;
+        if(alpha_ == -1 && anchor_point->x_ != -1 && anchor_point->y_ != -1) {
+            nexthop = recvGPSR(p, *anchor_point);
+        } else {
+            nexthop = recvGPSR(p, *destination);
+        }
+
         if (nexthop == NULL) {
             drop(p, DROP_RTR_NO_ROUTE);
             return;
@@ -386,24 +391,6 @@ void ElbarGridOfflineAgent::routing(Packet *p) {
                 send(p, 0);
             }
         }
-    }
-    else if(region_ == REGION_0) {
-        node* nexthop = NULL;
-        if(alpha_ == -1 && anchor_point->x_ != -1 && anchor_point->y_ != -1) {
-            nexthop = recvGPSR(p, *anchor_point);
-        } else {
-            nexthop = recvGPSR(p, *destination);
-        }
-
-        if (nexthop == NULL) {
-            drop(p, DROP_RTR_NO_ROUTE);
-            return;
-        }
-        cmh->direction() = hdr_cmn::DOWN;
-        cmh->addr_type() = NS_AF_INET;
-        cmh->last_hop_ = my_id_;
-        cmh->next_hop_ = nexthop->id_;
-        send(p, 0);
     }
 }
 

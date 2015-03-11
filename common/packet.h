@@ -213,10 +213,9 @@ static const packet_t PT_GRID = 82;				// approximate hole by gird
 static const packet_t PT_GRIDDYNAMIC = 83;		// gird dynamic
 static const packet_t PT_DYNAMICPOLYGON = 84;	// Dynamic polygon
 // wsn-ext
-static const packet_t PT_GREEDY = 85; 			// greedy
-static const packet_t PT_ELBARGRID = 86; // elbar + grid
+static const packet_t PT_ELBARGRID = 85; // elbar + grid
 
-static packet_t       PT_NTYPE = 87; 			// This MUST be the LAST one
+static packet_t       PT_NTYPE = 86; 			// This MUST be the LAST one
 
 enum packetClass
 {
@@ -448,7 +447,6 @@ public:
 		name_[PT_DYNAMICPOLYGON]="DYNAMICPOLYGON";
 
         // wsn-ext
-		name_[PT_GREEDY]="Greedy";
         name_[PT_ELBARGRID] = "ELBARGRIDOFFLINE";
 
 		name_[PT_NTYPE]= "undefined";

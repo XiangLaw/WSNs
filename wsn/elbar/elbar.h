@@ -10,8 +10,7 @@
 #define GREEDY_MODE 0x02
 
 enum Elbar_Region {
-    REGION_0 = 1, // inside grid boundhole
-    REGION_1, // broadcast boundhole information only
+    REGION_1 = 1, // broadcast boundhole information only
     REGION_2, // broadcast boundhole information
     REGION_3, // greedy only
 };
