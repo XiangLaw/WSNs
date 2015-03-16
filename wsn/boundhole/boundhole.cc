@@ -236,7 +236,7 @@ void BoundHoleAgent::recvBoundHole(Packet *p)
 	// if the boundhole packet has came back to the initial node
 	if (iph->saddr() == my_id_)
 	{
-		if (iph->ttl_ > (limit_hop - 5)) // replace 5 = limit_min_hop_
+		if (iph->ttl_ > (limit_hop - 10)) // replace 5 = limit_min_hop_
 		{
 			drop(p, " SmallHole");	// drop hole that have less than 5 hop
 		}
