@@ -65,8 +65,6 @@ private:
 
     /* dump */
     virtual char const *getAgentName();
-    void dumpParallelogram();
-    void dumpAngle();
 
 protected:
     virtual void initTraceFile();

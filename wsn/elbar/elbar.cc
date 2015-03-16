@@ -272,11 +272,17 @@ void ElbarGridOfflineAgent::routing(Packet *p) {
     Point *anchor_point = &(egh->anchor_point_);
     int routing_mode = egh->forwarding_mode_;
 
+    if (1019 == my_id_){
+        int i = my_id_;
+    }
+
     if (region_ == REGION_3 || region_ == REGION_1 || hole_list_ == NULL) {
         // greedy mode when in region3 or 1 or have no info about hole
         egh->forwarding_mode_ = GREEDY_MODE;
         node* nexthop = NULL;
-        if(alpha_ == -1 && anchor_point->x_ != -1 && anchor_point->y_ != -1) {
+        int x = anchor_point->x_;
+        int y = anchor_point->y_;
+        if(anchor_point->x_ != -1 && anchor_point->y_ != -1) {
             nexthop = recvGPSR(p, *anchor_point);
         } else {
             nexthop = recvGPSR(p, *destination);
@@ -583,27 +589,19 @@ void ElbarGridOfflineAgent::initTraceFile() {
     fclose(fp);
     fp = fopen("Neighbors.tr", "w");
     fclose(fp);
-    fp = fopen("AngleView.tr", "w");
-    fclose(fp);
-    fp = fopen("Parallelogram.tr", "w");
-    fclose(fp);
+//    fp = fopen("Parallelogram.tr", "w");
+//    fclose(fp);
 }
 
-void ElbarGridOfflineAgent::dumpAngle() {
-    FILE *fp = fopen("AngleView.tr", "a+");
-    fprintf(fp, "%d\t%f", my_id_, alpha_);
-    fclose(fp);
-}
-
-void ElbarGridOfflineAgent::dumpParallelogram() {
-    FILE *fp = fopen("Parallelogram.tr", "a+");
-    fprintf(fp, "%f\t%f\n", this->parallelogram_->p_.x_, this->parallelogram_->p_.y_);
-    fprintf(fp, "%f\t%f\n", this->parallelogram_->a_.x_, this->parallelogram_->a_.y_);
-    fprintf(fp, "%f\t%f\n", this->parallelogram_->b_.x_, this->parallelogram_->b_.y_);
-    fprintf(fp, "%f\t%f\n", this->parallelogram_->c_.x_, this->parallelogram_->c_.y_);
-    fprintf(fp, "\n");
-    fclose(fp);
-}
+//void ElbarGridOfflineAgent::dumpParallelogram() {
+//    FILE *fp = fopen("Parallelogram.tr", "a+");
+//    fprintf(fp, "%f\t%f\n", this->parallelogram_->p_.x_, this->parallelogram_->p_.y_);
+//    fprintf(fp, "%f\t%f\n", this->parallelogram_->a_.x_, this->parallelogram_->a_.y_);
+//    fprintf(fp, "%f\t%f\n", this->parallelogram_->b_.x_, this->parallelogram_->b_.y_);
+//    fprintf(fp, "%f\t%f\n", this->parallelogram_->c_.x_, this->parallelogram_->c_.y_);
+//    fprintf(fp, "\n");
+//    fclose(fp);
+//}
 
 //********** Math Helpers function ******************//
 // convert to geo_math_helper library
