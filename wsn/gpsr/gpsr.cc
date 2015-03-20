@@ -1,7 +1,7 @@
 /*
  * gpsr.cc
  *
- *  Last edited on Nov 11, 2013
+ *  Last edited on Mar 18, 2015
  *  by Trong Nguyen
  */
 
@@ -17,12 +17,12 @@ int hdr_gpsr::offset_;
  */
 static class HelloHeaderClass : public PacketHeaderClass
 {
-	public:
-		HelloHeaderClass() : PacketHeaderClass("PacketHeader/HELLO", sizeof(hdr_hello))
-		{
-			bind_offset(&hdr_hello::offset_);
-		}
-		~HelloHeaderClass(){}
+public:
+	HelloHeaderClass() : PacketHeaderClass("PacketHeader/HELLO", sizeof(hdr_hello))
+	{
+		bind_offset(&hdr_hello::offset_);
+	}
+	~HelloHeaderClass(){}
 }class_hellohdr;
 
 /*
@@ -30,12 +30,12 @@ static class HelloHeaderClass : public PacketHeaderClass
  */
 static class GPSRHeaderClass : public PacketHeaderClass
 {
-	public:
-		GPSRHeaderClass() : PacketHeaderClass("PacketHeader/GPSR", sizeof(hdr_gpsr))
-		{
-			bind_offset(&hdr_gpsr::offset_);
-		}
-		~GPSRHeaderClass(){}
+public:
+	GPSRHeaderClass() : PacketHeaderClass("PacketHeader/GPSR", sizeof(hdr_gpsr))
+	{
+		bind_offset(&hdr_gpsr::offset_);
+	}
+	~GPSRHeaderClass(){}
 }class_gpsrhdr;
 
 /*
@@ -43,13 +43,13 @@ static class GPSRHeaderClass : public PacketHeaderClass
  */
 static class GPSRAgentClass : public TclClass
 {
-	public:
-		GPSRAgentClass() : TclClass("Agent/GPSR") {}
+public:
+	GPSRAgentClass() : TclClass("Agent/GPSR") {}
 
-		TclObject *create(int, const char*const*)
-		{
-			return new GPSRAgent();
-		}
+	TclObject *create(int, const char*const*)
+	{
+		return new GPSRAgent();
+	}
 }class_gpsr;
 
 /*
@@ -77,6 +77,7 @@ GPSRAgent::GPSRAgent() : Agent(PT_GPSR), hello_timer_(this)
 	dest = new Point();
 
 	energy_checkpoint_ = 0;
+	off_time_ = -1;
 
 	bind("hello_period_", 		&hello_period_);
 	bind("energy_checkpoint_",	&energy_checkpoint_);
@@ -101,6 +102,7 @@ GPSRAgent::command(int argc, const char*const* argv)
 		if (strcasecmp(argv[1], "nodeoff") == 0)
 		{
 			hello_timer_.force_cancel();
+			off_time_ = Scheduler::instance().clock();
 		}
 	}
 
@@ -191,7 +193,7 @@ GPSRAgent::startUp()
 	dest->x_ = node_->destX();
 	dest->y_ = node_->destY();
 
-	hello_timer_.resched(randSend_.uniform(0.0, 5));
+	hello_timer_.resched(randSend_.uniform(0.0, 1));
 
 	FILE *fp;
 	fp = fopen("Neighbors.tr",	"w");	fclose(fp);
@@ -224,9 +226,9 @@ GPSRAgent::addNeighbor(nsaddr_t nid, Point location)
 	if (temp == NULL)	 		// it is a new node
 	{
 		temp = new neighbor;
-		temp->id_ = nid;
-		temp->x_ = location.x_;
-		temp->y_ = location.y_;
+		temp->id_ 	= nid;
+		temp->x_ 	= location.x_;
+		temp->y_ 	= location.y_;
 		temp->time_ = Scheduler::instance().clock();
 		temp->next_ = NULL;
 
@@ -254,7 +256,7 @@ GPSRAgent::addNeighbor(nsaddr_t nid, Point location)
 			}
 		}
 	}
-	else
+	else // temp != null
 	{
 		temp->time_ = Scheduler::instance().clock();
 		temp->x_ = location.x_;
@@ -323,7 +325,7 @@ GPSRAgent::hellotout()
 
 }
 
-void 
+void
 GPSRAgent::sendHello()
 {
 	if (my_id_ < 0) return;
@@ -349,8 +351,7 @@ GPSRAgent::sendHello()
 
 	send(p, 0);
 
-    // todo: uncomment
-//	printf("%d\t- Send Hello\n", my_id_);
+	printf("%d\t- Send Hello\n", my_id_);
 }
 
 void
@@ -451,6 +452,7 @@ GPSRAgent::recvGPSR(Packet* p, hdr_gpsr* gdh)
 			default:
 				drop(p, " UnknowType");
 				return;
+				break;
 		}
 
 		gdh->prev_ = *this;
@@ -497,7 +499,7 @@ GPSRAgent::dumpNeighbor()
 {
 	FILE *fp = fopen("Neighbors.tr", "a+");
 
-	fprintf(fp, "%d	%f	%f	", my_id_, this->x_, this->y_);
+	fprintf(fp, "%d	%f	%f	%f	", this->my_id_, this->x_, this->y_, this->off_time_);
 	for (node *temp = neighbor_list_; temp; temp = temp->next_)
 	{
 		fprintf(fp, "%d,", temp->id_);
