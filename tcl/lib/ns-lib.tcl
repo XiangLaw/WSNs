@@ -978,9 +978,7 @@ Simulator instproc create-griddynamic-agent { node } {
 	$node addr $addr
 	$node set ragent_ $ragent
 	$self at 0.0 	"$ragent start"    ;# start updates
-	$self at 30	"$ragent boundhole"
-	# $self at 90	"$ragent routing"	
-	return $ragent	
+	return $ragent
 }
 
 # CONVEX ONLINE

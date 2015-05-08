@@ -137,7 +137,7 @@ GridDynamicAgent::startUp()
 
 	pivot.id_ = -1;
 
-	findStuck_timer_.resched(20);
+	findStuck_timer_.resched(hello_period_ * 1.5);
 
 	// clear trace file
 	FILE *fp;
@@ -151,8 +151,6 @@ GridDynamicAgent::startUp()
 void
 GridDynamicAgent::recvGridDynamic(Packet* p)
 {
-	// printf("%f - recvGridDynamic\n", Scheduler::instance().clock());
-
 	hdr_griddynamic* hgd = HDR_GRIDDYNAMIC(p);
 	switch (hgd->type_)
 	{
@@ -231,8 +229,6 @@ GridDynamicAgent::findStuckAngle()
 void
 GridDynamicAgent::sendBoundHole()
 {
-	// printf("%f - sendBoundHole\n", Scheduler::instance().clock());
-
 	Packet		*p;
 	hdr_cmn		*cmh;
 	hdr_ip		*iph;
@@ -271,7 +267,7 @@ GridDynamicAgent::sendBoundHole()
 
 		send(p, 0);
 
-		printf("%d\t- Send GridDynamic at (%f)\n", my_id_, Scheduler::instance().clock());
+		printf("%d\t- Send GridDynamic (%f)\n", my_id_, Scheduler::instance().clock());
 	}
 
 	// send Pivot
@@ -1091,6 +1087,7 @@ void GridDynamicAgent::dumpElection()
 {
 	FILE * fp = fopen("Election.tr", "a+");
 	fprintf(fp, "%f\t%d\t%f\t%f\n", Scheduler::instance().clock(), my_id_, x_, y_);
+	printf("%d - elect (%f)\n", my_id_, Scheduler::instance().clock());
 	fclose(fp);
 }
 
@@ -1098,15 +1095,18 @@ void GridDynamicAgent::dumpAlarm()
 {
 	FILE * fp = fopen("Alarm.tr", "a+");
 	fprintf(fp, "%f\t%d\t%f\t%f\n", Scheduler::instance().clock(), my_id_, x_, y_);
+	printf("%d - alarm (%f)\n", my_id_, Scheduler::instance().clock());
 	fclose(fp);
 }
 
 void GridDynamicAgent::dumpPivot() {
 	FILE * fp = fopen("Alarm.tr", "a+");
+	printf("%d - pivot (%f)\n", my_id_, Scheduler::instance().clock());
 	fclose(fp);
 }
 
 void GridDynamicAgent::dumpCollect() {
 	FILE * fp = fopen("Collect.tr", "a+");
+	printf("%d - collect (%f)\n", my_id_, Scheduler::instance().clock());
 	fclose(fp);
 }

@@ -351,7 +351,6 @@ GPSRAgent::sendHello()
 
 	send(p, 0);
 
-	printf("%d\t- Send Hello\n", my_id_);
 }
 
 void
