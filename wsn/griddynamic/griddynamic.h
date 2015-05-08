@@ -1,9 +1,4 @@
-/*
- * grid.h
- *
- * Created on: Mar 20, 2014
- * author :    trongnguyen
- */
+
 
 #ifndef GRIDDYNAMIC_H_
 #define GRIDDYNAMIC_H_
@@ -24,12 +19,13 @@ struct stuckangle
 };
 
 int limit_boundhole_hop_;
+double nodeoff_threshold; // evaluate by time
 double limit_x_;
 double limit_y_;
 double r_;
 double range_;
 double limit_;
-//double update_period_;
+double update_period_;
 
 struct gridHole {
 	int hole_id_;
@@ -108,18 +104,19 @@ class GridDynamicAgent : public GPSRAgent {
 private:
 	friend class GridDynamicHelloTimer;
 	GridDynamicTimer findStuck_timer_;
-	GridDynamicTimer boundhole_timer_;
 	GridDynamicTimer updateSta_timer_;
 
 	stuckangle* stuck_angle_;
-	//polygonHole* hole_list_;
 	gridHole* hole_;
 
 	bool isBoundary;
+	bool isSink;
+	bool isStuck;
 	node pivot;
 
 	void startUp();
 
+	bool removeNodeoff();
 	void findStuckAngle();
 	node* getNeighborByBoundhole(Point*, Point*);
 
@@ -135,37 +132,40 @@ private:
 	void createPolygonHole(gridHole*);
 	void reducePolygonHole(gridHole*);
 
-
+	void updateState();
 	void checkState();
 
 	void recvGridDynamic(Packet* p);
 
-	void sendBroadcast(Packet*);
-	void recvBroadcast(Packet*);
+	void sendNotify();
+	void recvNotify(Packet *);
 
-	void sendElection();
-	void recvElection(Packet*);
+	void sendPivot();
+	void recvPivot(Packet *);
 
 	void sendAlarm();
-	void recvAlarm(Packet*);
 
-	//void sendUpdate();
-	//void recvUpdate(Packet*);
+	void sendCollect(Packet*);
+	void recvCollect(Packet*);
 
-	void sendData(Packet*);
-	void recvData(Packet*);
+	void sendUpdate();
+	void recvUpdate(Packet*);
 
 	Point getAnchorPoint(Point dest);
 
 	void dumpBoundhole(gridHole*);
 	void dumpArea(gridHole*);
+	void dumpPivot();
 	void dumpElection();
+	void dumpCollect();
 	void dumpAlarm();
 
 public:
 	GridDynamicAgent();
 	int 	command(int, const char*const*);
 	void 	recv(Packet*, Handler*);
+
+	static node* sink_list_;
 };
 
 #endif /* GRID_H_ */

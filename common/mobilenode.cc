@@ -214,6 +214,14 @@ MobileNode::command(int argc, const char*const* argv)
 			God::instance()->ComputeRoute();
 		    return TCL_OK;
 		}
+		else if (strcmp(argv[1], "sink") == 0) {
+
+			tcl.evalf("%s set ragent_", name_);
+			const char *str = tcl.result();
+			tcl.evalf("%s nodesink", str);
+
+			return TCL_OK;
+		}
 		else if (strcmp(argv[1], "shutdown") == 0) {
 			// set node state
 			//Phy *p;

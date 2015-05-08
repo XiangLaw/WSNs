@@ -265,6 +265,7 @@ set(OBJ_CC
   wsn/griddynamic/griddynamic.cc
   wsn/gridoffline/gridoffline.cc wsn/gridoffline/gridoffline_packet_data.cc
   wsn/gridonline/gridonline.cc wsn/gridonline/gridonline_packet_data.cc
+  wsn/griddynamic/griddynamic.cc wsn/griddynamic/griddynamic_packet_data.cc
   wsn/hexagon/hexagon.cc
   wsn/octagon/octagon.cc
   wsn/scalegoal/scalegoal.cc
