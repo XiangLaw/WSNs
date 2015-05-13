@@ -272,16 +272,10 @@ void ElbarGridOfflineAgent::routing(Packet *p) {
     Point *anchor_point = &(egh->anchor_point_);
     int routing_mode = egh->forwarding_mode_;
 
-    if (1019 == my_id_){
-        int i = my_id_;
-    }
-
     if (region_ == REGION_3 || region_ == REGION_1 || hole_list_ == NULL) {
         // greedy mode when in region3 or 1 or have no info about hole
         egh->forwarding_mode_ = GREEDY_MODE;
         node* nexthop = NULL;
-        int x = anchor_point->x_;
-        int y = anchor_point->y_;
         if(anchor_point->x_ != -1 && anchor_point->y_ != -1) {
             nexthop = recvGPSR(p, *anchor_point);
         } else {

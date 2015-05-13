@@ -65,8 +65,8 @@
 struct octagonHole
 {
 	int hole_id_;
-	double pc_;
-	double delta_;
+	double pc_; 	// perimeter of polygon
+	double delta_; 	// no use???
 	double d_;
 	struct node* node_list_;
 	struct octagonHole* next_;

@@ -224,7 +224,7 @@ GridOfflineAgent::recvBoundHole(Packet *p) {
 
     // if the grid packet has came back to the initial node
     if (iph->saddr() == my_id_) {
-        if (iph->ttl_ > (limit_boundhole_hop_ - 5)) {
+        if (iph->ttl_ > (limit_boundhole_hop_ - 10)) {
             drop(p, " SmallHole");    // drop hole that have less than 5 hop
         }
         else {
@@ -377,7 +377,7 @@ GridOfflineAgent::createPolygonHole(Packet *p) {
 
     // get a, x0, y0
     GridOfflinePacketData *data = (GridOfflinePacketData *) p->userdata();
-    data->dump();
+    //data->dump();
     int minx = 0, maxx = 0, miny = 0, maxy = 0, x = 0, y = 0;
 
     for (int i = 1; i <= data->size(); i++) {

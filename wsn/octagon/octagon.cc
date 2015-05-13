@@ -80,6 +80,9 @@ int OctagonAgent::command(int argc, const char*const* argv)
 
 // --------------------- Approximate hole ------------------------- //
 
+/**
+ * huyvq: algorithm 1 implementation: Core polygon determination
+ */
 void OctagonAgent::createHole(Packet* p)
 {
 	polygonHole * h = createPolygonHole(p);
@@ -112,8 +115,11 @@ void OctagonAgent::createHole(Packet* p)
 	Line l0;			// line contain n0 and perpendicular with base line
 	Line l1;			// line contain n1 and perpendicular with base line
 	Line l2;			// line contain n2 and parallel with base line
-	Line l3;			// line contain n2 and parallel with base line
+	Line l3;			// line contain n3 and parallel with base line
 
+	/*
+	 * huyvq: Select H p , H q as the two ends of the longest diagonal of the polygon.
+	 */
 	// find couple node that have maximum distance - n0, n1
 	newHole->d_ = 0;
 	for	(struct node* i = h->node_list_; i; i = i->next_)
@@ -130,13 +136,16 @@ void OctagonAgent::createHole(Packet* p)
 		}
 	}
 
-	bl = G::line(n0, n1);
+	bl = G::line(n0, n1); // bl = H(p)H(q)
 	l0 = G::perpendicular_line(n0, bl);
 	l1 = G::perpendicular_line(n1, bl);
 
 	// cycle the node_list
 	h->circleNodeList();
 
+	/*
+	 * huyvq: choose H(j) and H(k)
+	 */
 	// find n2 and n3 - with maximum distance from base line
 	double mdis = 0;
 	for (struct node* i = n0; i != n1->next_; i = i->next_)
@@ -158,6 +167,7 @@ void OctagonAgent::createHole(Packet* p)
 			n3 = i;
 		}
 	}
+
 	// check if n2 and n3 in other side of base line of not
 	if (G::position(n2, bl) * G::position(n3, bl) > 0) // n2 and n3 in same side of base line
 	{
@@ -203,8 +213,8 @@ void OctagonAgent::createHole(Packet* p)
 
 	// ------------ calculate approximate home
 
-	Point itsp;
-	Line itsl;
+	Point itsp; // intersect point (tmp)
+	Line itsl;  // intersect line (tmp)
 	double mc;
 
 	// l02 intersection l0 and l2
@@ -300,7 +310,7 @@ void OctagonAgent::createHole(Packet* p)
 	newHole->delta_ = 0;
 	i = h->node_list_;
 	do {
-		newHole->delta_ += G::distance(i, i->next_);
+		newHole->delta_ += G::distance(i, i->next_); // delta_ = perimeter of boundhole
 		i = i->next_;
 	} while (i != h->node_list_);
 
@@ -409,9 +419,11 @@ void OctagonAgent::recvBroadcast(Packet* p)
 		temp->next_ = newHole->node_list_;
 
 		// ----------- routing
+		// TODO: chỉ thực hiện staticRouting với điểm k có thông tin về hố chứ?
+		// TODO: đáng nhẽ phải gọi hàm sau khi kiểm tra điều kiện (1)?
 		staticRouting();
 
-		// ----------- broadcast hole's information. Check if (1) is accept
+		// ----------- broadcast hole's information. Check if (1) is satisfy
 		double alpha = 0;
 		double ln = 0;
 
@@ -439,7 +451,7 @@ void OctagonAgent::recvBroadcast(Packet* p)
 		}
 		else
 		{
-			drop(p,"limited");
+			drop(p,"region_limited");
 		}
 
 		// ---------- dump
@@ -452,7 +464,9 @@ void OctagonAgent::recvBroadcast(Packet* p)
 }
 
 // --------------------- Routing --------------------------------- //
-
+/*
+ * S is source ( S belongs to region 2)
+ */
 void OctagonAgent::staticRouting()
 {
 	// clear routing table
@@ -480,7 +494,7 @@ void OctagonAgent::staticRouting()
 			if (numIntersect > 1)
 			{
 				double l = G::distance(this, dest);
-				if (l <= h->d_ + (h->pc_ / (2 * (fsin3pi8 - 1))))
+				if (l <= h->d_ + (h->pc_ / (2 * (fsin3pi8 - 1)))) // scale factor = 1
 				{
 					bypassingHole(h, dest, routing_table, routing_num_);
 				}
@@ -540,7 +554,7 @@ void OctagonAgent::staticRouting()
 
 					free(scaleHole);
 				}
-			}
+			} // if SD intersects with hole polygon
 		} // for each hole
 	} // if (des->x_ || des->y_)
 
@@ -595,6 +609,26 @@ void OctagonAgent::dynamicRouting(Packet* p)
 		I.x_ = 0;
 		I.y_ = 0;
 
+		/*
+		 * how to choose I randomly?
+		 * cần tìm I nằm trong polygon, k mất tính tổng quát giả sử tọa độ X của các đỉnh của polygon là
+		 * x1 <= x2 <= x3 <= x4 <= x5 <= x6 <= x7 <= x8
+		 * khi đó I(x) = tích của (x(i) * r(i)) // r(i) = rand();
+		 * => x1 <= I(x) <= x8
+		 * tương tự cho I(y)
+		 * // TODO: có chắc I nằm trong polygon
+		 */
+		/* cần kiểm tra lại:
+		 * define 8 lines for new approximate hole
+		 *
+		 * 	|	    ____[2]_________
+		 * 	|	[02]	 			[21]______
+		 * 	|   /		 					  \
+		 * 	[0] ----------------------------- [1]
+		 * 	|   \____                       ___/
+		 * 	|.(I)	[30]____   ________[13]
+		 * 	|_______________[3]___________________
+		 */
 		double fr = 0;
 		n = h->node_list_;
 		do {
@@ -611,6 +645,9 @@ void OctagonAgent::dynamicRouting(Packet* p)
 
 		// calculate i
 		double i = (fsin3pi8 + broadcast_rate_ - 1 / cos(alpha / 2)) * l / h->pc_ - 0.3 / cos(alpha / 2);
+
+		// TODO: recheck formula? because i met a case where i < 1
+		if(i < 1) i = 1; // hardcode i = 1 if i < 1
 
 		// scale hole by I and i
 		scaleHole = new octagonHole();
