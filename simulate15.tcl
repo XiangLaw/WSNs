@@ -15,7 +15,7 @@ set opt(mac)	Mac/802_11
 set opt(ifq)	Queue/DropTail/PriQueue
 set opt(ll)	LL
 set opt(ant)	Antenna/OmniAntenna
-set opt(rp)	ELLIPSE
+set opt(rp)	EHDS
 set opt(trans)	UDP
 set opt(apps)	CBR
 
@@ -54,12 +54,11 @@ Antenna/OmniAntenna set Z_ 1.5
 Antenna/OmniAntenna set Gt_ 1
 Antenna/OmniAntenna set Gr_ 1
 
-Agent/ELLIPSE set limit_boundhole_hop_ 80
-Agent/ELLIPSE set alpha_ 0.8
-Agent/ELLIPSE set energy_checkpoint_ 995
-Agent/ELLIPSE set hello_period_ 0
-Agent/ELLIPSE set storage_opt_ 1
-Agent/ELLIPSE set range_ 40
+Agent/EHDS set limit_boundhole_hop_ 80
+Agent/EHDS set energy_checkpoint_ 995
+Agent/EHDS set hello_period_ 0
+Agent/EHDS set storage_opt_ 1
+Agent/EHDS set range_ 40
 
 Agent/UDP set fid_ 2
 
