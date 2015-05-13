@@ -145,6 +145,10 @@ int Agent::command(int argc, const char*const* argv)
 		{
 			return (TCL_OK);
 		}
+		if (strcasecmp(argv[1], "nodesink") == 0)
+		{
+			return (TCL_OK);
+		}
 	}
 	else if (argc == 3) {
 		if (strcmp(argv[1], "attach") == 0) {

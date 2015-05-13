@@ -33,6 +33,7 @@ private:
     int holeAvoidingProb();
     Elbar_Region regionDetermine(double angle);
 
+    void sendPackageToHop(Packet *p, node *nexthop);
     void configDataPacket(Packet *p);
     void recvData(Packet *p);
     void recvElbar(Packet *p);
@@ -74,6 +75,8 @@ public:
 
     int command(int, const char *const *);
     void recv(Packet *, Handler *);
+
+    void dumpAnchorPoint(int id, Point *pPoint);
 };
 
 #endif

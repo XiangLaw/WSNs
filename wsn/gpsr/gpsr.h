@@ -75,6 +75,7 @@ protected:
 	PortClassifier*	port_dmux_;			// for the higher layer app de-multiplexing
 	Trace *			trace_target_;
 	neighbor*		neighbor_list_;		// neighbor list: routing table implementation
+	double 			off_time_;			// time node go off
 	Point * 		dest;				// position of destination
 
 	nsaddr_t my_id_;					// node id (address), which is NOT necessary
