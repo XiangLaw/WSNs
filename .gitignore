@@ -34,3 +34,5 @@ Makefile
 *.tr
 
 .idea/
+bin/ns
+bin/ptypes2tcl
