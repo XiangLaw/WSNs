@@ -88,8 +88,21 @@ enum AppDataType {
 	DIFFUSION_DATA,
 
 	// Last ADU
-	ADU_LAST
+	ADU_LAST,
 
+	// Bound hole
+	BOUNDHOLE_DATA,
+
+	// Gird
+	GRIDOFFLINE_DATA,
+	GRIDONLINE_DATA,
+	GRIDDYNAMIC_DATA,
+
+	// Dynamic polygon
+	DYNAMICPOLYGON_DATA,
+
+    // Elbar
+    ELBAR_GRIDOFFLINE_DATA,
 };
 
 // Interface for generic application-level data unit. It should know its 

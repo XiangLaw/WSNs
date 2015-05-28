@@ -53,20 +53,21 @@ class REMQueue;
  * REM parameters, supplied by user
  */
 struct remp {
-	/*
-	 * User supplied.
-	 */
-	double p_inw;	/* queue weight given to cur q size sample */
-	double p_gamma;
-	double p_phi;
-	double p_delta;
-	double p_pktsize;
-	double p_updtime;
-	double p_bo;
-	/*
-	 * Computed as a function of user supplied parameters.
-	*/
-	double p_ptc;
+    /*
+     * User supplied.
+     */
+    double p_inw;
+    /* queue weight given to cur q size sample */
+    double p_gamma;
+    double p_phi;
+    double p_delta;
+    double p_pktsize;
+    double p_updtime;
+    double p_bo;
+    /*
+     * Computed as a function of user supplied parameters.
+    */
+    double p_ptc;
 
 };
 
@@ -74,66 +75,88 @@ struct remp {
  * REM variables, maintained by REM 
  */
 struct remv {
-	TracedDouble v_pl;	/* link price */
-	TracedDouble v_prob;	/* prob. of packet marking. */
-	double v_in;	/* used in computing the input rate */
-	double v_ave;
-	double v_count;
-	double v_pl1;
-	double v_pl2;
-	double v_in1;
-	double v_in2;
+    TracedDouble v_pl;
+    /* link price */
+    TracedDouble v_prob;
+    /* prob. of packet marking. */
+    double v_in;
+    /* used in computing the input rate */
+    double v_ave;
+    double v_count;
+    double v_pl1;
+    double v_pl2;
+    double v_in1;
+    double v_in2;
 
-	remv() : v_pl(0.0), v_prob(0.0), v_in(0.0), v_ave(0.0),	v_count(0.0){ }
+    remv() : v_pl(0.0), v_prob(0.0), v_in(0.0), v_ave(0.0), v_count(0.0) {
+    }
 };
 
 class REMTimer : public TimerHandler {
-	public:
-		REMTimer (REMQueue *a) : TimerHandler() { a_ = a; }
-	protected:
-		virtual void expire (Event *e);
-		REMQueue *a_;
-};			 
+public:
+    REMTimer(REMQueue *a) : TimerHandler() {
+        a_ = a;
+    }
+
+protected:
+    virtual void expire(Event *e);
+
+    REMQueue *a_;
+};
 
 class REMQueue : public Queue {
- public:	
-	REMQueue();
-	void set_update_timer();
-	void timeout();
+public:
+    REMQueue();
 
- protected:
-	int command(int argc, const char*const* argv);
-	void enque(Packet* pkt);
-	Packet* deque();
-	void reset();
-	void run_updaterule();
+    void set_update_timer();
 
-	LinkDelay* link_;	/* outgoing link */
-	PacketQueue *q_; 	/* underlying (usually) FIFO queue */
-		
-	Tcl_Channel tchan_;		 /* Place to write trace records */
-	TracedInt curq_;	/* current qlen seen by arrivals */
-	void trace(TracedVar*);	/* routine to write trace records */
+    void timeout();
 
-	REMTimer rem_timer_;
+protected:
+    int command(int argc, const char *const *argv);
 
-	/*
-	 * Static state.
-	 */
-	double pmark_;	 //number of packets being marked
-	remp remp_;	/* early-drop params */
+    void enque(Packet *pkt);
 
-	/*
-	 * Dynamic state.
-	 */
-	remv remv_;		/* early-drop variables */
+    Packet *deque();
 
-	int markpkts_ ; 
-	int bcount_;
-	int qib_; 
+    void reset();
 
-	void print_remp();	// for debugging
-	void print_remv();	// for debugging
+    void run_updaterule();
+
+    LinkDelay *link_;
+    /* outgoing link */
+    PacketQueue *q_;
+    /* underlying (usually) FIFO queue */
+
+    Tcl_Channel tchan_;
+    /* Place to write trace records */
+    TracedInt curq_;
+
+    /* current qlen seen by arrivals */
+    void trace(TracedVar *);
+
+    /* routine to write trace records */
+
+    REMTimer rem_timer_;
+
+    /*
+     * Static state.
+     */
+    double pmark_;     //number of packets being marked
+    remp remp_;    /* early-drop params */
+
+    /*
+     * Dynamic state.
+     */
+    remv remv_;
+    /* early-drop variables */
+
+    int markpkts_;
+    int bcount_;
+    int qib_;
+
+    void print_remp();    // for debugging
+    void print_remv();    // for debugging
 };
 
 

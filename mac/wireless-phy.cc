@@ -148,14 +148,6 @@ WirelessPhy::command(int argc, const char*const* argv)
 			return TCL_OK;
 		} else if (strcasecmp(argv[1], "NodeOff") == 0) {
 			node_off();
-
-			if (em() == NULL) 
-				return TCL_OK;
-			if (NOW > update_energy_time_) {
-				em()->DecrIdleEnergy(NOW-update_energy_time_,
-						     P_idle_);
-				update_energy_time_ = NOW;
-			}
 			return TCL_OK;
 		}
 	} else if(argc == 3) {
@@ -207,21 +199,19 @@ WirelessPhy::sendDown(Packet *p)
 	 * Sanity Check
 	 */
 	assert(initialized());
-	
-	if (em()) {
-			//node is off here...
-			if (Is_node_on() != true ) {
-			Packet::free(p);
-			return;
-			}
-			if(Is_node_on() == true && Is_sleeping() == true){
-			em()-> DecrSleepEnergy(NOW-update_energy_time_,
-							P_sleep_);
-			update_energy_time_ = NOW;
 
-			}
-
+	//node is off here...
+	if (!Is_node_on()) {
+		Packet::free(p);
+		return;
 	}
+	
+	// if node sleep
+	if (em() && Is_sleeping() == true){
+		em()-> DecrSleepEnergy(NOW-update_energy_time_, P_sleep_);
+		update_energy_time_ = NOW;
+	}
+
 	/*
 	 * Decrease node's energy
 	 */
@@ -320,18 +310,16 @@ WirelessPhy::sendUp(Packet *p)
 
 	Pr = p->txinfo_.getTxPr();
 	
-	// if the node is in sleeping mode, drop the packet simply
-	if (em()) {
-			if (Is_node_on()!= true){
-			pkt_recvd = 0;
-			goto DONE;
-			}
+	//node is off here...
+	if (!Is_node_on()) {
+		pkt_recvd = 0;
+		goto DONE;
+	}
 
-			if (Is_sleeping()==true && (Is_node_on() == true)) {
-				pkt_recvd = 0;
-				goto DONE;
-			}
-			
+	// if the node is in sleeping mode, drop the packet simply
+	if (em() && Is_sleeping()) {
+		pkt_recvd = 0;
+		goto DONE;
 	}
 	// if the energy goes to ZERO, drop the packet simply
 	if (em()) {
@@ -440,12 +428,11 @@ DONE:
 void
 WirelessPhy::node_on()
 {
-
-        node_on_= TRUE;
+	node_on_= TRUE;
 	status_ = IDLE;
 
-       if (em() == NULL)
- 	    return;	
+	if (em() == NULL)
+		return;
    	if (NOW > update_energy_time_) {
       	    update_energy_time_ = NOW;
    	}
@@ -454,16 +441,12 @@ WirelessPhy::node_on()
 void 
 WirelessPhy::node_off()
 {
-
-        node_on_= FALSE;
+	node_on_= FALSE;
 	status_ = SLEEP;
 
-	if (em() == NULL)
-            return;
-        if (NOW > update_energy_time_) {
-            em()->DecrIdleEnergy(NOW-update_energy_time_,
-                                P_idle_);
-            update_energy_time_ = NOW;
+	if (em() != NULL && NOW > update_energy_time_) {
+		em()->DecrIdleEnergy(NOW-update_energy_time_, P_idle_);
+		update_energy_time_ = NOW;
 	}
 }
 

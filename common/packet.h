@@ -199,8 +199,23 @@ static const packet_t PT_DCCP_RESET = 71;
         // M-DART packets
 static const packet_t PT_MDART = 72;
 	
-        // insert new packet types here
-static packet_t       PT_NTYPE = 73; // This MUST be the LAST one
+        // wsn algorithms
+static const packet_t PT_HELLO = 73;			// Hello - to locating neighbor
+static const packet_t PT_GPSR = 74;				// cbr routing by GPSR algorithm
+static const packet_t PT_BOUNDHOLE = 75;		// define BoundHole
+static const packet_t PT_EHDS = 76;				// cbr routing by EHDS
+static const packet_t PT_HEXAGON = 77;			// cbr routing by HEXAGON
+static const packet_t PT_ELLIPSE = 78;			// cbr routing by ELLIPSE
+static const packet_t PT_OCTAGON = 79;			// cbr routing by OCTAGON
+static const packet_t PT_CONVEXHULL = 80;		// cbr routing by Convex hull
+static const packet_t PT_SCALEGOAL = 81;		// broadcast scale convex hull hole
+static const packet_t PT_GRID = 82;				// approximate hole by gird
+static const packet_t PT_GRIDDYNAMIC = 83;		// gird dynamic
+static const packet_t PT_DYNAMICPOLYGON = 84;	// Dynamic polygon
+// wsn-ext
+static const packet_t PT_ELBARGRID = 85; // elbar + grid
+
+static packet_t       PT_NTYPE = 86; 			// This MUST be the LAST one
 
 enum packetClass
 {
@@ -416,6 +431,23 @@ public:
 		name_[PT_DCCP_CLOSE]="DCCP_Close";
 		name_[PT_DCCP_CLOSEREQ]="DCCP_CloseReq";
 		name_[PT_DCCP_RESET]="DCCP_Reset";
+
+		// WSN
+		name_[PT_HELLO]="HELLO";
+		name_[PT_BOUNDHOLE]="BOUNDHOLE";
+		name_[PT_GPSR]="GPSR";
+		name_[PT_EHDS]="EHDS";
+		name_[PT_HEXAGON]="HEXAGON";
+		name_[PT_ELLIPSE]="ELLIPSE";
+		name_[PT_OCTAGON]="OCTAGON";
+		name_[PT_CONVEXHULL]="CONVEXHULL";
+		name_[PT_SCALEGOAL]="SCALEGOAL";
+		name_[PT_GRID]="GRID";
+		name_[PT_GRIDDYNAMIC]="GRIDDYNAMIC";
+		name_[PT_DYNAMICPOLYGON]="DYNAMICPOLYGON";
+
+        // wsn-ext
+        name_[PT_ELBARGRID] = "ELBARGRIDOFFLINE";
 
 		name_[PT_NTYPE]= "undefined";
 	}

@@ -38,6 +38,7 @@
 #define ns_object_h
 
 #include "scheduler.h"
+#include "../../tclcl-1.20/tclcl.h"
 
 #define NOW Scheduler::instance().clock()
 

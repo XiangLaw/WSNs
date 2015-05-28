@@ -59,12 +59,12 @@ if {[info commands debug] == ""} {
 }
 
 proc assert args {
-        if [catch "expr $args" ret] {
-                set ret [eval expr $args]
-        }
-        if {! $ret} {
-                error "assertion failed: $args"
-        }
+	if [catch "expr $args" ret] {
+		set ret [eval expr $args]
+	}
+	if {! $ret} {
+		error "assertion failed: $args"
+	}
 }
 
 proc find-max list {
@@ -397,11 +397,11 @@ Simulator instproc MPLS { val } {
 
 
 Simulator instproc PGM { val } { 
-        if { $val == "ON" } {
-                Node enable-module "PGM"
-        } else {
-                Node disable-module "PGM"
-        }
+	if { $val == "ON" } {
+		Node enable-module "PGM"
+	} else {
+		Node disable-module "PGM"
+	}
 }
 Simulator instproc LMS { val } {
 	if { $val == "ON" } {
@@ -439,17 +439,17 @@ Simulator instproc get-nodetype {} {
 }
 
 Simulator instproc node-config args {
-        # Object::init-vars{} is defined in ~tclcl/tcl-object.tcl.
-        # It initializes all default variables in the following way:
-        #  1.  Look for pairs of {-cmd val} in args
-        #  2.  If "$self $cmd $val" is not valid then put it in a list of 
-        #      arguments to be returned to the caller.
-        # 
-        # Since we do not handle undefined {-cmd val} pairs, we ignore 
-        # return value from init-vars{}.
-        set args [eval $self init-vars $args]
+	# Object::init-vars{} is defined in ~tclcl/tcl-object.tcl.
+	# It initializes all default variables in the following way:
+	#  1.  Look for pairs of {-cmd val} in args
+	#  2.  If "$self $cmd $val" is not valid then put it in a list of 
+	#      arguments to be returned to the caller.
+	# 
+	# Since we do not handle undefined {-cmd val} pairs, we ignore 
+	# return value from init-vars{}.
+	set args [eval $self init-vars $args]
 
-        $self instvar addressType_  routingAgent_ propType_  macTrace_ \
+	$self instvar addressType_  routingAgent_ propType_  macTrace_ \
 	    routerTrace_ agentTrace_ movementTrace_ channelType_ channel_ \
 	    chan topoInstance_ propInstance_ mobileIP_ \
 	    rxPower_ txPower_ idlePower_ sleepPower_ sleepTime_ transitionPower_ \
@@ -460,26 +460,26 @@ Simulator instproc node-config args {
 	}
 
 
-        if [info exists macTrace_] {
+	if [info exists macTrace_] {
 		Simulator set MacTrace_ $macTrace_
 	}
-        if [info exists routerTrace_] {
+	if [info exists routerTrace_] {
 		Simulator set RouterTrace_ $routerTrace_
 	}
-        if [info exists agentTrace_] {
+	if [info exists agentTrace_] {
 		Simulator set AgentTrace_ $agentTrace_
 	}
-        if [info exists movementTrace_] {
+	if [info exists movementTrace_] {
 		Simulator set MovementTrace_ $movementTrace_
 	}
 
 	# change wrt Mike's code
 	if [info exists eotTrace_] {
-                Simulator set EotTrace_ $eotTrace_
-        }
+		Simulator set EotTrace_ $eotTrace_
+	}
 
-        # hacking for matching old cmu add-interface
-        # not good style, for back-compability ONLY
+	# hacking for matching old cmu add-interface
+	# not good style, for back-compability ONLY
 	#
 	# Only create 1 instance of prop
 	if {[info exists propInstance_]} {
@@ -494,10 +494,10 @@ Simulator instproc node-config args {
 	}
 	
 	# Add multi-interface support:
- 	# User can only specify either channelType_ (single_interface as 
+	 # User can only specify either channelType_ (single_interface as 
 	# before) or channel_ (multi_interface)
- 	# If both variables are specified, error!
- 	if {[info exists channelType_] && [info exists channel_]} { 
+	 # If both variables are specified, error!
+	 if {[info exists channelType_] && [info exists channel_]} { 
 		error "Can't specify both channel and channelType, error!"
 	} elseif {[info exists channelType_] && ![info exists satNodeType_]} {
 		# Single channel, single interface
@@ -505,10 +505,10 @@ Simulator instproc node-config args {
 		if {![info exists chan]} {
 			set chan [new $channelType_]
 		}
- 	} elseif {[info exists channel_]} {
+	 } elseif {[info exists channel_]} {
 		# Multiple channel, multiple interfaces
 		set chan $channel_
- 	}
+	 }
 	if [info exists topoInstance_] {
 		$propInstance_  topography $topoInstance_
 	}
@@ -530,19 +530,19 @@ Simulator instproc node-config args {
 # no shape OR color parameter is given
 Simulator instproc node args {
 	$self instvar Node_ routingAgent_ wiredRouting_ satNodeType_
-        if { [Simulator info vars EnableMcast_] != "" } {
-                warn "Flag variable Simulator::EnableMcast_ discontinued.\n\t\
-                      Use multicast methods as:\n\t\t\
-                        % set ns \[new Simulator -multicast on]\n\t\t\
-                        % \$ns multicast"
-                $self multicast
-                Simulator unset EnableMcast_
-        }
-        if { [Simulator info vars NumberInterfaces_] != "" } {
-                warn "Flag variable Simulator::NumberInterfaces_ discontinued.\n\t\
-                      Setting this variable will not affect simulations."
-                Simulator unset NumberInterfaces_
-        }
+	if { [Simulator info vars EnableMcast_] != "" } {
+		warn "Flag variable Simulator::EnableMcast_ discontinued.\n\t\
+		      Use multicast methods as:\n\t\t\
+			% set ns \[new Simulator -multicast on]\n\t\t\
+			% \$ns multicast"
+		$self multicast
+		Simulator unset EnableMcast_
+	}
+	if { [Simulator info vars NumberInterfaces_] != "" } {
+		warn "Flag variable Simulator::NumberInterfaces_ discontinued.\n\t\
+		      Setting this variable will not affect simulations."
+		Simulator unset NumberInterfaces_
+	}
 
 	# Satellite node
 	if { [info exists satNodeType_] } {
@@ -602,177 +602,227 @@ Simulator instproc imep-support {} {
 # XXX This should be moved into the node initialization procedure instead 
 # of standing here in ns-lib.tcl.
 Simulator instproc create-wireless-node args {
-        $self instvar routingAgent_ wiredRouting_ propInstance_ llType_ \
-	    macType_ ifqType_ ifqlen_ phyType_ chan antType_ \
-	    energyModel_ initialEnergy_ txPower_ rxPower_ \
-	    idlePower_ sleepPower_ sleepTime_ transitionPower_ transitionTime_ \
-	    topoInstance_ level1_ level2_ inerrProc_ outerrProc_ FECProc_ rtAgentFunction_
-
+	$self instvar routingAgent_ wiredRouting_ propInstance_ llType_ \
+		macType_ ifqType_ ifqlen_ phyType_ chan antType_ \
+		energyModel_ initialEnergy_ txPower_ rxPower_ \
+		idlePower_ sleepPower_ sleepTime_ transitionPower_ transitionTime_ \
+		topoInstance_ level1_ level2_ inerrProc_ outerrProc_ FECProc_ rtAgentFunction_   
+	
 	Simulator set IMEPFlag_ OFF
-
-        # create node instance
-        set node [eval $self create-node-instance $args]
-        
-        # basestation address setting
-        if { [info exist wiredRouting_] && $wiredRouting_ == "ON" } {
-		$node base-station [AddrParams addr2id [$node node-addr]]
+	
+	# create node instance
+	set node [eval $self create-node-instance $args]
+    
+	# basestation address setting
+	if { [info exist wiredRouting_] && $wiredRouting_ == "ON" } {
+    		$node base-station [AddrParams addr2id [$node node-addr]]
     	}
-        if {$rtAgentFunction_ != ""} {
-		set ragent [$self $rtAgentFunction_ $node]
-	} else {
+    	if {$rtAgentFunction_ != ""} {
+    		set ragent [$self $rtAgentFunction_ $node]
+    	} else {
+		# check if routingAgent set with format "Agent/routingAgent"
+		if {[string range $routingAgent_ 0 5] == "Agent/"} {
+			set routingAgent_ [string range $routingAgent_ 6 end]
+		}
+		    
 		switch -exact $routingAgent_ {
-		    DSDV {
-			    set ragent [$self create-dsdv-agent $node]
-		    }
-		    DSR {
-			    $self at 0.0 "$node start-dsr"
-		    }
-		    AODV {
-			    set ragent [$self create-aodv-agent $node]
-		    }
-		    AOMDV {
-			    set ragent [$self create-aomdv-agent $node]
-		    }
-		    MDART {
-			    set ragent [$self create-mdart-agent $node]
-		    }
-                    PUMA {
-                            set ragent [$self create-puma-agent $node]
-                    }
-		    TORA {
-			    Simulator set IMEPFlag_ ON
-			    set ragent [$self create-tora-agent $node]
-		    }
-		    DIFFUSION/RATE {
-			    eval $node addr $args
-			    set ragent [$self create-diffusion-rate-agent $node]
-		    }
-		    DIFFUSION/PROB {
-			    eval $node addr $args
-			    set ragent [$self create-diffusion-probability-agent $node]
-		    }
-		    Directed_Diffusion {
-			    eval $node addr $args
-			    set ragent [$self create-core-diffusion-rtg-agent $node]
-		    }
-		    FLOODING {
-			    eval $node addr $args
-			    set ragent [$self create-flooding-agent $node]
-		    }
-		    OMNIMCAST {
-			    eval $node addr $args
-			    set ragent [$self create-omnimcast-agent $node]
-		    }
-		    DumbAgent {
-			    set ragent [$self create-dumb-agent $node]
-		    }
-		    ManualRtg {
-			    set ragent [$self create-manual-rtg-agent $node]
-		    }
-		    default {
-			    eval $node addr $args
-			    puts "Wrong node routing agent!"
-			    exit
-		    }
+			DSDV {
+				set ragent [$self create-dsdv-agent $node]
+			}
+    	    		DSR {
+				$self at 0.0 "$node start-dsr"
+			}
+                        AODV {
+                        	set ragent [$self create-aodv-agent $node]
+                        }
+                        AOMDV {
+                        	set ragent [$self create-aomdv-agent $node]
+                        }
+                        GPSR {
+				set ragent [$self create-gpsr-agent $node]
+                        }
+                        EHDS {
+				set ragent [$self create-ehds-agent $node]
+                        }
+                        ELLIPSE {
+				set ragent [$self create-ellipse-agent $node]
+                        }
+                        HEXAGON {
+                		set ragent [$self create-hexagon-agent $node]
+                        }
+			SCALEHEXAGON {
+				set ragent [$self create-scalehexagon-agent $node]
+			}
+                        OCTAGON {
+				set ragent [$self create-octagon-agent $node]
+                        }
+			GOAL {
+				set ragent [$self create-goal-agent $node]
+			}
+			SCALEGOAL {
+				set ragent [$self create-scalegoal-agent $node]
+			}
+			GRIDOFFLINE {
+				set ragent [$self create-gridoffline-agent $node]
+			}
+			GRIDONLINE {
+				set ragent [$self create-gridonline-agent $node]
+			}
+			GRIDDYNAMIC {
+				set ragent [$self create-griddynamic-agent $node]
+			}
+			CONVEXONLINE {
+				set ragent [$self create-convexonline-agent $node]
+			}
+			DYNAMICPOLYGON {
+				set ragent [$self create-dynamicpolygon-agent $node]
+			}
+			GREEDY {
+				set ragent [$self create-greedy-agent $node]
+			}
+			ELBARGRIDOFFLINE {
+            				set ragent [$self create-elbar-gridoffline-agent $node]
+            }
+			MDART {
+				set ragent [$self create-mdart-agent $node]
+                        }
+                        PUMA {
+                        	set ragent [$self create-puma-agent $node]
+                        }
+                        TORA {
+                                Simulator set IMEPFlag_ ON
+                                set ragent [$self create-tora-agent $node]
+                        }
+                        DIFFUSION/RATE {
+				eval $node addr $args
+				set ragent [$self create-diffusion-rate-agent $node]
+                        }
+                        DIFFUSION/PROB {
+				eval $node addr $args
+				set ragent [$self create-diffusion-probability-agent $node]
+                        }
+                        Directed_Diffusion {
+				eval $node addr $args
+				set ragent [$self create-core-diffusion-rtg-agent $node]
+                        }
+                        FLOODING {
+				eval $node addr $args
+				set ragent [$self create-flooding-agent $node]
+                        }
+                        OMNIMCAST {
+				eval $node addr $args
+				set ragent [$self create-omnimcast-agent $node]
+                        }
+                        DumbAgent {
+				set ragent [$self create-dumb-agent $node]
+                        }
+                        ManualRtg {
+				set ragent [$self create-manual-rtg-agent $node]
+                        }
+                        default {
+				eval $node addr $args
+				puts "Wrong node routing agent!"
+                        	    exit
+			}
 		}
 	}
-
-	# errProc_ and FECProc_ are an option unlike other 
+        
+        # errProc_ and FECProc_ are an option unlike other 
         # parameters for node interface
-	if ![info exist inerrProc_] {
-		set inerrProc_ ""
-	}
-	if ![info exist outerrProc_] {
-		set outerrProc_ ""
-	}
-	if ![info exist FECProc_] {
-		set FECProc_ ""
-	}
-
-	
-
-	# Add main node interface
-	$node add-interface $chan $propInstance_ $llType_ $macType_ \
-	    $ifqType_ $ifqlen_ $phyType_ $antType_ $topoInstance_ \
-			$inerrProc_ $outerrProc_ $FECProc_
-	# Attach agent
-	if {$routingAgent_ != "DSR"} {
-		$node attach $ragent [Node set rtagent_port_]
-	}
-	if {$routingAgent_ == "DIFFUSION/RATE" ||
-            $routingAgent_ == "DIFFUSION/PROB" ||
-            $routingAgent_ == "FLOODING" ||
-            $routingAgent_ == "OMNIMCAST" ||
-	    $routingAgent_ == "Directed_Diffusion" } {
-		$ragent port-dmux [$node demux]
-		$node instvar ll_
-		$ragent add-ll $ll_(0)
-	}
-	if { $routingAgent_ == "DumbAgent" } {
-		$ragent port-dmux [$node demux]
-	}
-	
-
-	# Bind routing agent and mip agent if existing basestation 
-	# address setting
+        if ![info exist inerrProc_] {
+        	set inerrProc_ ""
+        }
+        if ![info exist outerrProc_] {
+        	set outerrProc_ ""
+        }
+        if ![info exist FECProc_] {
+        	set FECProc_ ""
+        }
+        
+        
+        
+        # Add main node interface
+        $node add-interface $chan $propInstance_ $llType_ $macType_ \
+            $ifqType_ $ifqlen_ $phyType_ $antType_ $topoInstance_ \
+        		$inerrProc_ $outerrProc_ $FECProc_
+        # Attach agent
+        if {$routingAgent_ != "DSR"} {
+        	$node attach $ragent [Node set rtagent_port_]
+        }
+        if {$routingAgent_ == "DIFFUSION/RATE" ||
+        $routingAgent_ == "DIFFUSION/PROB" ||
+        $routingAgent_ == "FLOODING" ||
+        $routingAgent_ == "OMNIMCAST" ||
+        $routingAgent_ == "Directed_Diffusion" } {
+        	$ragent port-dmux [$node demux]
+        	$node instvar ll_
+        	$ragent add-ll $ll_(0)
+        }
+        if { $routingAgent_ == "DumbAgent" } {
+        	$ragent port-dmux [$node demux]
+        }
+        
+        
+        # Bind routing agent and mip agent if existing basestation 
+        # address setting
         if { [info exist wiredRouting_] && $wiredRouting_ == "ON" } {
-		if { $routingAgent_ != "DSR" } {
-			$node mip-call $ragent
-		}
-	}
-	#
+        if { $routingAgent_ != "DSR" } {
+        		$node mip-call $ragent
+        	}
+        }
+        #
         # This Trace Target is used to log changes in direction
         # and velocity for the mobile node.
         #
-	set tracefd [$self get-ns-traceall]
+        set tracefd [$self get-ns-traceall]
         if {$tracefd != "" } {
-		$node nodetrace $tracefd
-		$node agenttrace $tracefd
-	}
-	set namtracefd [$self get-nam-traceall]
-	if {$namtracefd != "" } {
-		$node namattach $namtracefd
-	}
-	if [info exists energyModel_] {
-		if  [info exists level1_] {
-			set l1 $level1_
-		} else {
-			set l1 0.5
-		}
-		if  [info exists level2_] {
-			set l2 $level2_
-		} else {
-			set l2 0.2
-		}
-		$node addenergymodel [new $energyModel_ $node \
-				$initialEnergy_ $l1 $l2]
+        	$node nodetrace $tracefd
+        	$node agenttrace $tracefd
+        }
+        set namtracefd [$self get-nam-traceall]
+        if {$namtracefd != "" } {
+        	$node namattach $namtracefd
+        }
+        if [info exists energyModel_] {
+        	if  [info exists level1_] {
+        		set l1 $level1_
+        	} else {
+        		set l1 0.5
+        	}
+        	if  [info exists level2_] {
+        		set l2 $level2_
+        	} else {
+        		set l2 0.2
+        	}
+        	$node addenergymodel [new $energyModel_ $node \
+        			$initialEnergy_ $l1 $l2]
         }
         if [info exists txPower_] {
-		$node setPt $txPower_
+        	$node setPt $txPower_
         }
         if [info exists rxPower_] {
-		$node setPr $rxPower_
+        	$node setPr $rxPower_
         }
         if [info exists idlePower_] {
-		$node setPidle $idlePower_
+        	$node setPidle $idlePower_
         }
-#
-	if [info exists sleepPower_] {
-		$node setPsleep $sleepPower_
+        #
+        if [info exists sleepPower_] {
+        	$node setPsleep $sleepPower_
         }
-	if [info exists sleepTime_] {
-		$node setTSleep $sleepTime_
+        if [info exists sleepTime_] {
+        	$node setTSleep $sleepTime_
         }
-	if [info exists transitionPower_] {
-		$node setPtransition $transitionPower_
+        if [info exists transitionPower_] {
+        	$node setPtransition $transitionPower_
         }
-	if [info exists transitionTime_] {
-		$node setTtransition $transitionTime_
+        if [info exists transitionTime_] {
+        	$node setTtransition $transitionTime_
         }	
-#
-	$node topography $topoInstance_
-	
-	return $node
+        #
+        $node topography $topoInstance_
+        
+        return $node
 }
 
 Simulator instproc create-node-instance args {
@@ -801,7 +851,7 @@ Simulator instproc set-dsr-nodetype {} {
 }
 
 Simulator instproc create-tora-agent { node } {
-        set ragent [new Agent/TORA [$node id]]
+	set ragent [new Agent/TORA [$node id]]
 	$node set ragent_ $ragent
 	return $ragent
 }
@@ -852,11 +902,11 @@ Simulator instproc create-manual-rtg-agent { node } {
 }
 
 Simulator instproc create-aodv-agent { node } {
-        #  Create AODV routing agent
+	#  Create AODV routing agent
 	set ragent [new Agent/AODV [$node node-addr]]
-        $self at 0.0 "$ragent start"     ;# start BEACON/HELLO Messages
-        $node set ragent_ $ragent
-        return $ragent
+	$self at 0.0 "$ragent start"     ;# start BEACON/HELLO Messages
+	$node set ragent_ $ragent
+	return $ragent
 }
 
 # AOMDV patch
@@ -867,20 +917,275 @@ Simulator instproc create-aomdv-agent { node } {
 	return $ragent
 }
 
+# GPSR
+Simulator instproc create-gpsr-agent { node } {					
+	set ragent [new Agent/GPSR]
+	set addr [$node node-addr]
+	$ragent addr $addr
+	$ragent node $node
+	if [Simulator set mobile_ip_] {
+		$ragent port-dmux [$node demux]
+	}
+	$node addr $addr
+	$node set ragent_ $ragent
+	$self at 0.0 "$ragent start";
+	return $ragent
+}
+
+# GRID OFFLINE
+Simulator instproc create-gridoffline-agent { node } {
+	set ragent [new Agent/GRIDOFFLINE]
+	set addr [$node node-addr]
+	$ragent addr $addr
+	$ragent node $node
+	if [Simulator set mobile_ip_] {
+		$ragent port-dmux [$node demux]
+	}
+	$node addr $addr
+	$node set ragent_ $ragent
+	$self at 0.0 	"$ragent start"    ;# start updates
+	$self at 30	"$ragent boundhole"
+	$self at 90	"$ragent routing"	
+	return $ragent	
+}
+
+# GRID ONLINE
+Simulator instproc create-gridonline-agent { node } {
+	set ragent [new Agent/GRIDONLINE]
+	set addr [$node node-addr]
+	$ragent addr $addr
+	$ragent node $node
+	if [Simulator set mobile_ip_] {
+		$ragent port-dmux [$node demux]
+	}
+	$node addr $addr
+	$node set ragent_ $ragent
+	$self at 0.0 	"$ragent start"    ;# start updates
+	$self at 30	"$ragent boundhole"
+	$self at 90	"$ragent routing"
+	return $ragent	
+}
+
+# GRID DYNAMIC
+Simulator instproc create-griddynamic-agent { node } {
+	set ragent [new Agent/GRIDDYNAMIC]
+	set addr [$node node-addr]
+	$ragent addr $addr
+	$ragent node $node
+	if [Simulator set mobile_ip_] {
+		$ragent port-dmux [$node demux]
+	}
+	$node addr $addr
+	$node set ragent_ $ragent
+	$self at 0.0 	"$ragent start"    ;# start updates
+	return $ragent
+}
+
+# CONVEX ONLINE
+Simulator instproc create-convexonline-agent { node } {
+	set ragent [new Agent/CONVEXONLINE]
+	set addr [$node node-addr]
+	$ragent addr $addr
+	$ragent node $node
+	if [Simulator set mobile_ip_] {
+		$ragent port-dmux [$node demux]
+	}
+	$node addr $addr
+	$node set ragent_ $ragent
+	$self at 0.0 	"$ragent start"    ;# start updates
+	$self at 30	"$ragent boundhole"
+	$self at 90	"$ragent routing"
+	return $ragent	
+}
+
+# EHDS
+Simulator instproc create-ehds-agent { node } {
+	set ragent [new Agent/EHDS]
+	set addr [$node node-addr]
+	$ragent addr $addr
+	$ragent node $node
+	if [Simulator set mobile_ip_] {
+		$ragent port-dmux [$node demux]
+	}
+	$node addr $addr
+	$node set ragent_ $ragent
+	$self at 0.0 	"$ragent start"    ;# start updates
+	$self at 30	"$ragent boundhole"
+	$self at 90	"$ragent routing"
+	$self at 99	"$ragent bcenergy"
+	return $ragent
+}
+
+# GOAL
+Simulator instproc create-goal-agent { node } {
+	set ragent [new Agent/GOAL]
+	set addr [$node node-addr]
+	$ragent addr $addr
+	$ragent node $node
+	if [Simulator set mobile_ip_] {
+		$ragent port-dmux [$node demux]
+	}
+	$node addr $addr
+	$node set ragent_ $ragent	
+	$self at 0.0	"$ragent start"    ;# start updates
+	$self at 30	"$ragent boundhole"
+	$self at 99	"$ragent bcenergy"
+	return $ragent
+}
+
+# SCALEGOAL
+Simulator instproc create-scalegoal-agent { node } {
+	set ragent [new Agent/SCALEGOAL]
+	set addr [$node node-addr]
+	$ragent addr $addr
+	$ragent node $node
+	if [Simulator set mobile_ip_] {
+		$ragent port-dmux [$node demux]
+	}
+	$node addr $addr
+	$node set ragent_ $ragent	
+	$self at 0.0	"$ragent start"    ;# start updates
+	$self at 30	"$ragent boundhole"
+	$self at 99	"$ragent bcenergy"
+	return $ragent
+}
+
+# ELLIPSE
+Simulator instproc create-ellipse-agent { node } {
+	set ragent [new Agent/ELLIPSE]
+	set addr [$node node-addr]
+	$ragent addr $addr
+	$ragent node $node
+	if [Simulator set mobile_ip_] {
+		$ragent port-dmux [$node demux]
+	}
+	$node addr $addr
+	$node set ragent_ $ragent	
+	$self at 0.0 "$ragent start"    ;# start updates	
+	$self at 30 "$ragent boundhole"
+	$self at 99 "$ragent bcenergy"
+	return $ragent
+}
+
+# HEXAGON
+Simulator instproc create-hexagon-agent { node } {
+	set ragent [new Agent/HEXAGON]
+	set addr [$node node-addr]
+	$ragent addr $addr
+	$ragent node $node
+	if [Simulator set mobile_ip_] {
+		$ragent port-dmux [$node demux]
+	}
+	$node addr $addr
+	$node set ragent_ $ragent
+	$self at 0.0 	"$ragent start"    ;# start updates
+	$self at 30	"$ragent boundhole"
+	$self at 90	"$ragent routing"
+	$self at 99	"$ragent bcenergy"
+	return $ragent
+}
+
+# SCALE HEXAGON
+Simulator instproc create-scalehexagon-agent { node } {
+	set ragent [new Agent/SCALEHEXAGON]
+	set addr [$node node-addr]
+	$ragent addr $addr
+	$ragent node $node
+	if [Simulator set mobile_ip_] {
+		$ragent port-dmux [$node demux]
+	}
+	$node addr $addr
+	$node set ragent_ $ragent	
+	$self at 0.0 	"$ragent start"    ;# start updates
+	$self at 30	"$ragent boundhole"
+	return $ragent
+}
+
+# OCTAGON
+Simulator instproc create-octagon-agent { node } {
+	set ragent [new Agent/OCTAGON]
+	set addr [$node node-addr]
+	$ragent addr $addr
+	$ragent node $node
+	if [Simulator set mobile_ip_] {
+		$ragent port-dmux [$node demux]
+	}
+	$node addr $addr
+	$node set ragent_ $ragent
+	$self at 0.0 	"$ragent start"    ;# start updates
+	$self at 30 	"$ragent boundhole"
+	$self at 90 	"$ragent routing"	
+	return $ragent
+}
+
+# DYNAMIC POLYGON
+Simulator instproc create-dynamicpolygon-agent { node } {
+	set ragent [new Agent/DYNAMICPOLYGON]
+	set addr [$node node-addr]
+	$ragent addr $addr
+	$ragent node $node
+	if [Simulator set mobile_ip_] {
+		$ragent port-dmux [$node demux]
+	}
+	$node addr $addr
+	$node set ragent_ $ragent
+	$self at 0.0 	"$ragent start"    ;# start updates
+	$self at 30	"$ragent boundhole"
+	$self at 90	"$ragent routing"
+	return $ragent	
+}
+
+# GREEDY
+Simulator instproc create-greedy-agent { node } {
+	set ragent [new Agent/Greedy [$node node-addr]]
+
+	set addr [$node node-addr]
+    
+	$ragent addr $addr
+	$ragent node $node
+	if [Simulator set mobile_ip_] {
+		$ragent port-dmux [$node set dmux_]
+	}
+	$node addr $addr
+	$node set ragent_ $ragent
+	
+	$self at 0.0 "$ragent set-location"
+	$self at 0.0 "$ragent start"
+	return $ragent
+}
+
+# ELBAR GRID OFFLINE
+Simulator instproc create-elbar-gridoffline-agent { node } {
+	set ragent [new Agent/ELBARGRIDOFFLINE]
+	set addr [$node node-addr]
+	$ragent addr $addr
+	$ragent node $node
+	if [Simulator set mobile_ip_] {
+		$ragent port-dmux [$node demux]
+	}
+	$node addr $addr
+	$node set ragent_ $ragent
+	$self at 0.0 	"$ragent start"    ;# start updates
+	$self at 30	"$ragent boundhole"
+	$self at 90 "$ragent broadcast"
+	$self at 120 "$ragent routing"
+	return $ragent
+}
+
 Simulator instproc create-puma-agent { node } {
-        #  Create PUMA routing agent
-        set ragent [new Agent/PUMA [$node node-addr]]
-        $self at 0.0 "$ragent start"
-        $node set ragent_ $ragent
-        return $ragent
+	#  Create PUMA routing agent
+	set ragent [new Agent/PUMA [$node node-addr]]
+	$self at 0.0 "$ragent start"
+	$node set ragent_ $ragent
+	return $ragent
 }
 
 Simulator instproc create-mdart-agent { node } {
-        #  Create M-DART routing agent
+	#  Create M-DART routing agent
 	set ragent [new Agent/MDART [$node node-addr]]
-        $self at 0.0 "$ragent start"     ;# start BEACON/HELLO Messages
-        $node set ragent_ $ragent
-        return $ragent
+	$self at 0.0 "$ragent start"     ;# start BEACON/HELLO Messages
+	$node set ragent_ $ragent
+	return $ragent
 }
 
 Simulator instproc use-newtrace {} {
@@ -892,7 +1197,7 @@ Simulator instproc use-taggedtrace { {tag ON} } {
 }
 
 Simulator instproc hier-node haddr {
- 	error "hier-nodes should be created with [$ns_ node $haddr]"
+	 error "hier-nodes should be created with [$ns_ node $haddr]"
 }
 
 Simulator instproc now {} {
@@ -916,7 +1221,7 @@ Simulator instproc cancel args {
 }
 
 Simulator instproc after {ival args} {
-        eval $self at [expr [$self now] + $ival] $args
+	eval $self at [expr [$self now] + $ival] $args
 }
 
 #
@@ -1010,10 +1315,10 @@ Simulator instproc run {} {
 
 # johnh xxx?
 Simulator instproc log-simstart { } {
-        # GFR Modification to log actual start
-        global simstart
-        puts "Starting Actual Simulation"
-        set simstart [clock seconds]
+	# GFR Modification to log actual start
+	global simstart
+	puts "Starting Actual Simulation"
+	set simstart [clock seconds]
 }
 
 Simulator instproc halt {} {
@@ -1075,36 +1380,36 @@ Simulator instproc simplex-link { n1 n2 bw delay qtype args } {
 	# Now create the link
 	switch -exact $qtypeOrig {
 		RTM {
-                        set c [lindex $args 1]
-                        set link_($sid:$did) [new CBQLink       \
-                                        $n1 $n2 $bw $delay $q $c]
-                }
-                CBQ -
-                CBQ/WRR {
-                        # assume we have a string of form "linktype linkarg"
-                        if {[llength $args] == 0} {
-                                # default classifier for cbq is just Fid type
-                                set c [new Classifier/Hash/Fid 33]
-                        } else {
-                                set c [lindex $args 0]
-                        }
-                        set link_($sid:$did) [new CBQLink       \
-                                        $n1 $n2 $bw $delay $q $c]
-                }
+			set c [lindex $args 1]
+			set link_($sid:$did) [new CBQLink       \
+					$n1 $n2 $bw $delay $q $c]
+		}
+		CBQ -
+		CBQ/WRR {
+			# assume we have a string of form "linktype linkarg"
+			if {[llength $args] == 0} {
+				# default classifier for cbq is just Fid type
+				set c [new Classifier/Hash/Fid 33]
+			} else {
+				set c [lindex $args 0]
+			}
+			set link_($sid:$did) [new CBQLink       \
+					$n1 $n2 $bw $delay $q $c]
+		}
 		FQ      {
 			set link_($sid:$did) [new FQLink $n1 $n2 $bw $delay $q]
 		}
-                intserv {
-                        #XX need to clean this up
-                        set link_($sid:$did) [new IntServLink   \
-                                        $n1 $n2 $bw $delay $q	\
+		intserv {
+			#XX need to clean this up
+			set link_($sid:$did) [new IntServLink   \
+					$n1 $n2 $bw $delay $q	\
 						[concat $qtypeOrig $args]]
-                }
-                default {
-                        set link_($sid:$did) [new SimpleLink    \
-                                        $n1 $n2 $bw $delay $q]
-                }
-        }
+		}
+		default {
+			set link_($sid:$did) [new SimpleLink    \
+					$n1 $n2 $bw $delay $q]
+		}
+	}
 	if {$qtype == "RED/Pushback"} {
 		set pushback 1
 	} else {
@@ -1206,9 +1511,9 @@ Simulator instproc remove-nam-linkconfig {i1 i2} {
 # interface a packet should go out from)
 #
 Simulator instproc multihome-add-interface { core if } {
-  	$self instvar link_
-  	set coreId [$core id]
-  	set ifId [$if id]
+	  $self instvar link_
+	  set coreId [$core id]
+	  set ifId [$if id]
 
 	# arbitrary values (doesn't matter since link will NEVER be used!)
 	set bw 1Mb
@@ -1227,16 +1532,16 @@ Simulator instproc multihome-add-interface { core if } {
 	}
 
 
-    	$core instvar multihome_interfaces_ num_interfaces_
-    	set interface_ {}
+	    $core instvar multihome_interfaces_ num_interfaces_
+	    set interface_ {}
 
-    	# interface node
-    	lappend interface_ $if
+	    # interface node
+	    lappend interface_ $if
 
-    	# link from interface node to core node
-    	lappend interface_ [$link_($coreId:$ifId) set head_]
+	    # link from interface node to core node
+	    lappend interface_ [$link_($coreId:$ifId) set head_]
 
-    	lappend multihome_interfaces_ $interface_
+	    lappend multihome_interfaces_ $interface_
 }
 
 Simulator instproc duplex-link { n1 n2 bw delay type args } {
@@ -1291,12 +1596,12 @@ Simulator instproc namtrace-all file   {
 
 Simulator instproc energy-color-change {level1 level2} {
 	$self instvar level1_ level2_
- 	set level1_ $level1
- 	set level2_ $level2
+	 set level1_ $level1
+	 set level2_ $level2
 }
 
 Simulator instproc namtrace-all-wireless {file optx opty} {
-        $self instvar namtraceAllFile_
+	$self instvar namtraceAllFile_
 
 	# indicate that we need a W event written to the trace
 	$self set namNeedsW_ 1
@@ -1309,11 +1614,11 @@ Simulator instproc namtrace-all-wireless {file optx opty} {
 }
 
 Simulator instproc nam-end-wireless {stoptime} {
-        $self instvar namtraceAllFile_
+	$self instvar namtraceAllFile_
 
-        if {$namtraceAllFile_ != ""} {
+	if {$namtraceAllFile_ != ""} {
 		$self puts-nam-config "W -t $stoptime"
-        }
+	}
 }
 
 Simulator instproc namtrace-some file {
@@ -1322,7 +1627,7 @@ Simulator instproc namtrace-some file {
 }
 
 # Support for event-tracing
-        
+	
 Simulator instproc eventtrace-all {{file ""}} {
 	$self instvar eventTraceAll_ eventtraceAllFile_ traceAllFile_
 	set eventTraceAll_ 1
@@ -1539,34 +1844,34 @@ Simulator instproc cost {n1 n2 c} {
 
 # Armando L. Caro Jr. <acaro@@cis,udel,edu> 10/22/2001
 Simulator instproc multihome-attach-agent { core agent } {
-      	$agent set-multihome-core [$core entry]
+	      $agent set-multihome-core [$core entry]
 
-      	foreach interface [$core set multihome_interfaces_] {
-  		set ifNode [lindex $interface 0]
+	      foreach interface [$core set multihome_interfaces_] {
+		  set ifNode [lindex $interface 0]
 		set coreLink [lindex $interface 1]
 
-      		# attach agent to the node for each interface
-      		$ifNode attach $agent
-      		set addr [$agent set agent_addr_]
-      		set port [$agent set agent_port_]
-      		set entry [$ifNode entry]
+		      # attach agent to the node for each interface
+		      $ifNode attach $agent
+		      set addr [$agent set agent_addr_]
+		      set port [$agent set agent_port_]
+		      set entry [$ifNode entry]
 
-      		# give the interface info to the agent
+		      # give the interface info to the agent
 		$agent add-multihome-interface $addr $port $entry $coreLink
 			
-      		$agent instvar multihome_bindings_
-      		set binding_ {}
-      		lappend binding_ $addr
-      		lappend binding_ $port
-      		lappend multihome_bindings_ $binding_
-      	}
+		      $agent instvar multihome_bindings_
+		      set binding_ {}
+		      lappend binding_ $addr
+		      lappend binding_ $port
+		      lappend multihome_bindings_ $binding_
+	      }
 }
 
 Simulator instproc attach-agent { node agent } {
 	$node attach $agent
 	# $agent set nodeid_ [$node id]
 
-        # Armando L. Caro Jr. <acaro@@cis,udel,edu> 10/22/2001 
+	# Armando L. Caro Jr. <acaro@@cis,udel,edu> 10/22/2001 
 	#
 	# list of tuples (addr, port)
 	# This is NEEDED so that single homed agents can play with multihomed
@@ -1636,19 +1941,19 @@ Simulator instproc delay { n1 n2 delay {type simplex} } {
 #   Helper proc for setting bandwidth on an existing link
 #
 Simulator instproc bandwidth { n1 n2 bandwidth {type simplex} } {
-        $self instvar link_
-        set sid [$n1 id]
-        set did [$n2 id]
-        if [info exists link_($sid:$did)] {
-                set d [$link_($sid:$did) link]
-                $d set bandwidth_ $bandwidth
-        } 
-        if {$type == "duplex"} {
-                if [info exists link_($did:$sid)] {
-                        set d [$link_($did:$sid) link]
-                        $d set bandwidth_ $bandwidth
-                }
-        }
+	$self instvar link_
+	set sid [$n1 id]
+	set did [$n2 id]
+	if [info exists link_($sid:$did)] {
+		set d [$link_($sid:$did) link]
+		$d set bandwidth_ $bandwidth
+	} 
+	if {$type == "duplex"} {
+		if [info exists link_($did:$sid)] {
+			set d [$link_($did:$sid) link]
+			$d set bandwidth_ $bandwidth
+		}
+	}
 }
 
 
@@ -1657,12 +1962,12 @@ Simulator instproc connect {src dst} {
 
 	$self instvar conn_ nconn_ sflows_ nsflows_ useasim_
 
-        # Armando L. Caro Jr. <acaro@@cis,udel,edu>
+	# Armando L. Caro Jr. <acaro@@cis,udel,edu>
 	# does the agent type support multihoming??
 	# @@@ do we need to worry about $useasim_ below?? (wasn't in 2.1b8)
-    	if {[lindex [split [$src info class] "/"] 1] == "SCTP"} {
-    		$self multihome-connect $src $dst
-    	}
+	    if {[lindex [split [$src info class] "/"] 1] == "SCTP"} {
+		    $self multihome-connect $src $dst
+	    }
 
 	$self simplex-connect $src $dst
 	$self simplex-connect $dst $src
@@ -1690,29 +1995,29 @@ Simulator instproc connect {src dst} {
 # Armando L. Caro Jr. <acaro@@cis,udel,edu> 10/12/2001
 Simulator instproc multihome-connect {src dst} {
 	
-        set destNum 0
+	set destNum 0
 	foreach binding [$src set multihome_bindings_] {
 		incr destNum
-  		set addr [lindex $binding 0]
-  		set port [lindex $binding 1]
-      		$dst add-multihome-destination $addr $port
-    	}
+		  set addr [lindex $binding 0]
+		  set port [lindex $binding 1]
+		      $dst add-multihome-destination $addr $port
+	    }
 	if {$destNum == 0} {
-	        # src isn't multihomed, so make sure we do an
+		# src isn't multihomed, so make sure we do an
 		# add-multihome-destination
 		$dst add-multihome-destination \
 				[$src set agent_addr_] [$src set agent_port_]
 	}
 	
-        set destNum 0
+	set destNum 0
 	foreach binding [$dst set multihome_bindings_] {
 		incr destNum
-  		set addr [lindex $binding 0]
-  		set port [lindex $binding 1]
-      		$src add-multihome-destination $addr $port
-    	}
+		  set addr [lindex $binding 0]
+		  set port [lindex $binding 1]
+		      $src add-multihome-destination $addr $port
+	    }
 	if {$destNum == 0} {
-	        # dst isn't multihomed, so make sure we do an
+		# dst isn't multihomed, so make sure we do an
 		# add-multihome-destination
 		$src add-multihome-destination \
 				[$dst set agent_addr_] [$dst set agent_port_]
@@ -1724,11 +2029,11 @@ Simulator instproc simplex-connect { src dst } {
 	$src set dst_port_ [$dst set agent_port_]
 
 
-        # Polly Huang: to support abstract TCP simulations
-        if {[lindex [split [$src info class] "/"] 1] == "AbsTCP"} {
+	# Polly Huang: to support abstract TCP simulations
+	if {[lindex [split [$src info class] "/"] 1] == "AbsTCP"} {
 	    $self at [$self now] "$self rtt $src $dst"
 	    $dst set class_ [$src set class_]
-        }
+	}
 
 	return $src
 }
@@ -1788,11 +2093,11 @@ Simulator instproc all-nodes-list {} {
 }
 
 Simulator instproc link { n1 n2 } {
-        $self instvar Node_ link_
-        if { ![catch "$n1 info class Node"] } {
+	$self instvar Node_ link_
+	if { ![catch "$n1 info class Node"] } {
 		set n1 [$n1 id]
 	}
-        if { ![catch "$n2 info class Node"] } {
+	if { ![catch "$n2 info class Node"] } {
 		set n2 [$n2 id]
 	}
 	if [info exists link_($n1:$n2)] {
@@ -1820,16 +2125,16 @@ Simulator instproc create-connection {s_type source d_type dest pktClass} {
 # Creates a highspeed connection. Similar to create-connection 
 # above except the sink agent requires additional work -- Sylvia
 Simulator instproc create-highspeed-connection {s_type source d_type dest pktClass} {
-        set s_agent [new Agent/$s_type]
-        set d_agent [new Agent/$d_type]
-        $d_agent resize_buffers
-        $s_agent set fid_ $pktClass
-        $d_agent set fid_ $pktClass
-        $self attach-agent $source $s_agent
-        $self attach-agent $dest $d_agent
-        $self connect $s_agent $d_agent
+	set s_agent [new Agent/$s_type]
+	set d_agent [new Agent/$d_type]
+	$d_agent resize_buffers
+	$s_agent set fid_ $pktClass
+	$d_agent set fid_ $pktClass
+	$self attach-agent $source $s_agent
+	$self attach-agent $dest $d_agent
+	$self connect $s_agent $d_agent
 
-        return $s_agent
+	return $s_agent
 }
 
 # Creates connection. First creates a source agent of type s_type and binds
@@ -1900,7 +2205,7 @@ Classifier instproc in-slot? slot {
 	$self instvar slots_
 	set ret ""
 	if {[info exists slots_($slot)]} {
-	        set ret $slots_($slot)
+		set ret $slots_($slot)
 	}
 	set ret
 }
@@ -1920,15 +2225,15 @@ Classifier instproc dump {} {
 }
 
 Classifier instproc no-slot slot {
-        puts stderr "--- Classfier::no-slot{} default handler (tcl/lib/ns-lib.tcl) ---"
-        puts stderr "\t$self: no target for slot $slot"
-        puts stderr "\t$self type: [$self info class]"
-        puts stderr "content dump:"
-        $self dump
-        puts stderr "---------- Finished standard no-slot{} default handler ----------"
-        # Clear output before we bail out
-        [Simulator instance] flush-trace
-        exit 1
+	puts stderr "--- Classfier::no-slot{} default handler (tcl/lib/ns-lib.tcl) ---"
+	puts stderr "\t$self: no target for slot $slot"
+	puts stderr "\t$self type: [$self info class]"
+	puts stderr "content dump:"
+	$self dump
+	puts stderr "---------- Finished standard no-slot{} default handler ----------"
+	# Clear output before we bail out
+	[Simulator instance] flush-trace
+	exit 1
 }
 
 Classifier/Hash instproc dump args {
@@ -1947,8 +2252,8 @@ Classifier/Hash instproc init nbuck {
 }
 
 Classifier/Port/Reserve instproc init args {
-        eval $self next
-        $self reserve-port 2
+	eval $self next
+	$self reserve-port 2
 }
 
 Simulator instproc makeflowmon { cltype { clslots 29 } } {
@@ -2002,86 +2307,86 @@ Simulator instproc attach-fmon {lnk fm { edrop 0 } } {
 
 Simulator instproc maketbtagger { cltype { clslots 29 } } {
 
-        set tagger [new QueueMonitor/ED/Tagger]
-        set cl [new Classifier/Hash/$cltype $clslots]
+	set tagger [new QueueMonitor/ED/Tagger]
+	set cl [new Classifier/Hash/$cltype $clslots]
 
-        $cl proc unknown-flow { src dst fid }  {
-                set fdesc [new QueueMonitor/ED/Flow/TB]
-                set dsamp [new Samples]
-                $fdesc set-delay-samples $dsamp
-                set slot [$self installNext $fdesc]
-                $self set-hash auto $src $dst $fid $slot
-        }
+	$cl proc unknown-flow { src dst fid }  {
+		set fdesc [new QueueMonitor/ED/Flow/TB]
+		set dsamp [new Samples]
+		$fdesc set-delay-samples $dsamp
+		set slot [$self installNext $fdesc]
+		$self set-hash auto $src $dst $fid $slot
+	}
 
-        $cl proc set-rate { src dst fid hashbucket rate depth init} {
-                set fdesc [new QueueMonitor/ED/Flow/TB]
-                set dsamp [new Samples]
-                $fdesc set-delay-samples $dsamp
-                $fdesc set target_rate_ $rate
-                $fdesc set bucket_depth_ $depth
-                # Initialize the bucket as full
-                $fdesc set tbucket_ $init  
-                set slot [$self installNext $fdesc]
-                $self set-hash $hashbucket $src $dst $fid $slot
-        }
+	$cl proc set-rate { src dst fid hashbucket rate depth init} {
+		set fdesc [new QueueMonitor/ED/Flow/TB]
+		set dsamp [new Samples]
+		$fdesc set-delay-samples $dsamp
+		$fdesc set target_rate_ $rate
+		$fdesc set bucket_depth_ $depth
+		# Initialize the bucket as full
+		$fdesc set tbucket_ $init  
+		set slot [$self installNext $fdesc]
+		$self set-hash $hashbucket $src $dst $fid $slot
+	}
 
-        $cl proc no-slot slotnum {
-                #
-                # note: we can wind up here when a packet passes
-                # through either an Out or a Drop Snoop Queue for
-                # a queue that the flow doesn't belong to anymore.
-                # Since there is no longer hash state in the
-                # hash classifier, we get a -1 return value for the
-                # hash classifier's classify() function, and there
-                # is no node at slot_[-1].  What to do about this?
-                # Well, we are talking about flows that have already
-                # been moved and so should rightly have their stats
-                # zero'd anyhow, so for now just ignore this case..
-                # puts "classifier $self, no-slot for slotnum $slotnum"
-        }
-        $tagger classifier $cl
-        return $tagger
+	$cl proc no-slot slotnum {
+		#
+		# note: we can wind up here when a packet passes
+		# through either an Out or a Drop Snoop Queue for
+		# a queue that the flow doesn't belong to anymore.
+		# Since there is no longer hash state in the
+		# hash classifier, we get a -1 return value for the
+		# hash classifier's classify() function, and there
+		# is no node at slot_[-1].  What to do about this?
+		# Well, we are talking about flows that have already
+		# been moved and so should rightly have their stats
+		# zero'd anyhow, so for now just ignore this case..
+		# puts "classifier $self, no-slot for slotnum $slotnum"
+	}
+	$tagger classifier $cl
+	return $tagger
 }
 
 # Added by Yun Wang
 
 Simulator instproc maketswtagger { cltype { clslots 29 } } {
 
-        set tagger [new QueueMonitor/ED/Tagger]
-        set cl [new Classifier/Hash/$cltype $clslots]
+	set tagger [new QueueMonitor/ED/Tagger]
+	set cl [new Classifier/Hash/$cltype $clslots]
 
-        $cl proc unknown-flow { src dst fid hashbucket }  {
-                set fdesc [new QueueMonitor/ED/Flow/TSW]
-                set dsamp [new Samples]
-                $fdesc set-delay-samples $dsamp
-                set slot [$self installNext $fdesc]
-                $self set-hash $hashbucket $src $dst $fid $slot
-        }
+	$cl proc unknown-flow { src dst fid hashbucket }  {
+		set fdesc [new QueueMonitor/ED/Flow/TSW]
+		set dsamp [new Samples]
+		$fdesc set-delay-samples $dsamp
+		set slot [$self installNext $fdesc]
+		$self set-hash $hashbucket $src $dst $fid $slot
+	}
 
-        $cl proc no-slot slotnum {
-                #
-                # note: we can wind up here when a packet passes
-                # through either an Out or a Drop Snoop Queue for
-                # a queue that the flow doesn't belong to anymore.
-                # Since there is no longer hash state in the
-                # hash classifier, we get a -1 return value for the
-                # hash classifier's classify() function, and there
-                # is no node at slot_[-1].  What to do about this?
-                # Well, we are talking about flows that have already
-                # been moved and so should rightly have their stats
-                # zero'd anyhow, so for now just ignore this case..
-                # puts "classifier $self, no-slot for slotnum $slotnum"
-        }
-        $tagger classifier $cl
-        return $tagger
+	$cl proc no-slot slotnum {
+		#
+		# note: we can wind up here when a packet passes
+		# through either an Out or a Drop Snoop Queue for
+		# a queue that the flow doesn't belong to anymore.
+		# Since there is no longer hash state in the
+		# hash classifier, we get a -1 return value for the
+		# hash classifier's classify() function, and there
+		# is no node at slot_[-1].  What to do about this?
+		# Well, we are talking about flows that have already
+		# been moved and so should rightly have their stats
+		# zero'd anyhow, so for now just ignore this case..
+		# puts "classifier $self, no-slot for slotnum $slotnum"
+	}
+	$tagger classifier $cl
+	return $tagger
 }
 
 # attach a Tagger to a link
 # Added by Yun Wang
 
 Simulator instproc attach-tagger {lnk fm} {
-        set isnoop [new SnoopQueue/Tagger]
-        $lnk attach-taggers $isnoop $fm
+	set isnoop [new SnoopQueue/Tagger]
+	$lnk attach-taggers $isnoop $fm
 }
 
 # Imported from session.tcl. It is deleted there.
@@ -2292,4 +2597,10 @@ Simulator instproc prepare-to-stop {} {
 		$i stop
 	}
 }
-    
+
+Simulator instproc create-greedy-agent { node } {
+	set ragent [new Agent/Greedy [$node node-addr]]
+	$self at 0.0 "$ragent start"
+	$node set ragent_ $ragent
+	return $ragent
+}

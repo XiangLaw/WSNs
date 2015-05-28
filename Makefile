@@ -53,13 +53,13 @@ PERL	= /usr/bin/perl
 # for diffusion
 #DIFF_INCLUDES = "./diffusion3/main ./diffusion3/lib ./diffusion3/nr ./diffusion3/ns"
 
-CCOPT	=  -Wall -Wno-write-strings 
+CCOPT	=  -Wall -Wno-write-strings -g
 STATIC	= 
 #LDFLAGS	= $(STATIC)
 LDFLAGS	=  
 LDOUT	= -o $(BLANK)
 
-DEFINE	= -DTCP_DELAY_BIND_ALL -DNO_TK -DTCLCL_CLASSINSTVAR  -DNDEBUG -DUSE_SHM -DHAVE_LIBTCLCL -DHAVE_TCLCL_H -DHAVE_LIBOTCL1_14 -DHAVE_OTCL_H -DHAVE_LIBTK8_5 -DHAVE_TK_H -DHAVE_LIBTCL8_5 -DHAVE_TCLINT_H -DHAVE_TCL_H  -DHAVE_CONFIG_H -DNS_DIFFUSION -DSMAC_NO_SYNC -DCPP_NAMESPACE=std -DUSE_SINGLE_ADDRESS_SPACE -Drng_test
+DEFINE	= -DTCP_DELAY_BIND_ALL -DNO_TK -DTCLCL_CLASSINSTVAR  -DNDEBUG -DUSE_SHM -DHAVE_LIBTCLCL -DHAVE_TCLCL_H -DHAVE_LIBOTCL1_14 -DHAVE_OTCL_H -DHAVE_LIBTK8_5 -DHAVE_TK_H -DHAVE_LIBTCL8_5 -DHAVE_TCLINT_H -DHAVE_TCL_H  -DHAVE_CONFIG_H -DNS_DIFFUSION -DSMAC_NO_SYNC -DCPP_NAMESPACE=std -DUSE_SINGLE_ADDRESS_SPACE -Drng_test -DNDEBUG -DDEBUG
 
 INCLUDES = \
 	-I. -I/usr/X11R6/include \
@@ -333,6 +333,23 @@ OBJ_CC = \
 	wpan/p802_15_4sscs.o wpan/p802_15_4timer.o \
 	wpan/p802_15_4trace.o wpan/p802_15_4transac.o \
 	apps/pbc.o \
+	wsn/boundhole/boundhole.o wsn/boundhole/boundhole_packet_data.o \
+	wsn/convexhull/convexhull.o  \
+	wsn/convexonline/convexonline.o  \
+	wsn/dynamicpolygon/dynamicpolygon.o  wsn/dynamicpolygon/dynamicpolygon_packet_data.o \
+	wsn/ehds/ehds.o  \
+	wsn/ellipse/ellipse.o  \
+	wsn/geomathhelper/geo_math_helper.o  \
+	wsn/goal/goal.o  \
+	wsn/gpsr/gpsr.o  \
+	wsn/griddynamic/griddynamic.o  \
+	wsn/gridoffline/gridoffline.o wsn/gridoffline/gridoffline_packet_data.o  \
+	wsn/gridonline/gridonline.o wsn/gridonline/gridonline_packet_data.o  \
+	wsn/hexagon/hexagon.o  \
+	wsn/octagon/octagon.o  \
+	wsn/scalegoal/scalegoal.o  \
+	wsn/scalehexagon/scalehexagon.o  \
+	wsn/elbar/elbar.o wsn/elbar/elbar_packet_data.o  \
 	$(OBJ_STL)
 
 

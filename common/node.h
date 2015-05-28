@@ -170,8 +170,9 @@ protected:
 	int nodeid_; 		 // for nam use
 
 	// Nam tracing facility
-        Tcl_Channel namChan_;
-	// Single thread ns, so we can use one global storage for all 
+    Tcl_Channel namChan_;
+
+    // Single thread ns, so we can use one global storage for all
 	// node objects
 	static char nwrk_[NODE_NAMLOG_BUFSZ];	
 	void namdump();

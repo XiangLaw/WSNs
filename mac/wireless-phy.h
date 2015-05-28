@@ -84,18 +84,18 @@ public:
 	void node_on();
 	void node_off();	
 
-        /* -NEW- */
-        inline double getAntennaZ() { return ant_->getZ(); }
-        inline double getPt() { return Pt_; }
-        inline double getRXThresh() { return RXThresh_; }
-        inline double getCSThresh() { return CSThresh_; }
-        inline double getFreq() { return freq_; }
-        /* End -NEW- */
+	/* -NEW- */
+	inline double getAntennaZ() { return ant_->getZ(); }
+	inline double getPt() { return Pt_; }
+	inline double getRXThresh() { return RXThresh_; }
+	inline double getCSThresh() { return CSThresh_; }
+	inline double getFreq() { return freq_; }
+	/* End -NEW- */
 
 	void node_sleep();
 	void node_wakeup();
 	inline bool& Is_node_on() { return node_on_; }
-	inline bool Is_sleeping() { if (status_==SLEEP) return(1); else return(0); }
+	inline bool Is_sleeping() { return status_ == SLEEP; }
 	double T_sleep_;	// 2.31 change: Time at which sleeping is to be enabled (sec)
 
 protected:

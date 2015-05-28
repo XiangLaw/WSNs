@@ -330,8 +330,7 @@ ListScheduler::cancel(Event* e)
 	e->uid_ = - e->uid_;
 }
 
-Event* 
-ListScheduler::lookup(scheduler_uid_t uid)
+Event* ListScheduler::lookup(scheduler_uid_t uid)
 {
 	Event* e;
 	for (e = queue_; e != 0; e = e->next_)
@@ -339,7 +338,6 @@ ListScheduler::lookup(scheduler_uid_t uid)
 			break;
 	return (e);
 }
-
 
 Event*
 ListScheduler::deque()

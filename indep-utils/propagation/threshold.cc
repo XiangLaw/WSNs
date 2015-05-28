@@ -53,11 +53,14 @@
 
 #include <math.h>
 #include <stdlib.h>
-#include <iostream.h>
+#include <iostream>
+#include <string.h>
 
 #ifndef M_PI
 #define M_PI 3.14159265359
 #endif
+
+using namespace std; 
 
 double Friis(double Pt, double Gt, double Gr, double lambda, double L, double d)
 {

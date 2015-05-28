@@ -89,8 +89,19 @@ Mac802_11::checkBackoffTimer()
 inline void
 Mac802_11::transmit(Packet *p, double timeout)
 {
-	tx_active_ = 1;
+	tx_active_ = 1;		// original
+
+//	int nid = netif_->node()->nodeid();
+//	double now = Scheduler::instance().clock();
+//	if (now > 200) {
+//		//mhSend_.start(timeout);
+//		hdr_cmn * hdr = HDR_CMN(p);
+//		hdr->error() = 1;
+//		return;
+//	}
 	
+	// original
+
 	if (EOTtarget_) {
 		assert (eotPacket_ == NULL);
 		eotPacket_ = p->copy();
@@ -1563,6 +1574,16 @@ Mac802_11::send(Packet *p, Handler *h)
 void
 Mac802_11::recv(Packet *p, Handler *h)
 {
+//	int nid = netif_->node()->nodeid();
+//	double now = Scheduler::instance().clock();
+//
+//	if (now > 200) {
+//		hdr_cmn * hdr = HDR_CMN(p);
+//		hdr->error() = 1;
+//	}
+
+	// original
+
 	struct hdr_cmn *hdr = HDR_CMN(p);
 	/*
 	 * Sanity Check

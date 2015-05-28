@@ -127,7 +127,8 @@ ARPTable::arpresolve(nsaddr_t dst, Packet *p, LL *ll)
 	llinfo = arplookup(dst);
 
 #ifdef DEBUG
-        fprintf(stderr, "%d - %s\n", node_->address(), __FUNCTION__);
+    // todo: uncomment
+//        fprintf(stderr, "%d - %s\n", node_->address(), __FUNCTION__);
 #endif
 	
 	if(llinfo && llinfo->up_) {
@@ -259,10 +260,11 @@ ARPTable::arpinput(Packet *p, LL *ll)
 	assert(initialized());
 
 #ifdef DEBUG
-	fprintf(stderr,
-                "%d - %s\n\top: %x, sha: %x, tha: %x, spa: %x, tpa: %x\n",
-		node_->address(), __FUNCTION__, ah->arp_op,
-                ah->arp_sha, ah->arp_tha, ah->arp_spa, ah->arp_tpa);
+    // TODO: uncomment
+//	fprintf(stderr,
+//                "%d - %s\n\top: %x, sha: %x, tha: %x, spa: %x, tpa: %x\n",
+//		node_->address(), __FUNCTION__, ah->arp_op,
+//                ah->arp_sha, ah->arp_tha, ah->arp_spa, ah->arp_tpa);
 #endif
 
 	if((llinfo = arplookup(ah->arp_spa)) == 0) {
@@ -294,7 +296,8 @@ ARPTable::arpinput(Packet *p, LL *ll)
                    (NS_AF_INET == ch->addr_type() &&
                     ch->next_hop() == ah->arp_spa)) {
 #ifdef DEBUG
-			fprintf(stderr, "\tsending HELD packet.\n");
+            // todo: uncomment
+//			fprintf(stderr, "\tsending HELD packet.\n");
 #endif
 			mac_->hdr_dst(mh, ah->arp_sha);
 			//ll->hdr_dst(p, ah->arp_sha);

@@ -148,6 +148,32 @@ set ptype(dccp_reset) 71\n\
 set pvals(71) DCCP_Reset\n\
 set ptype(mdart) 72\n\
 set pvals(72) MDART\n\
+set ptype(hello) 73\n\
+set pvals(73) HELLO\n\
+set ptype(gpsr) 74\n\
+set pvals(74) GPSR\n\
+set ptype(boundhole) 75\n\
+set pvals(75) BOUNDHOLE\n\
+set ptype(ehds) 76\n\
+set pvals(76) EHDS\n\
+set ptype(hexagon) 77\n\
+set pvals(77) HEXAGON\n\
+set ptype(ellipse) 78\n\
+set pvals(78) ELLIPSE\n\
+set ptype(octagon) 79\n\
+set pvals(79) OCTAGON\n\
+set ptype(convexhull) 80\n\
+set pvals(80) CONVEXHULL\n\
+set ptype(scalegoal) 81\n\
+set pvals(81) SCALEGOAL\n\
+set ptype(grid) 82\n\
+set pvals(82) GRID\n\
+set ptype(griddynamic) 83\n\
+set pvals(83) GRIDDYNAMIC\n\
+set ptype(dynamicpolygon) 84\n\
+set pvals(84) DYNAMICPOLYGON\n\
+set ptype(elbargridoffline) 85\n\
+set pvals(85) ELBARGRIDOFFLINE\n\
 proc ptype2val {str} {\n\
 global ptype\n\
 set str [string tolower $str]\n\

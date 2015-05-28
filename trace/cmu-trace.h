@@ -49,8 +49,8 @@
 /* ======================================================================
    Global Defines
    ====================================================================== */
-#define	DROP            'D'
-#define	RECV            'r'
+#define	DROP        'D'
+#define	RECV        'r'
 #define	SEND    	's'
 #define	FWRD    	'f'
 
@@ -66,29 +66,29 @@
 
 #define TR_PHY		0x10
 
-#define DROP_END_OF_SIMULATION		"END"
-#define	DROP_MAC_COLLISION		"COL"
-#define DROP_MAC_DUPLICATE		"DUP"
-#define DROP_MAC_PACKET_ERROR		"ERR"
-#define DROP_MAC_RETRY_COUNT_EXCEEDED	"RET"
-#define DROP_MAC_INVALID_STATE		"STA"
-#define DROP_MAC_BUSY			"BSY"
-#define DROP_MAC_INVALID_DST            "DST"
-#define DROP_MAC_SLEEP                  "SLP"   // smac sleep state
+#define DROP_END_OF_SIMULATION		" END"
+#define	DROP_MAC_COLLISION		" COL"
+#define DROP_MAC_DUPLICATE		" DUP"
+#define DROP_MAC_PACKET_ERROR		" ERR"
+#define DROP_MAC_RETRY_COUNT_EXCEEDED	" RET"
+#define DROP_MAC_INVALID_STATE		" STA"
+#define DROP_MAC_BUSY			" BSY"
+#define DROP_MAC_INVALID_DST            " DST"
+#define DROP_MAC_SLEEP                  " SLP"   // smac sleep state
 
-#define DROP_RTR_NO_ROUTE		"NRTE"  // no route
-#define DROP_RTR_ROUTE_LOOP		"LOOP"  // routing loop
-#define DROP_RTR_TTL                    "TTL"   // ttl reached zero
-#define DROP_RTR_QFULL                  "IFQ"   // queue full
-#define DROP_RTR_QTIMEOUT               "TOUT"  // packet expired
-#define DROP_RTR_MAC_CALLBACK           "CBK"   // MAC callback
-#define DROP_RTR_SALVAGE	        "SAL"
+#define DROP_RTR_NO_ROUTE		" NRTE"  // no route
+#define DROP_RTR_ROUTE_LOOP		" LOOP"  // routing loop
+#define DROP_RTR_TTL                    " TTL"   // ttl reached zero
+#define DROP_RTR_QFULL                  " IFQ"   // queue full
+#define DROP_RTR_QTIMEOUT               " TOUT"  // packet expired
+#define DROP_RTR_MAC_CALLBACK           " CBK"   // MAC callback
+#define DROP_RTR_SALVAGE	        " SAL"
 
-#define DROP_IFQ_QFULL                  "IFQ"   // no buffer space in IFQ
-#define DROP_IFQ_ARP_FULL               "ARP"   // dropped by ARP
-#define DROP_IFQ_FILTER                 "FIL"
+#define DROP_IFQ_QFULL                  " IFQ"   // no buffer space in IFQ
+#define DROP_IFQ_ARP_FULL               " ARP"   // dropped by ARP
+#define DROP_IFQ_FILTER                 " FIL"
 
-#define DROP_OUTSIDE_SUBNET             "OUT"   // dropped by base stations if received rtg updates from nodes outside its domain.
+#define DROP_OUTSIDE_SUBNET             " OUT"   // dropped by base stations if received rtg updates from nodes outside its domain.
 
 #define MAX_ID_LEN	3
 #define MAX_NODE	4096

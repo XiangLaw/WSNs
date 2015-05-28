@@ -83,7 +83,7 @@ public:
 
 	// # of optimal route changes for this node
 	int		route_changes;
-        int             link_changes;
+    int             link_changes;
 
 private:
 	void	RandomPosition(void);

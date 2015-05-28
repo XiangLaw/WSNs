@@ -151,32 +151,36 @@ MobileNode::command(int argc, const char*const* argv)
 		if(strcmp(argv[1], "start") == 0) {
 		        start();
 			return TCL_OK;
-		} else if(strcmp(argv[1], "log-movement") == 0) {
-#ifdef DEBUG
-                        fprintf(stderr,
-                                "%d - %s: calling update_position()\n",
-                                address_, __PRETTY_FUNCTION__);
-#endif
-		        update_position();
-		        log_movement();
+		}
+		else if(strcmp(argv[1], "log-movement") == 0) {
+			#ifdef DEBUG
+				fprintf(stderr, "%d - %s: calling update_position()\n", address_, __PRETTY_FUNCTION__);
+			#endif
+			update_position();
+			log_movement();
 			return TCL_OK;
-		} else if(strcmp(argv[1], "log-energy") == 0) {
+		}
+		else if(strcmp(argv[1], "log-energy") == 0) {
 			log_energy(1);
 			return TCL_OK;
-		} else if(strcmp(argv[1], "powersaving") == 0) {
+		}
+		else if(strcmp(argv[1], "powersaving") == 0) {
 			energy_model()->powersavingflag() = 1;
 			energy_model()->start_powersaving();
 			return TCL_OK;
-		} else if(strcmp(argv[1], "adaptivefidelity") == 0) {
+		}
+		else if(strcmp(argv[1], "adaptivefidelity") == 0) {
 			energy_model()->adaptivefidelity() = 1;
 			energy_model()->powersavingflag() = 1;
 			energy_model()->start_powersaving();
 			return TCL_OK;
-		} else if (strcmp(argv[1], "energy") == 0) {
+		}
+		else if (strcmp(argv[1], "energy") == 0) {
 			Tcl& tcl = Tcl::instance();
 			tcl.resultf("%f", energy_model()->energy());
 			return TCL_OK;
-		} else if (strcmp(argv[1], "adjustenergy") == 0) {
+		}
+		else if (strcmp(argv[1], "adjustenergy") == 0) {
 			// assume every 10 sec schedule and 1.15 W 
 			// idle energy consumption. needs to be
 			// parameterized.
@@ -185,24 +189,40 @@ MobileNode::command(int argc, const char*const* argv)
 			energy_model()->total_rcvtime() = 0;
 			energy_model()->total_sleeptime() = 0;
 			return TCL_OK;
-		} else if (strcmp(argv[1], "on") == 0) {
+		}
+		else if (strcmp(argv[1], "on") == 0) {
 			energy_model()->node_on() = true;
 			tcl.evalf("%s set netif_(0)", name_);
 			const char *str = tcl.result();
 			tcl.evalf("%s NodeOn", str);
 			God::instance()->ComputeRoute();
 			return TCL_OK;
-		} else if (strcmp(argv[1], "off") == 0) {
-			energy_model()->node_on() = false;
+		}
+		else if (strcmp(argv[1], "off") == 0) {
+			if (energy_model() != NULL) {
+				energy_model()->node_on() = false;
+			}
+
 			tcl.evalf("%s set netif_(0)", name_);
 			const char *str = tcl.result();
 			tcl.evalf("%s NodeOff", str);
+
 			tcl.evalf("%s set ragent_", name_);
 			str = tcl.result();
-			tcl.evalf("%s reset-state", str);
+			tcl.evalf("%s nodeoff", str);
+
 			God::instance()->ComputeRoute();
-		     	return TCL_OK;
-		} else if (strcmp(argv[1], "shutdown") == 0) {
+		    return TCL_OK;
+		}
+		else if (strcmp(argv[1], "sink") == 0) {
+
+			tcl.evalf("%s set ragent_", name_);
+			const char *str = tcl.result();
+			tcl.evalf("%s nodesink", str);
+
+			return TCL_OK;
+		}
+		else if (strcmp(argv[1], "shutdown") == 0) {
 			// set node state
 			//Phy *p;
 			energy_model()->node_on() = false;

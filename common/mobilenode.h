@@ -67,45 +67,45 @@ class MobileNode;
 
 
 #if COMMENT_ONLY
-		 -----------------------
-		|			|
+		 -------------------
+		|					|
 		|	Upper Layers	|
-		|			|
-		 -----------------------
+		|					|
+		 -------------------
 		    |		    |
 		    |		    |
 		 -------	 -------
-		|	|	|	|
+		|	|	|	|	|	|
 		|  LL	|	|  LL	|
-		|	|	|	|
+		|	|	|	|	|	|
 		 -------	 -------
 		    |		    |
 		    |		    |
 		 -------	 -------
-		|	|	|	|
+		|	|	|	|	|	|
 		| Queue	|	| Queue	|
-		|	|	|	|
+		|	|	|	|	|	|
 		 -------	 -------
 		    |		    |
 		    |		    |
 		 -------	 -------
-		|	|	|	|
+		|	|	|	|	|	|
 		|  Mac	|	|  Mac	|
-		|	|	|	|
+		|	|	|	|	|	|
 		 -------	 -------
 		    |		    |
 		    |		    |
-		 -------	 -------	 -----------------------
-		|	|	|	|	|			|
-		| Netif	| <---	| Netif | <---	|	Mobile Node	|
-		|	|	|	|	|			|
-		 -------	 -------	 -----------------------
+		 -------	 -------		 -------------------
+		|	|	|	|	|	|		|					|
+		| Netif	| <---Netif | <---	|	Mobile Node		|
+		|	|	|	|	|	|		|					|
+		 -------	 -------		 -------------------
 		    |		    |
 		    |		    |
 		 -----------------------
-		|			|
-		|	Channel(s) 	|
-		|			|
+		|						|
+		|		Channel(s) 		|
+		|						|
 		 -----------------------
 #endif
 class MobileNode;
@@ -128,10 +128,10 @@ public:
 	double	distance(MobileNode*);
 	double	propdelay(MobileNode*);
 	void	start(void);
-        inline void getLoc(double *x, double *y, double *z) {
+    inline void getLoc(double *x, double *y, double *z) {
 		update_position();  *x = X_; *y = Y_; *z = Z_;
 	}
-        inline void getVelo(double *dx, double *dy, double *dz) {
+    inline void getVelo(double *dx, double *dy, double *dz) {
 		*dx = dX_ * speed_; *dy = dY_ * speed_; *dz = 0.0;
 	}
 	inline MobileNode* nextnode() { return link_.le_next; }
@@ -168,7 +168,7 @@ protected:
 	 * Last time the position of this node was updated.
 	 */
 	double position_update_time_;
-        double position_update_interval_;
+    double position_update_interval_;
 
 	/*
          *  The following indicate the (x,y,z) position of the node on
@@ -196,7 +196,7 @@ protected:
 	 * for gridkeeper use only
  	 */
 	MobileNode*	next_;
-	double          radius_;
+	double      radius_;
 
 	// Used to generate position updates
 	PositionHandler pos_handle_;
@@ -205,8 +205,8 @@ protected:
 	void	log_movement();
 	void	random_direction();
 	void	random_speed();
-        void    random_destination();
-        int	set_destination(double x, double y, double speed);
+    void    random_destination();
+    int		set_destination(double x, double y, double speed);
 	  
 private:
 	inline int initialized() {
@@ -214,8 +214,8 @@ private:
 			X_ >= T_->lowerX() && X_ <= T_->upperX() &&
 			Y_ >= T_->lowerY() && Y_ <= T_->upperY());
 	}
-	void		random_position();
-	void		bound_position();
+	void	random_position();
+	void	bound_position();
 	int		random_motion_;	// is mobile
 
 	/*
