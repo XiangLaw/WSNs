@@ -57,7 +57,7 @@
 /* after autoconf (and HAVE_INT64) we can pick up tclcl.h */
 #ifndef stand_alone
 #ifdef __cplusplus
-#include "../tclcl/tclcl.h"
+#include "../tclcl-1.20/tclcl.h"
 #endif /* __cplusplus */
 #endif
 
