@@ -36,3 +36,7 @@ Makefile
 .idea/
 bin/ns
 bin/ptypes2tcl
+cbr.tcl
+nodeoff.tcl
+simulate.tcl
+topo_data.tcl

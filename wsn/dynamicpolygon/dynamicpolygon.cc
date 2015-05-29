@@ -64,7 +64,7 @@ DynamicPolygonAgent::command(int argc, const char*const* argv)
 		}
 		if (strcasecmp(argv[1], "bhenergy") == 0)
 		{
-			dumpEnergy("bhenergy.tr");
+			dumpEnergy((char *) "bhenergy.tr");
 			return TCL_OK;
 		}
 	}
