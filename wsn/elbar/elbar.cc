@@ -1,5 +1,3 @@
-#include <bits/ios_base.h>
-#include <X11/Xutil.h>
 #include "elbar.h"
 #include "elbar_packet.h"
 #include "elbar_packet_data.h"
