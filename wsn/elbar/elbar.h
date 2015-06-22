@@ -77,6 +77,8 @@ public:
     void recv(Packet *, Handler *);
 
     void dumpAnchorPoint(int id, Point *pPoint);
+
+    void dumpParallelogram();
 };
 
 #endif
