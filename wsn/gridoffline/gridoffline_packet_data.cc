@@ -45,8 +45,8 @@ char GridOfflinePacketData::getData(int index)
 {
 	char re;
 	int offset = (index - 1) * (sizeof(char));
-
-	memcpy(&re, data_ + offset,  sizeof(nsaddr_t));
+	
+	memcpy(&re, data_ + offset,  sizeof(char));
 
 	return re;
 }
