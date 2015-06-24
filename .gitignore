@@ -37,3 +37,17 @@ Makefile
 bin/ns
 bin/ptypes2tcl
 CMakeLists.txt
+autoconf.h
+config.log
+config.status
+ns
+nstk
+common/ptypes2tcl
+gen/ns_tcl.cc
+indep-utils/cmu-scen-gen/setdest/calcdest
+indep-utils/cmu-scen-gen/setdest/setdest
+indep-utils/webtrace-conv/dec/dec-tr-stat
+indep-utils/webtrace-conv/epa/epa-tr-stat
+indep-utils/webtrace-conv/nlanr/nlanr-tr-stat
+indep-utils/webtrace-conv/ucb/ucb-tr-stat
+tcl/lib/ns-autoconf.tcl
