@@ -60,8 +60,8 @@
 #define HAVE_SNPRINTF 1
 #define HAVE_STRTOLL 1
 #define HAVE_STRTOQ 1
-#define HAVE_ADDR2ASCII 1
-/* #undef HAVE_FEENABLEEXCEPT */
+/* #undef HAVE_ADDR2ASCII */
+#define HAVE_FEENABLEEXCEPT 1
 
 /* headers */
 #define STDC_HEADERS 1
@@ -73,11 +73,11 @@
 #define HAVE_FENV_H 1
 
 /* structures */
-/* #undef HAVE_ETHER_HEADER_STRUCT */
-/* #undef HAVE_ETHER_ADDRESS_STRUCT */
+#define HAVE_ETHER_HEADER_STRUCT 1
+#define HAVE_ETHER_ADDRESS_STRUCT 1
 
 /* constants */
-/* #undef HAVE_SIOCGIFHWADDR */
+#define HAVE_SIOCGIFHWADDR 1
 
 
 /* stl */

@@ -4,6 +4,8 @@ set(TARNAME ns)
 
 set(CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake" ${CMAKE_MODULE_PATH})
 
+#set ( CMAKE_VERBOSE_MAKEFILE true )
+
 # program name, version etc
 
 set(PACKAGE_VERSION "2.35")
@@ -102,7 +104,7 @@ include_directories(
     ${OTCL_INCLUDE_DIRS}
     ${TCLCL_INCLUDE_DIRS}
     ${INCLUDE_SUB_DIR}
-	${PCAP_INCLUDE_DIRS}
+    ${PCAP_INCLUDE_DIRS}
 )
 set(nse_SRC
     common/tclAppInit.cc

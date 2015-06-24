@@ -1,26 +1,9 @@
-/*
- * grid.cc
- *
- *  Last edited on Nov 14, 2013
- *  by Trong Nguyen
- *
- *  1. Using Grid Online algorithm to detect the hole as a gird
- *  2. Each adjust cell of hole election a Pivot node
- */
-
 #include "config.h"
 
 #include "griddynamic.h"
 #include "griddynamic_packet.h"
 
 #include "wsn/gridoffline/gridoffline_packet_data.h"
-#include "wsn/boundhole/boundhole_packet_data.h"
-#include "wsn/geomathhelper/geo_math_helper.h"
-
-#include "../include/tcl.h"
-#include "../geomathhelper/geo_math_helper.h"
-#include "../../common/packet.h"
-#include "../gpsr/gpsr.h"
 
 #define MIN(a, b) ((a) < (b) ? (a) : (b))
 
@@ -70,9 +53,9 @@ GridDynamicAgent::GridDynamicAgent() : GPSRAgent(),
 	bind("limit_x_", &limit_x_);
 	bind("limit_y_", &limit_y_);
 
-	//TODO: fixed or set by script
-	update_period_ = hello_period_;
-	nodeoff_threshold = hello_period_;
+	// TODO: fixed or set by script
+	nodeoff_threshold = hello_period_*2;
+	alert_threshold = 10;
 }
 
 int
@@ -85,6 +68,8 @@ GridDynamicAgent::command(int argc, const char*const* argv)
 			startUp();
 		}
 		if (strcasecmp(argv[1], "nodesink") == 0){
+			findStuck_timer_.force_cancel();
+			updateSta_timer_.force_cancel();
 			// add sink
 			isSink = true;
 			node* temp = new node();
@@ -95,12 +80,17 @@ GridDynamicAgent::command(int argc, const char*const* argv)
 		}
 		if (strcasecmp(argv[1], "nodeoff") == 0)
 		{
+//            dumpNodeOffReal();
 			findStuck_timer_.force_cancel();
 			updateSta_timer_.force_cancel();
 		}
 	}
 
-	return GPSRAgent::command(argc,argv);
+	int re = GPSRAgent::command(argc,argv);
+    nx_ = (int)x_/r_;
+    ny_ = (int)y_/r_;
+
+    return re;
 }
 
 // handle the receive packet just of type PT_GRID
@@ -137,18 +127,26 @@ void
 GridDynamicAgent::startUp()
 {
 	// printf("%f - startUp\n", Scheduler::instance().clock());
+    //dumpHoleArea();
 
 	pivot.id_ = -1;
 
-	findStuck_timer_.resched(hello_period_ * 1.5);
+	if (hello_period_ != 0) {
+		findStuck_timer_.resched(hello_period_ * 1.5);
+	} else {
+		printf("Warning: %s\n", "hello_period_ must be not equal to zero");
+		findStuck_timer_.force_cancel();
+	}
 
 	// clear trace file
 	FILE *fp;
-	fp = fopen("GridHole.tr", 		"w");	fclose(fp);
+//	fp = fopen("GridHole.tr", 		"w");	fclose(fp);
 	fp = fopen("Election.tr", 		"w");	fclose(fp);
 	fp = fopen("Pivot.tr", 		"w");		fclose(fp);
 	fp = fopen("Alarm.tr",			"w");	fclose(fp);
 	fp = fopen("PolygonHole.tr", 	"w");	fclose(fp);
+    fp = fopen("NodeOff.tr", 	"w");	fclose(fp);
+    fp = fopen("NodeOffReal.tr", 	"w");	fclose(fp);
 }
 
 void
@@ -202,8 +200,6 @@ GridDynamicAgent::findStuckAngle()
 			new_angle->b_ = nb2;
 			new_angle->next_ = stuck_angle_;
 			stuck_angle_ = new_angle;
-
-			sendBoundHole();
 		}
 
 		nb1 = nb1->next_;
@@ -224,9 +220,9 @@ GridDynamicAgent::findStuckAngle()
 		new_angle->b_ = nb2;
 		new_angle->next_ = stuck_angle_;
 		stuck_angle_ = new_angle;
-
-		sendBoundHole();
 	}
+
+    sendBoundHole();
 }
 
 void
@@ -236,6 +232,8 @@ GridDynamicAgent::sendBoundHole()
 	hdr_cmn		*cmh;
 	hdr_ip		*iph;
 	hdr_grid	*gh;
+
+    if (!stuck_angle_) return;
 
 	isStuck = true;
 	isBoundary = true;
@@ -270,7 +268,7 @@ GridDynamicAgent::sendBoundHole()
 
 		send(p, 0);
 
-		printf("%d\t- Send GridDynamic (%f)\n", my_id_, Scheduler::instance().clock());
+		//printf("%d\t- Send GridDynamic (%f)\n", my_id_, Scheduler::instance().clock());
 	}
 
 	// send Pivot
@@ -290,6 +288,8 @@ GridDynamicAgent::recvBoundHole(Packet *p)
 	addData(p);
 
 	if (isStuck){
+		sendPivot();
+        printf("Send collect from 2 BoundHole:%d (%d) %f-%f\n", iph->src_, my_id_, this->x_, this->y_);
 		sendCollect(p);
 
 		drop(p, "reach stuck node");
@@ -299,22 +299,17 @@ GridDynamicAgent::recvBoundHole(Packet *p)
 	// if the grid packet has came back to the initial node
 	if (iph->saddr() == my_id_)
 	{
-//		if (iph->ttl_ > (limit_boundhole_hop_ - 5))
-//		{
-//			drop(p, " SmallHole");	// drop hole that have less than 5 hop
-//		}
-//		else
-//		{
 			createGridHole(p, *this);
 			hole_->hole_id_ = my_id_;
 			hole_->dump();
 
 			dumpBoundhole(hole_);
 
+			sendPivot();
+			printf("Send collect from 1 BoundHole:%d (%d) %f-%f\n", iph->src_, my_id_, this->x_, this->y_);
 			sendCollect(p);
 
 			drop(p, "reach stuck node");
-//		}
 		return;
 	}
 
@@ -372,6 +367,16 @@ GridDynamicAgent::sendNotify()
 {
 	dumpPivot();
 
+	// remove all old neighbor
+	node * n;
+	while(neighbor_list_){
+		n = neighbor_list_;
+		neighbor_list_ = (neighbor*)neighbor_list_->next_;
+		free(n);
+	}
+	//schedule for check state
+	updateSta_timer_.resched(hello_period_ * 1.5);
+
 	pivot.id_ = my_id_;
 	pivot.x_ = this->x_;
 	pivot.y_ = this->y_;
@@ -417,6 +422,7 @@ GridDynamicAgent::recvNotify(Packet *p)
 
 		// replace hello packet by updateState packet
 		hello_timer_.force_cancel();
+		findStuck_timer_.force_cancel();
 		updateSta_timer_.resched(randSend_.uniform(0.0, 5));
 
 		// continue forwarding
@@ -446,8 +452,12 @@ void GridDynamicAgent::updateState(){
 void
 GridDynamicAgent::checkState()
 {
-	if (removeNodeoff()){
-		sendAlarm();
+	if (removeNodeoff() && max_neighbor != 0){
+		int count = 0;
+		for (node* temp = neighbor_list_; temp; temp = temp->next_) count++;
+
+		if ((100 - alert_threshold)/100.0 >= count/max_neighbor)
+			sendAlarm();
 	}
 }
 
@@ -544,11 +554,19 @@ GridDynamicAgent::sendAlarm()
 			send(p, 0);
 		}
 	}
+
+	Packet 	* p		= allocpkt();
+
+	GridOfflinePacketData * data = new GridOfflinePacketData();
+	p->setdata(data);
+	printf("Send collect from ALARM (%d) %f-%f\n", my_id_, x_, y_);
+	sendCollect(p);
 }
 
 void
 GridDynamicAgent::recvPivot(Packet *p)
 {
+	hdr_cmn	*cmh = HDR_CMN(p);
 	hdr_griddynamic		*gdh = HDR_GRIDDYNAMIC(p);
 	node* next = NULL;
 
@@ -566,6 +584,9 @@ GridDynamicAgent::recvPivot(Packet *p)
 		next = getNeighborByGreedy(gdh->p_);
 
 		if (next == NULL){ // no node is closer than itself
+            if (my_id_ == 386 || my_id_ == 428){
+                printf("dump");
+            }
 			drop(p);
 			sendNotify();
 			return;
@@ -576,7 +597,6 @@ GridDynamicAgent::recvPivot(Packet *p)
 
 
 	/* foward */
-	hdr_cmn	*cmh = HDR_CMN(p);
 
 	cmh->direction() = hdr_cmn::DOWN;
 	cmh->next_hop_	 = next->id_;
@@ -620,13 +640,20 @@ void GridDynamicAgent::sendUpdate() {
 
 void GridDynamicAgent::recvUpdate(Packet *p) {
 	hdr_ip *iph = HDR_IP(p);
+	hdr_cmn	*cmh = HDR_CMN(p);
 	hdr_griddynamic *gdh = HDR_GRIDDYNAMIC(p);
 
 	if (iph->daddr() == my_id_){
 		addNeighbor(iph->saddr(), gdh->p_);
+		// update max neighbor
+		max_neighbor = 0;
+		for (node* temp = neighbor_list_; temp; temp = temp->next_) max_neighbor++;
 	} else {
+		if (pivot.id_ == -1) {
+			drop(p, "dont have pivot");
+			return;
+		}
 		// forward
-		hdr_cmn	*cmh = HDR_CMN(p);
 		node *next = getNeighborByGreedy(pivot);
 
 		if (next != NULL) {
@@ -639,7 +666,6 @@ void GridDynamicAgent::recvUpdate(Packet *p) {
 		}
 	}
 }
-
 
 /* --------------------- Send data -------------------------------- */
 void GridDynamicAgent::sendCollect(Packet *p) {
@@ -676,6 +702,7 @@ node* GridDynamicAgent::getNeighborByBoundhole(Point * p, Point * prev)
  */
 bool GridDynamicAgent::removeNodeoff()
 {
+	// update
 	neighbor* next = NULL, *prev = NULL;
 	bool isChange = false;
 
@@ -685,6 +712,7 @@ bool GridDynamicAgent::removeNodeoff()
 		if (Scheduler::instance().clock() - temp->time_ > nodeoff_threshold){
 			isChange = true;
 			neighbor_list_ = next;
+            dumpNodeOff(temp);
 			free(temp);
 		} else break;
 	}
@@ -708,7 +736,7 @@ bool GridDynamicAgent::removeNodeoff()
 bool
 GridDynamicAgent::checkCell(Point point)
 {
-	return ((int)(point.x_ / r_) == (int)(this->x_ / r_) && (int)(point.y_ / r_) == (int)(this->y_ / r_));
+	return ((int)(point.x_ / r_) == nx_ && (int)(point.y_ / r_) == ny_);
 }
 
 void
@@ -1078,38 +1106,77 @@ GridDynamicAgent::dumpBoundhole(gridHole* p)
 	fclose(fp);
 }
 
-void
-GridDynamicAgent::dumpArea(gridHole* hole)
-{
-	FILE * fp = fopen("Area.tr", "a+");
-	fprintf(fp, "%f\t%f\n", Scheduler::instance().clock(), G::area(hole->node_list_));
-	fclose(fp);
-}
-
 void GridDynamicAgent::dumpElection()
 {
 	FILE * fp = fopen("Election.tr", "a+");
 	fprintf(fp, "%f\t%d\t%f\t%f\n", Scheduler::instance().clock(), my_id_, x_, y_);
-	printf("%d - elect (%f)\n", my_id_, Scheduler::instance().clock());
 	fclose(fp);
+//	printf("%d - elect (%f)\n", my_id_, Scheduler::instance().clock());
 }
 
 void GridDynamicAgent::dumpAlarm()
 {
 	FILE * fp = fopen("Alarm.tr", "a+");
 	fprintf(fp, "%f\t%d\t%f\t%f\n", Scheduler::instance().clock(), my_id_, x_, y_);
-	printf("%d - alarm (%f)\n", my_id_, Scheduler::instance().clock());
 	fclose(fp);
+//	printf("%d - alarm (%f)\n", my_id_, Scheduler::instance().clock());
 }
 
 void GridDynamicAgent::dumpPivot() {
-	FILE * fp = fopen("Alarm.tr", "a+");
-	printf("%d - pivot (%f)\n", my_id_, Scheduler::instance().clock());
+	FILE * fp = fopen("Pivot.tr", "a+");
+    fprintf(fp, "%d - pivot (%f) %f %f\n", my_id_, Scheduler::instance().clock(), x_, y_);
+    double x = nx_ * r_;
+    double y = ny_ * r_;
+    fprintf(fp, "%f\t%f\n%f\t%f\n%f\t%f\n%f\t%f\n%f\t%f\n", x, y, x+r_, y, x+r_, y+r_, x, y+r_,x,y);
 	fclose(fp);
 }
 
 void GridDynamicAgent::dumpCollect() {
 	FILE * fp = fopen("Collect.tr", "a+");
-	printf("%d - collect (%f)\n", my_id_, Scheduler::instance().clock());
+    fprintf(fp, "%d - collect (%f)\n", my_id_, Scheduler::instance().clock());
 	fclose(fp);
+}
+
+void GridDynamicAgent::dumpNodeOff(neighbor *n) {
+    FILE * fp = fopen("NodeOff.tr", "a+");
+    fprintf(fp, "%d - nodeoff:%d %f %f (%f)\n", my_id_, n->id_, n->x_, n->y_, Scheduler::instance().clock());
+    fclose(fp);
+}
+
+void GridDynamicAgent::dumpNodeOffReal() {
+    FILE * fp = fopen("NodeOffReal.tr", "a+");
+    fprintf(fp, "%d - %f %f %f\n", my_id_, x_, y_, Scheduler::instance().clock());
+    fclose(fp);
+}
+
+void GridDynamicAgent::dumpHoleArea() {
+//    char s[20];
+//    for (int i = 0; i < 10; i++){
+//        neighbor* n;
+//        sprintf(s, "area%d.tr",i+1);
+//        FILE * fp = fopen(s, "r");
+//        int j = 0;
+//        while (!feof(fp)){
+//            Point p;
+//            int x, y;
+//            fscanf(fp, "%d\t%d", &x, &y);
+//            p.x_ = x;
+//            p.y_ = y;
+//            neighbor* n = new neighbor();
+//            n->x_ = x;
+//            n->y_ = y;
+//            n->id_ = j;
+//            n->next_ = neighbor_list_;
+//            neighbor_list_ = n;
+//            j++;
+//        }
+//        fclose(fp);
+//        printf( "%d - %f\n", i, G::area(neighbor_list_));
+//        while(neighbor_list_){
+//            n = neighbor_list_;
+//            neighbor_list_ = (neighbor*)neighbor_list_->next_;
+//            free(n);
+//        }
+//    }
+
 }

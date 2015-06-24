@@ -1626,7 +1626,7 @@ Agent/GRIDOFFLINE set hello_period_ 0
 Agent/GRIDOFFLINE set energy_checkpoint_ 995
 Agent/GRIDOFFLINE set limit_ 0
 Agent/GRIDOFFLINE set range_ 40
-Agent/GRIDOFFLINE set r_ 20
+Agent/GRIDOFFLINE set r_ 80
 Agent/GRIDOFFLINE set limit_boundhole_hop_ 80
 
 Agent/GRIDONLINE set hello_period_ 0
@@ -1642,7 +1642,7 @@ Agent/GRIDDYNAMIC set limit_ 0;			# limit of edge of approximate hole
 Agent/GRIDDYNAMIC set limit_x_ 1000;			# limit of edge of approximate hole
 Agent/GRIDDYNAMIC set limit_y_ 1000;			# limit of edge of approximate hole
 Agent/GRIDDYNAMIC set range_ 40;		# communicate rage of each sensor node
-Agent/GRIDDYNAMIC set r_ 60;			# diameter of grid
+Agent/GRIDDYNAMIC set r_ 100;			# diameter of grid
 Agent/GRIDDYNAMIC set limit_boundhole_hop_ 80;	# limit of nodes in real hole
 
 Agent/CONVEXONLINE set hello_period_ 0
