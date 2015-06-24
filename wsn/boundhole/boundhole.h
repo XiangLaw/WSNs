@@ -12,8 +12,8 @@
 #include "wsn/gpsr/gpsr.h"
 #include "boundhole_packet.h"
 
-#define STORAGE_ALL	0x00
-#define STORAGE_ONE 0x01
+#define STORAGE_ALL	0x00 // announcement
+#define STORAGE_ONE 0x01 // broadcast
 
 class BoundHoleAgent;
 

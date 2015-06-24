@@ -236,9 +236,9 @@ void BoundHoleAgent::recvBoundHole(Packet *p)
 	// if the boundhole packet has came back to the initial node
 	if (iph->saddr() == my_id_)
 	{
-		if (iph->ttl_ > (limit_hop - 10)) // replace 5 = limit_min_hop_
+		if (iph->ttl_ > (limit_hop - 10)) // replace 10 = limit_min_hop_
 		{
-			drop(p, " SmallHole");	// drop hole that have less than 5 hop
+			drop(p, " SmallHole");	// drop hole that have less than 10 hop
 		}
 		else
 		{
@@ -450,7 +450,6 @@ node* BoundHoleAgent::getNeighborByBoundHole(Point * p, Point * prev)
 
 	for (node * temp = neighbor_list_; temp; temp = temp->next_)
 	{
-		int i = temp->id_;
 		Angle a = G::angle(this, p, this, temp);
 		if (a > max_angle && (!G::is_intersect(this, temp, p, prev) ||
 				(temp->x_ == p->x_ && temp->y_ == p->y_) ||
