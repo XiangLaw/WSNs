@@ -1,9 +1,9 @@
-# Script for WisSim simulator. Last edit 3/14/2015 9:05:53 AM
+# Script for WisSim simulator. Last edit 6/19/2015 3:17:58 PM
 
-set opt(x)	1000	;# X dimension of the topography
-set opt(y)	1000	;# Y dimension of the topography
+set opt(x)	1100	;# X dimension of the topography
+set opt(y)	1100	;# Y dimension of the topography
 set opt(stop)	500	;# simulation time
-set opt(nn)	1500	;# number of nodes
+set opt(nn)	1830	;# number of nodes
 set opt(tr)	Trace.tr	;# trace file
 set opt(nam)	nam.out.tr
 
@@ -15,18 +15,17 @@ set opt(mac)	Mac/802_11
 set opt(ifq)	Queue/DropTail/PriQueue
 set opt(ll)	LL
 set opt(ant)	Antenna/OmniAntenna
-set opt(rp)	EHDS
+set opt(rp)	GRIDDYNAMIC
 set opt(trans)	UDP
 set opt(apps)	CBR
 
-set opt(energymodel)	EnergyModel
-set opt(initialenergy)  1000		;# Initial energy in Joules
-set opt(checkpoint)	995
-set opt(idlePower) 	0.0096
-set opt(rxPower) 	0.021
-set opt(txPower) 	0.0255
-set opt(sleepPower) 	0.000648
-set opt(transitionPower) 0.024
+set opt(energymodel)	 EnergyModel
+set opt(initialenergy)   1000
+set opt(idlePower) 	     0.0096
+set opt(rxPower) 	     0.045
+set opt(txPower) 	     0.0885
+set opt(sleepPower) 	 0.000648
+set opt(transitionPower) 0.0096
 set opt(transitionTime)  0.0129
 
 # ======================================================================
@@ -54,11 +53,13 @@ Antenna/OmniAntenna set Z_ 1.5
 Antenna/OmniAntenna set Gt_ 1
 Antenna/OmniAntenna set Gr_ 1
 
-Agent/EHDS set limit_boundhole_hop_ 80
-Agent/EHDS set energy_checkpoint_ 995
-Agent/EHDS set hello_period_ 0
-Agent/EHDS set storage_opt_ 1
-Agent/EHDS set range_ 40
+Agent/GRIDDYNAMIC set limit_boundhole_hop_ 80
+Agent/GRIDDYNAMIC set energy_checkpoint_ 995
+Agent/GRIDDYNAMIC set hello_period_ 40
+Agent/GRIDDYNAMIC set limit_x_ 1100
+Agent/GRIDDYNAMIC set limit_y_ 1100
+Agent/GRIDDYNAMIC set range_ 40
+Agent/GRIDDYNAMIC set r_ 100
 
 Agent/UDP set fid_ 2
 
@@ -138,9 +139,11 @@ for {set i 0} {$i < $opt(nn)} {incr i} {
 	$ns_ at $opt(stop).000000001 "$mnode_($i) reset"
 }
 
-source ./cbr1.tcl
+source ./cbr.tcl
 
 source ./nodeoff.tcl
+
+source ./nodesink.tcl
 
 # ending nam and the simulation
 #$ns_ at $opt(stop) "$ns_ nam-end-wireless $opt(stop)" 
