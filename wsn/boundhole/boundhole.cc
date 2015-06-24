@@ -306,12 +306,19 @@ void BoundHoleAgent::recvBoundHole(Packet *p)
 
 				data->add(nb->id_, nb->x_, nb->y_);
 				nb = getNeighborByBoundHole(nb, &temp);
-
+				if(nb == NULL) {
+					drop(p, DROP_RTR_NO_ROUTE);
+					return;
+				}
 				continue;
 			}
 			else
 			{
 				nb = getNeighbor(next.id_);
+				if(nb==NULL) {
+					drop(p, DROP_RTR_NO_ROUTE);
+					return;
+				}
 				continue;
 			}
 		}

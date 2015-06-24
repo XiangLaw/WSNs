@@ -36,3 +36,4 @@ Makefile
 .idea/
 bin/ns
 bin/ptypes2tcl
+CMakeLists.txt

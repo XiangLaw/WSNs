@@ -1,5 +1,3 @@
-#include <bits/ios_base.h>
-#include <X11/Xutil.h>
 #include "elbar.h"
 #include "elbar_packet.h"
 #include "elbar_packet_data.h"
@@ -234,6 +232,7 @@ void ElbarGridOfflineAgent::detectParallelogram() {
                 this->parallelogram_->c_ = c;
                 this->parallelogram_->p_.x_ = this->x_;
                 this->parallelogram_->p_.y_ = this->y_;
+                dumpParallelogram();
             }
 
             alpha_ = angle;
@@ -430,6 +429,7 @@ void ElbarGridOfflineAgent::broadcastHci() {
 //
     if (hole_list_ == NULL)
         return;
+    dumpBoundhole();
 
 //    detect parallelogram
     detectParallelogram();
@@ -608,19 +608,20 @@ void ElbarGridOfflineAgent::initTraceFile() {
     fclose(fp);
     fp = fopen("AnchorPoint.tr", "w");
     fclose(fp);
-//    fp = fopen("Parallelogram.tr", "w");
-//    fclose(fp);
+    fp = fopen("Parallelogram.tr", "w");
+    fclose(fp);
 }
 
-//void ElbarGridOfflineAgent::dumpParallelogram() {
-//    FILE *fp = fopen("Parallelogram.tr", "a+");
-//    fprintf(fp, "%f\t%f\n", this->parallelogram_->p_.x_, this->parallelogram_->p_.y_);
-//    fprintf(fp, "%f\t%f\n", this->parallelogram_->a_.x_, this->parallelogram_->a_.y_);
-//    fprintf(fp, "%f\t%f\n", this->parallelogram_->b_.x_, this->parallelogram_->b_.y_);
-//    fprintf(fp, "%f\t%f\n", this->parallelogram_->c_.x_, this->parallelogram_->c_.y_);
-//    fprintf(fp, "\n");
-//    fclose(fp);
-//}
+void ElbarGridOfflineAgent::dumpParallelogram() {
+    FILE *fp = fopen("Parallelogram.tr", "a+");
+    fprintf(fp, "%d\t", my_id_);
+    fprintf(fp, "%f\t%f\n", this->parallelogram_->p_.x_, this->parallelogram_->p_.y_);
+    fprintf(fp, "%f\t%f\n", this->parallelogram_->a_.x_, this->parallelogram_->a_.y_);
+    fprintf(fp, "%f\t%f\n", this->parallelogram_->b_.x_, this->parallelogram_->b_.y_);
+    fprintf(fp, "%f\t%f\n", this->parallelogram_->c_.x_, this->parallelogram_->c_.y_);
+    fprintf(fp, "\n");
+    fclose(fp);
+}
 
 //********** Math Helpers function ******************//
 // convert to geo_math_helper library

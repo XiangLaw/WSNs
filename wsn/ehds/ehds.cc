@@ -38,6 +38,7 @@ EHDSAgent::EHDSAgent() : BoundHoleAgent()
 	fp = fopen("ApproximateHole.tr", "w");	fclose(fp);
 	fp = fopen("RoutingTable.tr", "w");		fclose(fp);
 	fp = fopen("Hopcount.tr", "w");			fclose(fp);
+	fp = fopen("BroadcastRegion.tr", "w");	fclose(fp);
 }
 
 void
@@ -176,7 +177,8 @@ EHDSAgent::sendBC()
 	ehh->circle_.y_ 		= circleHole_list_->y_;
 	ehh->circle_.radius_ 	= circleHole_list_->radius_;
 
-	send(p, 0);
+	//send(p, 0);
+	recvEHDS(p);
 }
 
 void
@@ -209,6 +211,8 @@ EHDSAgent::recvEHDS(Packet* p)
 	// forward packet
 	if (edh->type_ == EHDS_HA)
 	{
+		dumpBroadcastRegion();
+
 		if (cmh->direction() == hdr_cmn::UP	&& iph->daddr() == my_id_)	// up to destination
 		{
 			drop(p, " Finish");
@@ -421,5 +425,13 @@ EHDSAgent::dumpHopcount(Packet* p)
 
 	fprintf(fp, "%d	%d	%d\n", my_id_, cmh->uid(), cmh->num_forwards_);
 
+	fclose(fp);
+}
+
+void
+EHDSAgent::dumpBroadcastRegion()
+{
+	FILE *fp = fopen("BroadcastRegion.tr", "a+");
+	fprintf(fp, "%d %f %f\n", my_id_, x_, y_);
 	fclose(fp);
 }

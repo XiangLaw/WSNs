@@ -14,7 +14,7 @@
 #define EHDS_DATA_GREEDY  GPSR_GPSR			// packet bring data, forward by greedy
 #define EHDS_DATA_ROUTING GPSR_PERIME		// packet bring data, forward by routing table
 
-#define EHDS_HA 0x01						// packet bring hole information to special node
+#define EHDS_HA 0x00						// packet bring hole information to special node
 #define EHDS_BC 0x01						// packet broadcast hole information
 
 #define HDR_EHDS_DATA(p) 	((struct hdr_ehds_data*)hdr_ehds::access(p))
