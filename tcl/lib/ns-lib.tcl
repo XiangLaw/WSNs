@@ -641,6 +641,9 @@ Simulator instproc create-wireless-node args {
                         GPSR {
 				set ragent [$self create-gpsr-agent $node]
                         }
+                        GEAR {
+                        			    set ragent [$self create-gear-agent $node]
+                        		    }
                         EHDS {
 				set ragent [$self create-ehds-agent $node]
                         }
@@ -929,6 +932,24 @@ Simulator instproc create-gpsr-agent { node } {
 	$node addr $addr
 	$node set ragent_ $ragent
 	$self at 0.0 "$ragent start";
+	return $ragent
+}
+
+# GEAR
+Simulator instproc create-gear-agent { node } {
+	set ragent [new Agent/GEAR]
+	set addr [$node node-addr]
+	$ragent addr $addr
+	$ragent node $node
+	if [Simulator set mobile_ip_] {
+		$ragent port-dmux [$node demux]
+	}
+	$node addr $addr
+	$node set ragent_ $ragent
+	$self at 0.0 "$ragent start"    ;# start updates
+	$self at 0.5 "$ragent cleartrace"
+	$self at 100 "$ragent neighborlist"
+	$self at 499 "$ragent energy"
 	return $ragent
 }
 

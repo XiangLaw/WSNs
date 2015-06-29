@@ -1581,6 +1581,11 @@ Agent/MDART set etxMetric_ true
 
 Agent/GPSR set hello_period_ 0
 Agent/GPSR set energy_checkpoint_ 995
+Agent/GPSR set range_ 40
+
+Agent/GEAR set hello_period_ 50
+Agent/GEAR set alpha_ 0.8
+Agent/GEAR set range_ 40
 
 Agent/GOAL set hello_period_ 0
 Agent/GOAL set energy_checkpoint_ 995

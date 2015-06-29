@@ -182,6 +182,7 @@ set protolist {
 # WSN	
 	HELLO
 	GPSR
+	GEAR
 	BOUNDHOLE	
 	EHDS
 	ELLIPSE
