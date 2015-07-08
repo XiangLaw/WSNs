@@ -44,7 +44,7 @@ private:
 	void getDestInfo();
 
 	// functions used for receive and send packets
-	void helloMsg();
+	void sendHello();
 	void recvHello(Packet*);
 protected:
 	// point to the sensor node

@@ -25,7 +25,7 @@ void GEARTimer::expire(Event *e) {
 }
 
 void GEARAgent::helloTimeOut() {
-	helloMsg();
+	sendHello();
 	hello_timer_.resched(hello_period_);
 }
 
@@ -68,7 +68,7 @@ inline void GEARAgent::getDestInfo() {
 	des_y_ = node_->destY();
 }
 
-void GEARAgent::helloMsg() {
+void GEARAgent::sendHello() {
 	if (my_id_ < 0) return;
 
 	Packet *p = allocpkt();
@@ -134,7 +134,7 @@ void GEARAgent::recvGEAR(Packet *p) {
 
 		cmh->next_hop_ = next->id_;
 
-		printf("%d ", cmh->next_hop_);
+		//printf("%d ", cmh->next_hop_);
 
 		updateEnergyAware(next);
 
@@ -250,6 +250,7 @@ void GEARAgent::recv(Packet *p, Handler *h) {
 	struct hdr_gear* gh = HDR_GEAR(p);
 
 	// if packet is from higher layer, prepare header for angleview before forward packet
+	// convert PT_CBR to PT_GEAR
 	if (my_id_ == iph->saddr()) {
 		if (cmh->num_forwards() == 0 && cmh->ptype() != PT_GEAR) {
 			cmh->ptype() = PT_GEAR;
@@ -272,7 +273,7 @@ void GEARAgent::recv(Packet *p, Handler *h) {
 			break;
 		case GEAR:
 			if (gh->des_x_ == my_x_ && gh->des_y_ == my_y_) {
-				printf("recved.");
+				printf("recved.\n");
 				port_dmux_->recv(p, h);
 			}
 			recvGEAR(p);

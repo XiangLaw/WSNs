@@ -488,7 +488,13 @@ GPSRAgent::dumpEnergy(char* filename)
 	if (node_->energy_model())
 	{
 		FILE *fp = fopen(filename, "a+");
-		fprintf(fp, "%d\t%f\t%f\t%f\n", my_id_, this->x_, this->y_, node_->energy_model()->energy());
+		fprintf(fp, "%d\t%f\t%f\t%f\t%f\t%f\t%f\t%f\n", my_id_, this->x_, this->y_,
+				node_->energy_model()->energy(),
+		        node_->energy_model()->et(),
+				node_->energy_model()->er(),
+				node_->energy_model()->ei(),
+				node_->energy_model()->es()
+		);
 		fclose(fp);
 	}
 }

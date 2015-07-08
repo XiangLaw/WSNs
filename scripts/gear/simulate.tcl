@@ -87,6 +87,7 @@ set tracefd	[open $opt(tr) w]
 #set namtrace	[open $opt(nam) w]
 
 # run the simulator
+puts "Routing Protocol: $opt(rp)"
 $ns_ trace-all $tracefd 
 #$ns_ namtrace-all-wireless $namtrace $opt(x) $opt(y) 
 
