@@ -1,9 +1,9 @@
-# Script for WisSim simulator. Last edit 3/11/2015 4:21:08 PM
+# Script for WisSim simulator. Last edit 7/1/2015 9:45:38 AM
 
-set opt(x)	500	;# X dimension of the topography
-set opt(y)	500	;# Y dimension of the topography
+set opt(x)	1000	;# X dimension of the topography
+set opt(y)	1000	;# Y dimension of the topography
 set opt(stop)	500	;# simulation time
-set opt(nn)	1047	;# number of nodes
+set opt(nn)	1729	;# number of nodes
 set opt(tr)	Trace.tr	;# trace file
 set opt(nam)	nam.out.tr
 
@@ -19,14 +19,13 @@ set opt(rp)	ELBARGRIDOFFLINE
 set opt(trans)	UDP
 set opt(apps)	CBR
 
-set opt(energymodel)	EnergyModel
-set opt(initialenergy)  1000		;# Initial energy in Joules
-set opt(checkpoint)	995
-set opt(idlePower) 	0.0096
-set opt(rxPower) 	0.021
-set opt(txPower) 	0.0255
-set opt(sleepPower) 	0.000648
-set opt(transitionPower) 0.024
+set opt(energymodel)	 EnergyModel
+set opt(initialenergy)   1000
+set opt(idlePower) 	     0.0096
+set opt(rxPower) 	     0.045
+set opt(txPower) 	     0.0885
+set opt(sleepPower) 	 0.000648
+set opt(transitionPower) 0.0096
 set opt(transitionTime)  0.0129
 
 # ======================================================================
@@ -54,9 +53,13 @@ Antenna/OmniAntenna set Z_ 1.5
 Antenna/OmniAntenna set Gt_ 1
 Antenna/OmniAntenna set Gr_ 1
 
-Agent/ELBARGRIDOFFLINE set energy_checkpoint_ 995
 Agent/ELBARGRIDOFFLINE set limit_boundhole_hop_ 60
+Agent/ELBARGRIDOFFLINE set energy_checkpoint_ 995
 Agent/ELBARGRIDOFFLINE set hello_period_ 0
+Agent/ELBARGRIDOFFLINE set limit_x_ 1000
+Agent/ELBARGRIDOFFLINE set limit_y_ 1000
+Agent/ELBARGRIDOFFLINE set range_ 40
+Agent/ELBARGRIDOFFLINE set r_ 80
 
 Agent/UDP set fid_ 2
 
