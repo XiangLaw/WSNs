@@ -121,7 +121,10 @@ GridOfflineAgent::recv(Packet *p, Handler *h) {
 
 void
 GridOfflineAgent::startUp() {
-    findStuck_timer_.resched(20);
+    if (hello_period_ > 0)
+        findStuck_timer_.resched(hello_period_ * 1.5);
+    else
+        findStuck_timer_.resched(20);
 
     // clear trace file
     initTraceFile();
@@ -131,6 +134,12 @@ GridOfflineAgent::startUp() {
 
 void
 GridOfflineAgent::findStuckAngle() {
+
+    if (my_id_ == 0){
+        printf("dump\n");
+    }
+    dumpNeighbor2();
+
     if (neighbor_list_ == NULL || neighbor_list_->next_ == NULL) {
         stuck_angle_ = NULL;
         return;
@@ -654,6 +663,17 @@ GridOfflineAgent::dumpArea() {
     fclose(fp);
 }
 
+void GridOfflineAgent::dumpNeighbor2() {
+    FILE *fp = fopen("Neighbor_2.tr", "a+");
+    fprintf(fp, "%d	%f	%f	%f	", this->my_id_, this->x_, this->y_, this->off_time_);
+    for (node *temp = neighbor_list_; temp; temp = temp->next_)
+    {
+        fprintf(fp, "%d,", temp->id_);
+    }
+    fprintf(fp, "\n");
+    fclose(fp);
+}
+
 void GridOfflineAgent::initTraceFile() {
     FILE *fp;
     fp = fopen("Area.tr", "w");
@@ -663,5 +683,7 @@ void GridOfflineAgent::initTraceFile() {
     fp = fopen("Neighbors.tr", "w");
     fclose(fp);
     fp = fopen("Time.tr", "w");
+    fclose(fp);
+    fp = fopen("Neighbor_2.tr", "w");
     fclose(fp);
 }

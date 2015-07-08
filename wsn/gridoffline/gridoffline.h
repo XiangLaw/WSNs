@@ -111,6 +111,8 @@ public:
     virtual char const * getAgentName();
 
     virtual void initTraceFile();
+
+	void dumpNeighbor2();
 };
 
 #endif /* GRID_H_ */

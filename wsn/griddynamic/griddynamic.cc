@@ -80,7 +80,7 @@ GridDynamicAgent::command(int argc, const char*const* argv)
 		}
 		if (strcasecmp(argv[1], "nodeoff") == 0)
 		{
-//            dumpNodeOffReal();
+            dumpNodeOffReal();
 			findStuck_timer_.force_cancel();
 			updateSta_timer_.force_cancel();
 		}
@@ -289,7 +289,7 @@ GridDynamicAgent::recvBoundHole(Packet *p)
 
 	if (isStuck){
 		sendPivot();
-        printf("Send collect from 2 BoundHole:%d (%d) %f-%f\n", iph->src_, my_id_, this->x_, this->y_);
+        printf("Send collect from 2 BoundHole:%d (%d) %f-%f at %f\n", iph->src_, my_id_, this->x_, this->y_, Scheduler::instance().clock());
 		sendCollect(p);
 
 		drop(p, "reach stuck node");
@@ -411,7 +411,8 @@ GridDynamicAgent::recvNotify(Packet *p)
 	hdr_griddynamic	*gdh = HDR_GRIDDYNAMIC(p);
 
 	if (checkCell(gdh->p_)){
-		if (pivot.id_ >= 0){
+		// update pivot in case same pivot
+		if (pivot.id_ >= 0 && pivot.id_ <= gdh->id_){
 			drop(p, "repeated notify");
 			return;
 		}
@@ -456,7 +457,7 @@ GridDynamicAgent::checkState()
 		int count = 0;
 		for (node* temp = neighbor_list_; temp; temp = temp->next_) count++;
 
-		if ((100 - alert_threshold)/100.0 >= count/max_neighbor)
+		if ((100 - alert_threshold)/100.0 > count/max_neighbor)
 			sendAlarm();
 	}
 }
@@ -464,6 +465,10 @@ GridDynamicAgent::checkState()
 void
 GridDynamicAgent::sendPivot()
 {
+	if (pivot.id_ >= 0){
+		return;
+	}
+
 	dumpElection();
 
 	int x = r_ * (int)(this->x_ / r_);
@@ -559,7 +564,7 @@ GridDynamicAgent::sendAlarm()
 
 	GridOfflinePacketData * data = new GridOfflinePacketData();
 	p->setdata(data);
-	printf("Send collect from ALARM (%d) %f-%f\n", my_id_, x_, y_);
+	printf("Send collect from ALARM (%d) %f-%f at %f\n", my_id_, x_, y_, Scheduler::instance().clock());
 	sendCollect(p);
 }
 
@@ -581,12 +586,14 @@ GridDynamicAgent::recvPivot(Packet *p)
 			// keep forward
 		}
 	} else {
+		if (pivot.id_ >= 0){
+			drop(p, "known pivot");
+			return;
+		}
+
 		next = getNeighborByGreedy(gdh->p_);
 
 		if (next == NULL){ // no node is closer than itself
-            if (my_id_ == 386 || my_id_ == 428){
-                printf("dump");
-            }
 			drop(p);
 			sendNotify();
 			return;
@@ -646,8 +653,12 @@ void GridDynamicAgent::recvUpdate(Packet *p) {
 	if (iph->daddr() == my_id_){
 		addNeighbor(iph->saddr(), gdh->p_);
 		// update max neighbor
-		max_neighbor = 0;
-		for (node* temp = neighbor_list_; temp; temp = temp->next_) max_neighbor++;
+		int count_neighbor = 0;
+		for (node* temp = neighbor_list_; temp; temp = temp->next_) count_neighbor++;
+		if (count_neighbor > max_neighbor){
+			max_neighbor = count_neighbor;
+		}
+		int i = my_id_;
 	} else {
 		if (pivot.id_ == -1) {
 			drop(p, "dont have pivot");
@@ -670,6 +681,7 @@ void GridDynamicAgent::recvUpdate(Packet *p) {
 /* --------------------- Send data -------------------------------- */
 void GridDynamicAgent::sendCollect(Packet *p) {
 	dumpCollect();
+	drop(p);
 }
 
 
@@ -723,6 +735,7 @@ bool GridDynamicAgent::removeNodeoff()
 		if (Scheduler::instance().clock() - temp->time_ > nodeoff_threshold){
 			isChange = true;
 			prev->next_ = next;
+			dumpNodeOff(temp);
 			free(temp);
 		} else {
 			prev = temp;
@@ -875,8 +888,6 @@ GridDynamicAgent::updateGridHole(Packet* p, gridHole* hole)
 void
 GridDynamicAgent::createPolygonHole(gridHole* hole)
 {
-	// printf("%f - createPolygonHole\n", Scheduler::instance().clock());
-
 	hole->clearNodeList();
 
 	int nx = ceil(limit_x_ / r_);
@@ -1043,7 +1054,6 @@ GridDynamicAgent::reducePolygonHole(gridHole* h)
 
 				if (G::angle(g2, g1, g2, g3) > M_PI)
 				{
-					//	int t = fabs(g3->x_ - g2->x_) + fabs(g2->y_ - g1->y_) + fabs(g3->y_ - g2->y_) + fabs(g2->x_ - g1->x_);	// conditional is boundary length
 					int t = fabs(g3->x_ - g2->x_) * fabs(g2->y_ - g1->y_) + fabs(g3->y_ - g2->y_) * fabs(g2->x_ - g1->x_);	// conditional is area
 					if (t < min)
 					{
@@ -1111,7 +1121,6 @@ void GridDynamicAgent::dumpElection()
 	FILE * fp = fopen("Election.tr", "a+");
 	fprintf(fp, "%f\t%d\t%f\t%f\n", Scheduler::instance().clock(), my_id_, x_, y_);
 	fclose(fp);
-//	printf("%d - elect (%f)\n", my_id_, Scheduler::instance().clock());
 }
 
 void GridDynamicAgent::dumpAlarm()
@@ -1119,7 +1128,6 @@ void GridDynamicAgent::dumpAlarm()
 	FILE * fp = fopen("Alarm.tr", "a+");
 	fprintf(fp, "%f\t%d\t%f\t%f\n", Scheduler::instance().clock(), my_id_, x_, y_);
 	fclose(fp);
-//	printf("%d - alarm (%f)\n", my_id_, Scheduler::instance().clock());
 }
 
 void GridDynamicAgent::dumpPivot() {
@@ -1147,36 +1155,4 @@ void GridDynamicAgent::dumpNodeOffReal() {
     FILE * fp = fopen("NodeOffReal.tr", "a+");
     fprintf(fp, "%d - %f %f %f\n", my_id_, x_, y_, Scheduler::instance().clock());
     fclose(fp);
-}
-
-void GridDynamicAgent::dumpHoleArea() {
-//    char s[20];
-//    for (int i = 0; i < 10; i++){
-//        neighbor* n;
-//        sprintf(s, "area%d.tr",i+1);
-//        FILE * fp = fopen(s, "r");
-//        int j = 0;
-//        while (!feof(fp)){
-//            Point p;
-//            int x, y;
-//            fscanf(fp, "%d\t%d", &x, &y);
-//            p.x_ = x;
-//            p.y_ = y;
-//            neighbor* n = new neighbor();
-//            n->x_ = x;
-//            n->y_ = y;
-//            n->id_ = j;
-//            n->next_ = neighbor_list_;
-//            neighbor_list_ = n;
-//            j++;
-//        }
-//        fclose(fp);
-//        printf( "%d - %f\n", i, G::area(neighbor_list_));
-//        while(neighbor_list_){
-//            n = neighbor_list_;
-//            neighbor_list_ = (neighbor*)neighbor_list_->next_;
-//            free(n);
-//        }
-//    }
-
 }
