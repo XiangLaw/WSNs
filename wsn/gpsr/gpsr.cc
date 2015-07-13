@@ -101,10 +101,8 @@ GPSRAgent::command(int argc, const char*const* argv)
 		}
 		if (strcasecmp(argv[1], "nodeoff") == 0)
 		{
-            if (off_time_ < 0) {
-                hello_timer_.force_cancel();
-                off_time_ = Scheduler::instance().clock();
-            }
+			hello_timer_.force_cancel();
+			node_->energy_model()->update_off_time(true);
 		}
 	}
 
@@ -190,10 +188,6 @@ GPSRAgent::recv(Packet *p, Handler *h)
 void
 GPSRAgent::startUp()
 {
-
-    if (node_->address() == 1110){
-        int i = 0;
-    }
 	this->x_ = node_->X();		// get Location
 	this->y_ = node_->Y();
 	dest->x_ = node_->destX();
@@ -494,11 +488,14 @@ GPSRAgent::dumpEnergy(char* filename)
 	if (node_->energy_model())
 	{
 		FILE *fp = fopen(filename, "a+");
-		fprintf(fp, "%d\t%f\t%f\t%f\t%f\t%f\t%f\t%f\n", my_id_, this->x_, this->y_, node_->energy_model()->energy(),
+		fprintf(fp, "%d\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\n", my_id_, this->x_, this->y_,
+				node_->energy_model()->energy(),
+				node_->energy_model()->off_time(),
+		        node_->energy_model()->et(),
 				node_->energy_model()->er(),
-                node_->energy_model()->et(),
-                node_->energy_model()->ei(),
-                node_->energy_model()->es());
+				node_->energy_model()->ei(),
+				node_->energy_model()->es()
+		);
 		fclose(fp);
 	}
 }

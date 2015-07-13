@@ -1,9 +1,9 @@
-# Script for WisSim simulator. Last edit 6/22/2015 2:07:20 PM
+# Script for WisSim simulator. Last edit 7/8/2015 10:18:38 AM
 
-set opt(x)	800	;# X dimension of the topography
-set opt(y)	800	;# Y dimension of the topography
+set opt(x)	1000	;# X dimension of the topography
+set opt(y)	1000	;# Y dimension of the topography
 set opt(stop)	500	;# simulation time
-set opt(nn)	1377	;# number of nodes
+set opt(nn)	1500	;# number of nodes
 set opt(tr)	Trace.tr	;# trace file
 set opt(nam)	nam.out.tr
 
@@ -15,11 +15,12 @@ set opt(mac)	Mac/802_11
 set opt(ifq)	Queue/DropTail/PriQueue
 set opt(ll)	LL
 set opt(ant)	Antenna/OmniAntenna
-set opt(rp)	GRIDOFFLINE
+set opt(rp)	GPSR
 set opt(trans)	UDP
 set opt(apps)	CBR
 
 set opt(energymodel)	 EnergyModel
+set opt(radiomodel)      RadioModel
 set opt(initialenergy)   1000
 set opt(idlePower) 	     0.0096
 set opt(rxPower) 	     0.045
@@ -32,11 +33,11 @@ set opt(transitionTime)  0.0129
 
 
 
-Phy/WirelessPhy set RXThresh_ 1.20174e-07
-Phy/WirelessPhy set CSThresh_ 1.559e-11
+Phy/WirelessPhy set RXThresh_ 3.66152e-10
+Phy/WirelessPhy set CSThresh_ 3.66152e-10
 Phy/WirelessPhy set freq_ 9.14e+08
 Phy/WirelessPhy set CPThresh_ 10.0
-Phy/WirelessPhy set Pt_ 0.281838
+Phy/WirelessPhy set Pt_ 8.5872e-4    ;# 40m
 Phy/WirelessPhy set L_ 1
 Phy/WirelessPhy set Rb_ 2*1e6
 
@@ -53,11 +54,8 @@ Antenna/OmniAntenna set Z_ 1.5
 Antenna/OmniAntenna set Gt_ 1
 Antenna/OmniAntenna set Gr_ 1
 
-Agent/GRIDOFFLINE set limit_boundhole_hop_ 80
-Agent/GRIDOFFLINE set energy_checkpoint_ 995
-Agent/GRIDOFFLINE set hello_period_ 100
-#Agent/GRIDOFFLINE set storage_opt_ 0
-Agent/GRIDOFFLINE set range_ 40
+Agent/GPSR set energy_checkpoint_ 995
+Agent/GPSR set hello_period_ 0
 
 Agent/UDP set fid_ 2
 
@@ -66,7 +64,7 @@ Agent/CBR set type_ CBR
 Agent/CBR set dport_ 0
 Agent/CBR set rate_ 0.1Mb
 Agent/CBR set sport_ 0
-Agent/CBR set interval_ 1
+Agent/CBR set interval_ 27
 
 # ======================================================================
 
@@ -118,6 +116,8 @@ $ns_ node-config -adhocRouting $opt(rp) \
 		 -transitionPower $opt(transitionPower) \
 		 -transitionTime $opt(transitionTime) \
 		 -initialEnergy $opt(initialenergy)
+
+puts "Routing Protocol: $opt(rp)"
 
 # set up nodes
 for {set i 0} {$i < $opt(nn)} {incr i} {

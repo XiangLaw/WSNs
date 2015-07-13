@@ -947,9 +947,6 @@ Simulator instproc create-gear-agent { node } {
 	$node addr $addr
 	$node set ragent_ $ragent
 	$self at 0.0 "$ragent start"    ;# start updates
-	$self at 0.5 "$ragent cleartrace"
-	$self at 100 "$ragent neighborlist"
-	$self at 499 "$ragent energy"
 	return $ragent
 }
 

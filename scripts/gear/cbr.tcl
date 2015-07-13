@@ -1,10 +1,10 @@
 # udp data
 
 set opt(tn) 2
-set opt(interval) 50.0
+set opt(interval) 100.0
 
-set s(0)	641	;	set d(0)	755
-set s(1)	888	;	set d(1)	433
+set s(0)	48	;	set d(0)	1104
+set s(1)	1081	;	set d(1)	271
 
 for {set i 0} {$i < $opt(tn)} {incr i} {
 	$mnode_($s($i)) setdest [$mnode_($d($i)) set X_] [$mnode_($d($i)) set Y_] 0
