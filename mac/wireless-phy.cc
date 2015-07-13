@@ -225,7 +225,7 @@ WirelessPhy::sendDown(Packet *p)
 
 		    if (start_time > update_energy_time_) {
 			    em()->DecrIdleEnergy(start_time - 
-						 update_energy_time_, P_idle_, update_energy_time_);
+						 update_energy_time_, P_idle_);
 			    update_energy_time_ = start_time;
 		    }
 
@@ -388,7 +388,7 @@ DONE:
 
 		if (start_time > update_energy_time_) {
 			em()->DecrIdleEnergy(start_time-update_energy_time_,
-					     P_idle_, update_energy_time_);
+					     P_idle_);
 			update_energy_time_ = start_time;
 		}
 		
@@ -445,7 +445,7 @@ WirelessPhy::node_off()
 	status_ = SLEEP;
 
 	if (em() != NULL && NOW > update_energy_time_) {
-		em()->DecrIdleEnergy(NOW-update_energy_time_, P_idle_, update_energy_time_);
+		em()->DecrIdleEnergy(NOW-update_energy_time_, P_idle_);
 		update_energy_time_ = NOW;
 	}
 }
@@ -495,7 +495,7 @@ WirelessPhy::node_sleep()
 	    em()->DecrTransitionEnergy(T_transition_,P_transition_);
 
             em()->DecrIdleEnergy(NOW-update_energy_time_,
-                                P_idle_, update_energy_time_);
+                                P_idle_);
 		status_ = SLEEP;
 	        update_energy_time_ = NOW;
 
@@ -527,7 +527,7 @@ void WirelessPhy::UpdateIdleEnergy()
 	}
 	if (NOW > update_energy_time_ && (Is_node_on()==TRUE && status_ == IDLE ) ) {
 		  em()-> DecrIdleEnergy(NOW-update_energy_time_,
-					P_idle_, update_energy_time_);
+					P_idle_);
 		  update_energy_time_ = NOW;
 	}
 
