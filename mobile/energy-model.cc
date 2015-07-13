@@ -93,11 +93,11 @@ void EnergyModel::DecrRcvEnergy(double rcvtime, double P_rcv)
 	update_off_time(false);
 }
 
-void EnergyModel::DecrIdleEnergy(double idletime, double P_idle, double last_update_energy_time)
+void EnergyModel::DecrIdleEnergy(double idletime, double P_idle)
 {
 	double dEng = P_idle * idletime;
 	if (energy_ <= dEng) {
-		update_off_time_idle_state(last_update_energy_time, P_idle);
+		update_off_time_idle_state(dEng, P_idle);
 		energy_ = 0.0;
 	}
 	else
@@ -345,9 +345,9 @@ void EnergyModel::update_off_time(bool force)
 	off_time_ = NOW;
 }
 
-void EnergyModel::update_off_time_idle_state(double last_update_energy_time, double P_idle)
+void EnergyModel::update_off_time_idle_state(double dEng, double P_idle)
 {
 	if(off_time_ > 0) return;
-	double remaining_time = energy_ / P_idle;
-	off_time_ = remaining_time + last_update_energy_time;
+	double dTime = (dEng - energy_) / P_idle;
+	off_time_ = NOW - dTime;
 }
