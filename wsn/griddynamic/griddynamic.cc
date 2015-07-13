@@ -46,6 +46,7 @@ GridDynamicAgent::GridDynamicAgent() : GPSRAgent(),
 	stuck_angle_ = NULL;
 	hole_ = NULL;
 	pivot.id_ = -1;
+    max_node_list_ = NULL;
 	bind("range_", &range_);
 	bind("limit_", &limit_);
 	bind("r_", &r_);
@@ -657,11 +658,31 @@ void GridDynamicAgent::recvUpdate(Packet *p) {
 	if (iph->daddr() == my_id_){
 		addNeighbor(iph->saddr(), gdh->p_);
 		// update max neighbor
-		int count_neighbor = 0;
-		for (node* temp = neighbor_list_; temp; temp = temp->next_) count_neighbor++;
-		if (count_neighbor > max_neighbor){
-			max_neighbor = count_neighbor;
-		}
+		for (neighbor* temp = neighbor_list_; temp; temp = (neighbor*) temp->next_){
+                node* prev = NULL;
+                bool check = false;
+                for (node* n = max_node_list_; n; n=n->next_){
+                    if (n->id_ > temp->id_) continue;
+                    if (n->id_ == temp->id_) {
+                        check = true;
+                    }
+                    break;
+                }
+                if (!check){
+                    if(prev == NULL){
+                        node* n = new node();
+                        n->id_ = temp->id_;
+                        n->next_ = max_node_list_;
+                        max_node_list_ = n;
+                    } else {
+                        node* n = new node();
+                        n->id_ = temp->id_;
+                        n->next_ = prev->next_;
+                        prev->next_ = n;
+                    }
+                }
+        }
+
 	} else {
 		if (pivot.id_ == -1) {
 			drop(p, "dont have pivot");

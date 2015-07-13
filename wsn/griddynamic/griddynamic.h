@@ -108,13 +108,13 @@ private:
 
 	stuckangle* stuck_angle_;
 	gridHole* hole_;
+    node* max_node_list_;
 
 	bool isBoundary;
 	bool isSink;
 	bool isStuck;
 	node pivot;
 	int nx_, ny_;
-	double max_neighbor = 0;
 
 	void startUp();
 
