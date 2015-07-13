@@ -137,7 +137,7 @@ void ElbarGridOfflineAgent::configDataPacket(Packet *p) {
 
     iph->saddr() = my_id_;
     iph->daddr() = -1;
-    iph->ttl_ = 100;
+    iph->ttl_ = max(100, limit_boundhole_hop_);
 
     sendGPSR(p);
 }

@@ -101,8 +101,10 @@ GPSRAgent::command(int argc, const char*const* argv)
 		}
 		if (strcasecmp(argv[1], "nodeoff") == 0)
 		{
-			hello_timer_.force_cancel();
-			off_time_ = Scheduler::instance().clock();
+            if (off_time_ < 0) {
+                hello_timer_.force_cancel();
+                off_time_ = Scheduler::instance().clock();
+            }
 		}
 	}
 
@@ -188,6 +190,10 @@ GPSRAgent::recv(Packet *p, Handler *h)
 void
 GPSRAgent::startUp()
 {
+
+    if (node_->address() == 1110){
+        int i = 0;
+    }
 	this->x_ = node_->X();		// get Location
 	this->y_ = node_->Y();
 	dest->x_ = node_->destX();

@@ -19,8 +19,8 @@ struct stuckangle
 };
 
 int limit_boundhole_hop_;
-double nodeoff_threshold; // evaluate by time
-double alert_threshold; // evaluate by percent
+double nodeoff_threshold_; // evaluate by time
+double alert_threshold_; // evaluate by percent
 double limit_x_;
 double limit_y_;
 double r_;
@@ -114,7 +114,7 @@ private:
 	bool isStuck;
 	node pivot;
 	int nx_, ny_;
-	int max_neighbor;
+	double max_neighbor = 0;
 
 	void startUp();
 
@@ -168,8 +168,8 @@ public:
 	static node* sink_list_;
 
 	void dumpNodeOffReal();
-
 	void dumpHoleArea();
+    void dumpNeighbor2();
 };
 
 #endif /* GRID_H_ */

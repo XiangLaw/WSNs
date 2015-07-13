@@ -52,10 +52,10 @@ GridDynamicAgent::GridDynamicAgent() : GPSRAgent(),
 	bind("limit_boundhole_hop_", &limit_boundhole_hop_);
 	bind("limit_x_", &limit_x_);
 	bind("limit_y_", &limit_y_);
+    bind("alert_threshold_", &alert_threshold_);
 
 	// TODO: fixed or set by script
-	nodeoff_threshold = hello_period_*2;
-	alert_threshold = 10;
+	nodeoff_threshold_ = hello_period_*2;
 }
 
 int
@@ -140,12 +140,12 @@ GridDynamicAgent::startUp()
 
 	// clear trace file
 	FILE *fp;
-//	fp = fopen("GridHole.tr", 		"w");	fclose(fp);
 	fp = fopen("Election.tr", 		"w");	fclose(fp);
 	fp = fopen("Pivot.tr", 		"w");		fclose(fp);
 	fp = fopen("Alarm.tr",			"w");	fclose(fp);
 	fp = fopen("PolygonHole.tr", 	"w");	fclose(fp);
-    fp = fopen("NodeOff.tr", 	"w");	fclose(fp);
+    fp = fopen("Neighbors_2.tr", 	"w");	fclose(fp);
+    fp = fopen("NodeOff.tr", 	"w");	    fclose(fp);
     fp = fopen("NodeOffReal.tr", 	"w");	fclose(fp);
 }
 
@@ -173,6 +173,8 @@ GridDynamicAgent::findStuckAngle()
 		// if no change, do nothing
 		return;
 	}
+
+    dumpNeighbor2();
 
 
 	// update stuck node state
@@ -457,8 +459,10 @@ GridDynamicAgent::checkState()
 		int count = 0;
 		for (node* temp = neighbor_list_; temp; temp = temp->next_) count++;
 
-		if ((100 - alert_threshold)/100.0 > count/max_neighbor)
-			sendAlarm();
+		if ((100 - alert_threshold_)/100.0 > count/max_neighbor) {
+            printf("alert-%d/%f\n", count, max_neighbor);
+            sendAlarm();
+        }
 	}
 }
 
@@ -658,7 +662,6 @@ void GridDynamicAgent::recvUpdate(Packet *p) {
 		if (count_neighbor > max_neighbor){
 			max_neighbor = count_neighbor;
 		}
-		int i = my_id_;
 	} else {
 		if (pivot.id_ == -1) {
 			drop(p, "dont have pivot");
@@ -721,7 +724,7 @@ bool GridDynamicAgent::removeNodeoff()
 	// remove ahead
 	for(neighbor* temp = neighbor_list_; temp; temp = next){
 		next = (neighbor*)temp->next_;
-		if (Scheduler::instance().clock() - temp->time_ > nodeoff_threshold){
+		if (Scheduler::instance().clock() - temp->time_ > nodeoff_threshold_){
 			isChange = true;
 			neighbor_list_ = next;
             dumpNodeOff(temp);
@@ -732,7 +735,7 @@ bool GridDynamicAgent::removeNodeoff()
 	//remove mid
 	for(neighbor* temp = neighbor_list_; temp; temp = next){
 		next = (neighbor*)temp->next_;
-		if (Scheduler::instance().clock() - temp->time_ > nodeoff_threshold){
+		if (Scheduler::instance().clock() - temp->time_ > nodeoff_threshold_){
 			isChange = true;
 			prev->next_ = next;
 			dumpNodeOff(temp);
@@ -1143,6 +1146,17 @@ void GridDynamicAgent::dumpCollect() {
 	FILE * fp = fopen("Collect.tr", "a+");
     fprintf(fp, "%d - collect (%f)\n", my_id_, Scheduler::instance().clock());
 	fclose(fp);
+}
+
+void GridDynamicAgent::dumpNeighbor2() {
+    FILE *fp = fopen("Neighbors_2.tr", "a+");
+    fprintf(fp, "%d	%f	%f	%f	", this->my_id_, this->x_, this->y_, Scheduler::instance().clock());
+    for (node *temp = neighbor_list_; temp; temp = temp->next_)
+    {
+        fprintf(fp, "%d,", temp->id_);
+    }
+    fprintf(fp, "\n");
+    fclose(fp);
 }
 
 void GridDynamicAgent::dumpNodeOff(neighbor *n) {

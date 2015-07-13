@@ -1,7 +1,7 @@
 # udp data
 
 set opt(tn) 0
-set opt(interval) 50.0
+set opt(interval) 30.0
 
 
 for {set i 0} {$i < $opt(tn)} {incr i} {
