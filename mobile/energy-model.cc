@@ -73,6 +73,7 @@ void EnergyModel::DecrTxEnergy(double txtime, double P_tx)
 	// This variable keeps track of total energy consumption in Transmission..
 	et_=et_+dEng;
 //
+	update_off_time(false);
 }
 
 
@@ -89,6 +90,7 @@ void EnergyModel::DecrRcvEnergy(double rcvtime, double P_rcv)
 	// This variable keeps track of total energy consumption in RECV mode..
 	er_=er_+dEng;
 //
+	update_off_time(false);
 }
 
 void EnergyModel::DecrIdleEnergy(double idletime, double P_idle) 
@@ -104,6 +106,7 @@ void EnergyModel::DecrIdleEnergy(double idletime, double P_idle)
 	// This variable keeps track of total energy consumption in IDLE mode..
 	ei_=ei_+dEng;
 //
+	update_off_time(false);
 }
 
 //
@@ -119,6 +122,7 @@ void EnergyModel::DecrSleepEnergy(double sleeptime, double P_sleep)
 
 	// This variable keeps track of total energy consumption in SLEEP mode..
 	es_=es_+dEng;
+	update_off_time(false);
 }
 
 void EnergyModel::DecrTransitionEnergy(double transitiontime, double P_transition) 
@@ -130,6 +134,7 @@ void EnergyModel::DecrTransitionEnergy(double transitiontime, double P_transitio
 		energy_ = energy_ - dEng;
 	if (energy_ <= 0.0)
 		God::instance()->ComputeRoute();
+	update_off_time(false);
 }
 //
 
@@ -329,3 +334,11 @@ void AdaptiveFidelityEntity::adapt_it()
 	}
 }
 
+void EnergyModel::update_off_time(bool force)
+{
+	if (off_time_ > 0) return;
+	if (!force) {
+		if (energy_ > 0) return;
+	}
+	off_time_ = NOW;
+}

@@ -102,7 +102,7 @@ GPSRAgent::command(int argc, const char*const* argv)
 		if (strcasecmp(argv[1], "nodeoff") == 0)
 		{
 			hello_timer_.force_cancel();
-			off_time_ = Scheduler::instance().clock();
+			node_->energy_model()->update_off_time(true);
 		}
 	}
 
@@ -488,8 +488,9 @@ GPSRAgent::dumpEnergy(char* filename)
 	if (node_->energy_model())
 	{
 		FILE *fp = fopen(filename, "a+");
-		fprintf(fp, "%d\t%f\t%f\t%f\t%f\t%f\t%f\t%f\n", my_id_, this->x_, this->y_,
+		fprintf(fp, "%d\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\n", my_id_, this->x_, this->y_,
 				node_->energy_model()->energy(),
+				node_->energy_model()->off_time(),
 		        node_->energy_model()->et(),
 				node_->energy_model()->er(),
 				node_->energy_model()->ei(),

@@ -88,7 +88,7 @@ class MobileNode;
 class EnergyModel : public TclObject {
 public:
 	EnergyModel(MobileNode* n, double energy, double l1, double l2) :
-		energy_(energy), er_(0), et_(0),ei_(0), es_(0), 
+		energy_(energy), er_(0), et_(0),ei_(0), es_(0), off_time_(-1),
 		initialenergy_(energy), 
 		level1_(l1), level2_(l2), node_(n), 
 		sleep_mode_(0), total_sleeptime_(0), total_rcvtime_(0), 
@@ -107,6 +107,7 @@ public:
 	inline double ei() const { return ei_; }
 	inline double es() const { return es_; }
 //
+	inline double off_time() const { return off_time_; }
 	inline double initialenergy() const { return initialenergy_; }
 	inline double level1() const { return level1_; }
 	inline double level2() const { return level2_; }
@@ -163,6 +164,8 @@ public:
 	// Sleeping state
 	enum SleepState { WAITING = 0, POWERSAVING = 1, INROUTE = 2 };
 
+	void update_off_time(bool force); 	// huyvq: update off_time_
+
 protected:
 	double energy_;
 //
@@ -170,7 +173,9 @@ protected:
 	double et_; // Total energy consumption in transmission
 	double ei_; // Total energy consumption in IDLE mode
 	double es_; // Total energy consumption in SLEEP mode
-//	
+//
+	double off_time_; // huyvq: add new attr for off time in trace file (when energy = 0.0)
+
 	double initialenergy_;
 	double level1_;
 	double level2_;
