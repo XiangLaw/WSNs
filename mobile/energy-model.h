@@ -115,7 +115,7 @@ public:
    
 	virtual void DecrTxEnergy(double txtime, double P_tx);
 	virtual void DecrRcvEnergy(double rcvtime, double P_rcv);
-	virtual void DecrIdleEnergy(double idletime, double P_idle);
+	virtual void DecrIdleEnergy(double idletime, double P_idle, double last_update_energy_time);
 //
 	virtual void DecrSleepEnergy(double sleeptime, double P_sleep);
 	virtual void DecrTransitionEnergy(double transitiontime, double P_transition);
@@ -165,6 +165,7 @@ public:
 	enum SleepState { WAITING = 0, POWERSAVING = 1, INROUTE = 2 };
 
 	void update_off_time(bool force); 	// huyvq: update off_time_
+	void update_off_time_idle_state(double last_update_energy_time, double P_idle); // handle for idle state only
 
 protected:
 	double energy_;
