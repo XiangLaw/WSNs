@@ -456,12 +456,13 @@ void GridDynamicAgent::updateState(){
 void
 GridDynamicAgent::checkState()
 {
-	if (removeNodeoff() && max_neighbor != 0){
-		int count = 0;
+	if (removeNodeoff() && max_node_list_ != NULL){
+		int count = 0, count_max_ = 0;
 		for (node* temp = neighbor_list_; temp; temp = temp->next_) count++;
+        for (node* temp = max_node_list_; temp; temp = temp->next_) count_max_++;
 
-		if ((100 - alert_threshold_)/100.0 > count/max_neighbor) {
-            printf("alert-%d/%f\n", count, max_neighbor);
+		if ((100 - alert_threshold_)/100.0 > count/count_max_) {
+            printf("alert-%d/%f\n", count, count_max_);
             sendAlarm();
         }
 	}
