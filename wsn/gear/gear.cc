@@ -118,6 +118,9 @@ void GEARAgent::recvGEAR(Packet *p) {
 		return;
 	}
 
+	des_x_ = gh->des_x_;
+	des_y_ = gh->des_y_;
+
 	gneighbor *next = getNeighborByGreedy(gh->des_x_, gh->des_y_);
 
 	//if (next != NULL) {
@@ -127,8 +130,7 @@ void GEARAgent::recvGEAR(Packet *p) {
 		next = getNeighborByEnergyAware(cmh->last_hop_);
 
 		if (next == NULL) {
-			printf("\nError");
-			drop(p, "ERROR");
+			drop(p, DROP_RTR_NO_ROUTE);
 			return;
 		}
 
@@ -190,7 +192,7 @@ void GEARAgent::recvSendBack(Packet *p) {
 }
 
 void GEARAgent::updateEnergyAware(gneighbor* next) {
-	int constEnergy = 2;
+	int constEnergy = 20;
 
 	h_ = next->h_ + constEnergy;
 }
