@@ -665,7 +665,7 @@ GridOfflineAgent::dumpArea() {
 
 void GridOfflineAgent::dumpNeighbor2() {
     FILE *fp = fopen("Neighbor_2.tr", "a+");
-    fprintf(fp, "%d	%f	%f	%f	", this->my_id_, this->x_, this->y_, this->off_time_);
+    fprintf(fp, "%d	%f	%f	%f	", this->my_id_, this->x_, this->y_, node_->energy_model()->off_time());
     for (node *temp = neighbor_list_; temp; temp = temp->next_)
     {
         fprintf(fp, "%d,", temp->id_);

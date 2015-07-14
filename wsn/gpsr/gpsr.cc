@@ -275,7 +275,8 @@ GPSRAgent::getNeighbor(nsaddr_t nid)
 
 neighbor*
 GPSRAgent::getNeighborByGreedy(Point d, Point s)
-{
+{		bind_offset(&hdr_gear_offset::offset_);
+
 	//initializing the minimal distance as my distance to sink
 	double mindis = G::distance(s, d);
 	neighbor* re = NULL;
