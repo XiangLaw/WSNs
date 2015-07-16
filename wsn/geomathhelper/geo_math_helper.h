@@ -14,6 +14,9 @@
 #include "cstdlib"
 #include "float.h"
 
+#define min(x,y) (((x)<(y))?(x):(y))
+#define max(x,y) (((x)>(y))?(x):(y))
+
 typedef double Angle;
 
 class G;
@@ -300,6 +303,11 @@ public:
 
 	static Angle directedAngle2(Point *a, Point *p, Point *b);
 
+	static bool onSegment(Point p, Point q, Point r);
+
+	static int orientation(Point p, Point q, Point r);
+
+	static bool doIntersect(Point p1, Point q1, Point p2, Point q2);
 };
 
 #endif /* GEO_MATH_HELPER_H_ */

@@ -134,11 +134,7 @@ GridOfflineAgent::startUp() {
 
 void
 GridOfflineAgent::findStuckAngle() {
-
-    if (my_id_ == 0){
-        printf("dump\n");
-    }
-    dumpNeighbor2();
+    // dumpNeighbor2();
 
     if (neighbor_list_ == NULL || neighbor_list_->next_ == NULL) {
         stuck_angle_ = NULL;

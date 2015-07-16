@@ -613,7 +613,7 @@ bool ElbarGridOfflineAgent::isIntersectWithHole(Point *anchor, Point *dest, node
     node *tmp;
 
     for (tmp = node_list; tmp->next_ != NULL; tmp = tmp->next_) {
-        if (G::is_intersect(anchor, dest, tmp, tmp->next_))
+        if (G::doIntersect(*anchor, *dest, *tmp, *tmp->next_))
             return true;
     }
     return false;
@@ -621,7 +621,7 @@ bool ElbarGridOfflineAgent::isIntersectWithHole(Point *anchor, Point *dest, node
 }
 
 bool ElbarGridOfflineAgent::isAlphaContainsPoint(Point *x, Point *o, Point *y, Point *d) {
-    if (G::is_intersect(x, y, o, d)) { // OD intersects with XY
+    if (G::doIntersect(*x, *y, *o, *d)) { // OD intersects with XY
         return true;
     }
     else { // if D is inside XOY triangle
