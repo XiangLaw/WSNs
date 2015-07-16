@@ -282,22 +282,7 @@ void ElbarGridOfflineAgent::routing(Packet *p) {
         return;
     }
 
-    if (cmh->uid_ == 1739){
-        if (my_id_ == 114){
-            int i = 0;
-        }
-        int k = 0;
-    }
-
     if (region_ == REGION_2) {
-
-        int i;
-        if (cmh->uid_ == 1728){
-            if (my_id_ == 331){
-                int j = 0;
-            }
-            int i = my_id_;
-        }
         if (routing_mode == HOLE_AWARE_MODE) { // if hole aware mode
             if (!isAlphaContainsPoint(&(parallelogram_->a_), this, &(parallelogram_->c_), destination)) {
                 //if (!isBetweenAngle(destination, &(parallelogram_->a_), this, &(parallelogram_->c_))) {
@@ -388,9 +373,6 @@ void ElbarGridOfflineAgent::routing(Packet *p) {
             }
         }
     } else {
-        if (REGION_1 == region_){
-            int i = 0;
-        }
         node *nexthop;
         if (anchor_point->x_ != -1 && anchor_point->y_ != -1){
             // forward to anchor point when anchor point is set

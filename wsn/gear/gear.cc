@@ -346,9 +346,19 @@ void GEARAgent::startUp() {
 }
 
 void GEARAgent::dumpEnergy() {
-	FILE *fp = fopen("Energy.tr", "a+");
-	fprintf(fp, "%d\t%f\t%f\t%f\n", my_id_, my_x_, my_y_, node_->energy_model()->energy());
-	fclose(fp);
+	if (node_->energy_model())
+	{
+		FILE *fp = fopen("Energy.tr", "a+");
+		fprintf(fp, "%d\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\n", my_id_, my_x_, my_y_,
+				node_->energy_model()->energy(),
+				node_->energy_model()->off_time(),
+				node_->energy_model()->et(),
+				node_->energy_model()->er(),
+				node_->energy_model()->ei(),
+				node_->energy_model()->es()
+		);
+		fclose(fp);
+	}
 }
 
 void GEARAgent::dumpNeighbors(){
