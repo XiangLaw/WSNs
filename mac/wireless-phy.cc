@@ -441,6 +441,7 @@ WirelessPhy::node_on()
 void 
 WirelessPhy::node_off()
 {
+	if(!Is_node_on()) return;
 	node_on_= FALSE;
 	status_ = SLEEP;
 

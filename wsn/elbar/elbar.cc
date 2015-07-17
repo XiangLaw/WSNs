@@ -108,7 +108,7 @@ void ElbarGridOfflineAgent::recvData(Packet *p) {
     struct hdr_elbar_grid *egh = HDR_ELBAR_GRID(p);
 
     if (cmh->direction_ == hdr_cmn::UP && egh->daddr == my_id_) { // packet reach destination
-        printf("[Debug] %d - Received\n", my_id_);
+        //printf("[Debug] %d - Received\n", my_id_);
         port_dmux_->recv(p, 0);
         return;
     } else {// send new packet or routing recv packet
@@ -185,6 +185,13 @@ void ElbarGridOfflineAgent::detectParallelogram() {
                 item = item->next_;
             } while (item && item->next_ != tmp->node_list_);
 
+            angle = G::directedAngle(aj, this, ai);
+            angle = angle > 0 ? angle : angle + M_PI; //change angle from range -180;180 to 0;360
+
+            region_ = regionDetermine(angle);
+
+            if(REGION_2 != region_)
+                return;
 
             // detect parallelogram
             vi = tmp->node_list_;
@@ -218,22 +225,15 @@ void ElbarGridOfflineAgent::detectParallelogram() {
                 continue;
             }
 
-            /*
-        save Hole information into local memory if this node is in region 2
-         */
-            angle = G::directedAngle(aj, this, ai);
-            angle = angle > 0 ? angle : angle + M_PI; //change angle from rang -180;180 to 0;360
-
-            region_ = regionDetermine(angle);
-            if (REGION_2 == region_ || REGION_1 == region_) {
-                this->parallelogram_ = new parallelogram();
-                this->parallelogram_->a_ = a;
-                this->parallelogram_->b_ = b;
-                this->parallelogram_->c_ = c;
-                this->parallelogram_->p_.x_ = this->x_;
-                this->parallelogram_->p_.y_ = this->y_;
-                dumpParallelogram();
-            }
+            /* save Hole information into local memory if this node is in region 2
+             */
+            this->parallelogram_ = new parallelogram();
+            this->parallelogram_->a_ = a;
+            this->parallelogram_->b_ = b;
+            this->parallelogram_->c_ = c;
+            this->parallelogram_->p_.x_ = this->x_;
+            this->parallelogram_->p_.y_ = this->y_;
+            dumpParallelogram();
 
             alpha_ = angle;
         } else {
@@ -265,14 +265,33 @@ Elbar_Region ElbarGridOfflineAgent::regionDetermine(double angle) {
 void ElbarGridOfflineAgent::routing(Packet *p) {
     struct hdr_cmn *cmh = HDR_CMN(p);
     struct hdr_elbar_grid *egh = HDR_ELBAR_GRID(p);
-    struct hdr_ip *iph = HDR_IP(p);
 
     Point *destination = &(egh->destination_);
     Point *anchor_point = &(egh->anchor_point_);
     int routing_mode = egh->forwarding_mode_;
 
+
+    if(cmh->uid() == 1734) {
+        printf("myid=%d, destination=%g-%g, anchor=%g-%g, routingmode=%d, region=%d\n",
+               my_id_,
+        destination->x_, destination->y_,
+        anchor_point->x_, anchor_point->y_,
+        routing_mode, region_);
+    }
+
     // forward by GPSR when have no info about hole
     if (!hole_list_){
+        node *nexthop = recvGPSR(p, *destination);
+        if (nexthop == NULL) {
+            drop(p, DROP_RTR_NO_ROUTE);
+            return;
+        }
+        sendPackageToHop(p, nexthop);
+        return;
+    }
+
+    // after reaching to anchor point, just move forward to destination by gpsr
+    if (routing_mode == GO_TO_DEST_ONLY) {
         node *nexthop = recvGPSR(p, *destination);
         if (nexthop == NULL) {
             drop(p, DROP_RTR_NO_ROUTE);
@@ -289,7 +308,7 @@ void ElbarGridOfflineAgent::routing(Packet *p) {
                 // alpha does not contain D
 
                 // routing by greedy
-                egh->forwarding_mode_ = GREEDY_MODE;
+                egh->forwarding_mode_ = GO_TO_DEST_ONLY;
                 // set nexthop to neighbor being closest to D
                 node *nexthop = recvGPSR(p, *destination);
                 if (nexthop == NULL) {
@@ -305,10 +324,19 @@ void ElbarGridOfflineAgent::routing(Packet *p) {
             else {
                 // alpha contains D
                 // set nexthop to neighbor being closest to L
-                node *nexthop = recvGPSR(p, *anchor_point);
+                node *nexthop = getNeighborByGreedy(*anchor_point);
                 if (nexthop == NULL) {
-                    drop(p, DROP_RTR_NO_ROUTE);
-                    return;
+                    // huyvq: update when cannot go to anchor point anymore, just forward to dest by gpsr
+                    // case: destination is inside parallelogram and neither anchor point's neighbors
+                    //       can see the destination.
+
+                    egh->forwarding_mode_ = GO_TO_DEST_ONLY;
+
+                    nexthop = recvGPSR(p, *destination);
+                    if(nexthop == NULL) {
+                        drop(p, DROP_RTR_NO_ROUTE);
+                        return;
+                    }
                 }
                 sendPackageToHop(p, nexthop);
             }
@@ -377,8 +405,16 @@ void ElbarGridOfflineAgent::routing(Packet *p) {
         if (anchor_point->x_ != -1 && anchor_point->y_ != -1){
             // forward to anchor point when anchor point is set
             nexthop = recvGPSR(p, *anchor_point);
+            if (nexthop == NULL) {
+                drop(p, DROP_RTR_NO_ROUTE);
+                return;
+            }
         } else {
             nexthop = recvGPSR(p, *destination);
+            if(nexthop == NULL) {
+                drop(p, DROP_RTR_NO_ROUTE);
+                return;
+            }
         }
 
         sendPackageToHop(p, nexthop);

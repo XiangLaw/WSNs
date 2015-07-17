@@ -8,6 +8,7 @@
 
 #define HOLE_AWARE_MODE 0x01
 #define GREEDY_MODE 0x02
+#define GO_TO_DEST_ONLY 0x03
 
 enum Elbar_Region {
     REGION_1 = 1, // broadcast boundhole information only
