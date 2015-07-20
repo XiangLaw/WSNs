@@ -32,6 +32,7 @@ ElbarGridOfflineAgent::ElbarGridOfflineAgent()
     hole_list_ = NULL;
     parallelogram_ = NULL;
     alpha_ = 0;
+    region_ = REGION_3;
 }
 
 char const *ElbarGridOfflineAgent::getAgentName() {
@@ -271,7 +272,7 @@ void ElbarGridOfflineAgent::routing(Packet *p) {
     int routing_mode = egh->forwarding_mode_;
 
 
-    if(cmh->uid() == 1734) {
+    if(cmh->uid() == 1856) {
         printf("myid=%d, destination=%g-%g, anchor=%g-%g, routingmode=%d, region=%d\n",
                my_id_,
         destination->x_, destination->y_,
@@ -404,10 +405,15 @@ void ElbarGridOfflineAgent::routing(Packet *p) {
         node *nexthop;
         if (anchor_point->x_ != -1 && anchor_point->y_ != -1){
             // forward to anchor point when anchor point is set
-            nexthop = recvGPSR(p, *anchor_point);
+            nexthop = getNeighborByGreedy(*anchor_point);
             if (nexthop == NULL) {
-                drop(p, DROP_RTR_NO_ROUTE);
-                return;
+                egh->forwarding_mode_ = GO_TO_DEST_ONLY;
+
+                nexthop = recvGPSR(p, *destination);
+                if(nexthop == NULL) {
+                    drop(p, DROP_RTR_NO_ROUTE);
+                    return;
+                }
             }
         } else {
             nexthop = recvGPSR(p, *destination);
@@ -513,15 +519,13 @@ void ElbarGridOfflineAgent::recvHci(Packet *p) {
     }
 
     // check if is really receive this hole's information
-    for (polygonHole *h = hole_list_; h; h = h->next_) {
-        if (h->hole_id_ == iph->saddr())    // already received
-        {
-            drop(p, "HciReceived");
-            return;
-        }
+    if (hole_list_ != NULL)    // already received
+    {
+        drop(p, "HciReceived");
+        return;
     }
 
-    // create Grid if not set
+    // save Grid for its self
     createGrid(p);
     // determine region & parallelogram
     detectParallelogram();
@@ -544,7 +548,6 @@ void ElbarGridOfflineAgent::createGrid(Packet *p) {
 
     // add node info to hole item
     ElbarGridOfflinePacketData *data = (ElbarGridOfflinePacketData *) p->userdata();
-    data->dump();
 
     node *head = NULL;
     for (int i = 1; i <= data->size(); i++) {

@@ -69,7 +69,7 @@ GridOfflineAgent::command(int argc, const char *const *argv) {
             return TCL_OK;
         }
         if (strcasecmp(argv[1], "bcenergy") == 0) {
-            dumpEnergy();
+            //dumpEnergy();
             return TCL_OK;
         }
     }
@@ -235,7 +235,6 @@ GridOfflineAgent::recvBoundHole(Packet *p) {
 
             dumpBoundhole();
             dumpTime();
-            dumpEnergy();
             dumpArea();
 
             drop(p, " GRID");
