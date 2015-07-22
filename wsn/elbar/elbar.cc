@@ -32,6 +32,7 @@ ElbarGridOfflineAgent::ElbarGridOfflineAgent()
     hole_list_ = NULL;
     parallelogram_ = NULL;
     alpha_ = 0;
+    region_ = REGION_3;
 }
 
 char const *ElbarGridOfflineAgent::getAgentName() {
@@ -108,7 +109,7 @@ void ElbarGridOfflineAgent::recvData(Packet *p) {
     struct hdr_elbar_grid *egh = HDR_ELBAR_GRID(p);
 
     if (cmh->direction_ == hdr_cmn::UP && egh->daddr == my_id_) { // packet reach destination
-        printf("[Debug] %d - Received\n", my_id_);
+        //printf("[Debug] %d - Received\n", my_id_);
         port_dmux_->recv(p, 0);
         return;
     } else {// send new packet or routing recv packet
@@ -185,6 +186,13 @@ void ElbarGridOfflineAgent::detectParallelogram() {
                 item = item->next_;
             } while (item && item->next_ != tmp->node_list_);
 
+            angle = G::directedAngle(aj, this, ai);
+            angle = angle > 0 ? angle : angle + M_PI; //change angle from range -180;180 to 0;360
+
+            region_ = regionDetermine(angle);
+
+            if(REGION_2 != region_)
+                return;
 
             // detect parallelogram
             vi = tmp->node_list_;
@@ -218,22 +226,15 @@ void ElbarGridOfflineAgent::detectParallelogram() {
                 continue;
             }
 
-            /*
-        save Hole information into local memory if this node is in region 2
-         */
-            angle = G::directedAngle(aj, this, ai);
-            angle = angle > 0 ? angle : angle + M_PI; //change angle from rang -180;180 to 0;360
-
-            region_ = regionDetermine(angle);
-            if (REGION_2 == region_ || REGION_1 == region_) {
-                this->parallelogram_ = new parallelogram();
-                this->parallelogram_->a_ = a;
-                this->parallelogram_->b_ = b;
-                this->parallelogram_->c_ = c;
-                this->parallelogram_->p_.x_ = this->x_;
-                this->parallelogram_->p_.y_ = this->y_;
-                dumpParallelogram();
-            }
+            /* save Hole information into local memory if this node is in region 2
+             */
+            this->parallelogram_ = new parallelogram();
+            this->parallelogram_->a_ = a;
+            this->parallelogram_->b_ = b;
+            this->parallelogram_->c_ = c;
+            this->parallelogram_->p_.x_ = this->x_;
+            this->parallelogram_->p_.y_ = this->y_;
+            dumpParallelogram();
 
             alpha_ = angle;
         } else {
@@ -265,11 +266,19 @@ Elbar_Region ElbarGridOfflineAgent::regionDetermine(double angle) {
 void ElbarGridOfflineAgent::routing(Packet *p) {
     struct hdr_cmn *cmh = HDR_CMN(p);
     struct hdr_elbar_grid *egh = HDR_ELBAR_GRID(p);
-    struct hdr_ip *iph = HDR_IP(p);
 
     Point *destination = &(egh->destination_);
     Point *anchor_point = &(egh->anchor_point_);
     int routing_mode = egh->forwarding_mode_;
+
+
+    if(cmh->uid() == 1856) {
+        printf("myid=%d, destination=%g-%g, anchor=%g-%g, routingmode=%d, region=%d\n",
+               my_id_,
+        destination->x_, destination->y_,
+        anchor_point->x_, anchor_point->y_,
+        routing_mode, region_);
+    }
 
     // forward by GPSR when have no info about hole
     if (!hole_list_){
@@ -282,29 +291,25 @@ void ElbarGridOfflineAgent::routing(Packet *p) {
         return;
     }
 
-    if (cmh->uid_ == 1739){
-        if (my_id_ == 114){
-            int i = 0;
+    // after reaching to anchor point, just move forward to destination by gpsr
+    if (routing_mode == GO_TO_DEST_ONLY) {
+        node *nexthop = recvGPSR(p, *destination);
+        if (nexthop == NULL) {
+            drop(p, DROP_RTR_NO_ROUTE);
+            return;
         }
-        int k = 0;
+        sendPackageToHop(p, nexthop);
+        return;
     }
 
     if (region_ == REGION_2) {
-
-        int i;
-        if (cmh->uid_ == 1728){
-            if (my_id_ == 331){
-                int j = 0;
-            }
-            int i = my_id_;
-        }
         if (routing_mode == HOLE_AWARE_MODE) { // if hole aware mode
             if (!isAlphaContainsPoint(&(parallelogram_->a_), this, &(parallelogram_->c_), destination)) {
                 //if (!isBetweenAngle(destination, &(parallelogram_->a_), this, &(parallelogram_->c_))) {
                 // alpha does not contain D
 
                 // routing by greedy
-                egh->forwarding_mode_ = GREEDY_MODE;
+                egh->forwarding_mode_ = GO_TO_DEST_ONLY;
                 // set nexthop to neighbor being closest to D
                 node *nexthop = recvGPSR(p, *destination);
                 if (nexthop == NULL) {
@@ -320,10 +325,19 @@ void ElbarGridOfflineAgent::routing(Packet *p) {
             else {
                 // alpha contains D
                 // set nexthop to neighbor being closest to L
-                node *nexthop = recvGPSR(p, *anchor_point);
+                node *nexthop = getNeighborByGreedy(*anchor_point);
                 if (nexthop == NULL) {
-                    drop(p, DROP_RTR_NO_ROUTE);
-                    return;
+                    // huyvq: update when cannot go to anchor point anymore, just forward to dest by gpsr
+                    // case: destination is inside parallelogram and neither anchor point's neighbors
+                    //       can see the destination.
+
+                    egh->forwarding_mode_ = GO_TO_DEST_ONLY;
+
+                    nexthop = recvGPSR(p, *destination);
+                    if(nexthop == NULL) {
+                        drop(p, DROP_RTR_NO_ROUTE);
+                        return;
+                    }
                 }
                 sendPackageToHop(p, nexthop);
             }
@@ -388,15 +402,25 @@ void ElbarGridOfflineAgent::routing(Packet *p) {
             }
         }
     } else {
-        if (REGION_1 == region_){
-            int i = 0;
-        }
         node *nexthop;
         if (anchor_point->x_ != -1 && anchor_point->y_ != -1){
             // forward to anchor point when anchor point is set
-            nexthop = recvGPSR(p, *anchor_point);
+            nexthop = getNeighborByGreedy(*anchor_point);
+            if (nexthop == NULL) {
+                egh->forwarding_mode_ = GO_TO_DEST_ONLY;
+
+                nexthop = recvGPSR(p, *destination);
+                if(nexthop == NULL) {
+                    drop(p, DROP_RTR_NO_ROUTE);
+                    return;
+                }
+            }
         } else {
             nexthop = recvGPSR(p, *destination);
+            if(nexthop == NULL) {
+                drop(p, DROP_RTR_NO_ROUTE);
+                return;
+            }
         }
 
         sendPackageToHop(p, nexthop);
@@ -495,15 +519,13 @@ void ElbarGridOfflineAgent::recvHci(Packet *p) {
     }
 
     // check if is really receive this hole's information
-    for (polygonHole *h = hole_list_; h; h = h->next_) {
-        if (h->hole_id_ == iph->saddr())    // already received
-        {
-            drop(p, "HciReceived");
-            return;
-        }
+    if (hole_list_ != NULL)    // already received
+    {
+        drop(p, "HciReceived");
+        return;
     }
 
-    // create Grid if not set
+    // save Grid for its self
     createGrid(p);
     // determine region & parallelogram
     detectParallelogram();
@@ -526,7 +548,6 @@ void ElbarGridOfflineAgent::createGrid(Packet *p) {
 
     // add node info to hole item
     ElbarGridOfflinePacketData *data = (ElbarGridOfflinePacketData *) p->userdata();
-    data->dump();
 
     node *head = NULL;
     for (int i = 1; i <= data->size(); i++) {
@@ -631,7 +652,7 @@ bool ElbarGridOfflineAgent::isIntersectWithHole(Point *anchor, Point *dest, node
     node *tmp;
 
     for (tmp = node_list; tmp->next_ != NULL; tmp = tmp->next_) {
-        if (G::is_intersect(anchor, dest, tmp, tmp->next_))
+        if (G::doIntersect(*anchor, *dest, *tmp, *tmp->next_))
             return true;
     }
     return false;
@@ -639,7 +660,7 @@ bool ElbarGridOfflineAgent::isIntersectWithHole(Point *anchor, Point *dest, node
 }
 
 bool ElbarGridOfflineAgent::isAlphaContainsPoint(Point *x, Point *o, Point *y, Point *d) {
-    if (G::is_intersect(x, y, o, d)) { // OD intersects with XY
+    if (G::doIntersect(*x, *y, *o, *d)) { // OD intersects with XY
         return true;
     }
     else { // if D is inside XOY triangle

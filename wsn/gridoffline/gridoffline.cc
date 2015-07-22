@@ -69,7 +69,7 @@ GridOfflineAgent::command(int argc, const char *const *argv) {
             return TCL_OK;
         }
         if (strcasecmp(argv[1], "bcenergy") == 0) {
-            dumpEnergy();
+            //dumpEnergy();
             return TCL_OK;
         }
     }
@@ -134,7 +134,6 @@ GridOfflineAgent::startUp() {
 
 void
 GridOfflineAgent::findStuckAngle() {
-
     if (neighbor_list_ == NULL || neighbor_list_->next_ == NULL) {
         stuck_angle_ = NULL;
         return;
@@ -236,7 +235,6 @@ GridOfflineAgent::recvBoundHole(Packet *p) {
 
             dumpBoundhole();
             dumpTime();
-            dumpEnergy();
             dumpArea();
 
             drop(p, " GRID");
@@ -655,6 +653,17 @@ void
 GridOfflineAgent::dumpArea() {
     FILE *fp = fopen("Area.tr", "a+");
     fprintf(fp, "%f\n", G::area(hole_list_->node_list_));
+    fclose(fp);
+}
+
+void GridOfflineAgent::dumpNeighbor2() {
+    FILE *fp = fopen("Neighbor_2.tr", "a+");
+    fprintf(fp, "%d	%f	%f	%f	", this->my_id_, this->x_, this->y_, node_->energy_model()->off_time());
+    for (node *temp = neighbor_list_; temp; temp = temp->next_)
+    {
+        fprintf(fp, "%d,", temp->id_);
+    }
+    fprintf(fp, "\n");
     fclose(fp);
 }
 
