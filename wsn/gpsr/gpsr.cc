@@ -142,7 +142,7 @@ GPSRAgent::command(int argc, const char*const* argv)
 void
 GPSRAgent::recv(Packet *p, Handler *h)
 {
-	checkEnergy();
+	//checkEnergy();
 
 	struct hdr_cmn *cmh = HDR_CMN(p);
 	struct hdr_ip  *iph = HDR_IP(p);
@@ -192,7 +192,7 @@ GPSRAgent::startUp()
 	dest->x_ = node_->destX();
 	dest->y_ = node_->destY();
 
-	hello_timer_.resched(randSend_.uniform(0.0, 5));
+	hello_timer_.resched(randSend_.uniform(0.0, 15));
 
 	FILE *fp;
 	fp = fopen("Neighbors.tr",	"w");	fclose(fp);
@@ -257,7 +257,7 @@ GPSRAgent::addNeighbor(nsaddr_t nid, Point location)
 	}
 	else // temp != null
 	{
-		temp->time_ = Scheduler::instance().clock();
+		temp->time_ = NOW;
 		temp->x_ = location.x_;
 		temp->y_ = location.y_;
 	}
@@ -275,8 +275,7 @@ GPSRAgent::getNeighbor(nsaddr_t nid)
 
 neighbor*
 GPSRAgent::getNeighborByGreedy(Point d, Point s)
-{		bind_offset(&hdr_gear_offset::offset_);
-
+{
 	//initializing the minimal distance as my distance to sink
 	double mindis = G::distance(s, d);
 	neighbor* re = NULL;
