@@ -16,6 +16,7 @@
 
 #define min(x,y) (((x)<(y))?(x):(y))
 #define max(x,y) (((x)>(y))?(x):(y))
+#define in_range(x,a,y) ((x) <= (a) && (a) <= (y)) || ((x) >= (a) && (a) >= (y))
 
 typedef double Angle;
 
@@ -301,13 +302,18 @@ public:
 
     static bool	lineSegmentIntersection(Point *a, Point *b, Line l, Point& p);
 
-	static Angle directedAngle2(Point *a, Point *p, Point *b);
+	static Angle angle_x_axis(Point *a, Point *p);
 
+	static bool onSegment(Point *p, Point *q, Point *r) {return onSegment(*p, *q, *r);}
 	static bool onSegment(Point p, Point q, Point r);
 
 	static int orientation(Point p, Point q, Point r);
 
 	static bool doIntersect(Point p1, Point q1, Point p2, Point q2);
+
+	static bool isPointInsidePolygon(Point *d, node* node_list);
+
+	static bool isPointLiesInTriangle(Point *p, Point *p1, Point *p2, Point *p3);
 };
 
 #endif /* GEO_MATH_HELPER_H_ */

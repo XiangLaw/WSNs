@@ -26,7 +26,7 @@ void GEARTimer::expire(Event *e) {
 
 void GEARAgent::helloTimeOut() {
 	sendHello();
-	hello_timer_.resched(hello_period_);
+	if (hello_period_ > 0) hello_timer_.resched(hello_period_);
 }
 
 // update energy-aware value regularly
