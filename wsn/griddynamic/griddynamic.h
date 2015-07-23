@@ -21,6 +21,7 @@ struct stuckangle
 int limit_boundhole_hop_;
 double nodeoff_threshold_; // evaluate by time
 double alert_threshold_; // evaluate by percent
+double sink_threshold_; // evaluate by percent
 double limit_x_;
 double limit_y_;
 double r_;
@@ -108,19 +109,25 @@ private:
 
 	stuckangle* stuck_angle_;
 	gridHole* hole_;
-    node* max_node_list_;
+    neighbor* tracking_list_; // current nodes in tracking by pivot
+    node* max_node_list_; // storage node in cell by pivot
 
 	bool isBoundary;
 	bool isSink;
 	bool isStuck;
+    bool isAlerted;
+    bool isSinkNotify;
+    bool forceFindStuck;
 	node pivot;
 	int nx_, ny_;
 
 	void startUp();
 
 	bool removeNodeoff();
+    bool removeTrackingNodeOff();
 	void findStuckAngle();
 	node* getNeighborByBoundhole(Point*, Point*);
+    void addTracking(nsaddr_t saddr, Point point);
 
 	void sendBoundHole();
 	void recvBoundHole(Packet*);
@@ -159,6 +166,7 @@ private:
 	void dumpCollect();
 	void dumpAlarm();
 	void dumpNodeOff(neighbor*);
+    void dumpNodeOffReal();
 
 public:
 	GridDynamicAgent();
@@ -166,10 +174,6 @@ public:
 	void 	recv(Packet*, Handler*);
 
 	static node* sink_list_;
-
-	void dumpNodeOffReal();
-	void dumpHoleArea();
-    void dumpNeighbor2();
 };
 
 #endif /* GRID_H_ */

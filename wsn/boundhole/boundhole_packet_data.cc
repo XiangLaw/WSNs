@@ -47,15 +47,29 @@ void BoundHolePacketData::add(nsaddr_t id, double x, double y)
 
 void BoundHolePacketData::dump() {
 	FILE *fp = fopen("BoundHole.tr", "a+");
+    node* list = NULL;
 
 	for (int i = 1; i <= data_len_ / element_size_; i++)
 	{
 		node n = get_data(i);
+        node* nl = new node();
+        nl->next_ = list;
+        nl->id_ = n.id_;
+        nl->x_ = n.x_;
+        nl->y_ = n.y_;
+        list = nl;
+
 		fprintf(fp, "%d\t%f\t%f\n", n.id_, n.x_, n.y_);
 	}
 	node n = get_data(1);
-	fprintf(fp, "%d\t%f\t%f\n", n.id_, n.x_, n.y_);
+    node* nl = new node();
+    nl->next_ = list;
+    nl->id_ = n.id_;
+    nl->x_ = n.x_;
+    nl->y_ = n.y_;
+    list = nl;
 	fprintf(fp, "\n");
+    fprintf(fp, "BH Area:%f\n\n", G::area(list));
 	fclose(fp);
 }
 

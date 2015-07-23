@@ -651,16 +651,6 @@ double	G::area(node* n)
 		s += area(g1, g2, g3);
 		g1->next_ = g3;
 
-		FILE *fp = fopen("Test.tr", "w");
-		node* t = g1;
-		do {
-			fprintf(fp, "%f	%f\n", t->x_, t->y_);
-			t = t->next_;
-		} while (t && t != g1);
-
-		fprintf(fp, "%f	%f\n\n", g1->x_, g1->y_);
-		fclose(fp);
-
 		delete g2;
 	}
 	s += area(g1, g1->next_, g1->next_->next_);
