@@ -39,7 +39,6 @@ BoundHoleAgent::BoundHoleAgent() : GPSRAgent(),
 	bind("range_", &range_);
 	bind("storage_opt_", &storage_opt_);
 	bind("limit_boundhole_hop_", &limit_hop);
-	//bind("limit_min_boundhole_hop_", &limit_min_hop_);
 }
 
 int
@@ -221,7 +220,7 @@ void BoundHoleAgent::sendBoundHole()
 
 		send(p, 0);
 
-		printf("%d\t- Send BoundHole\n", my_id_);
+//		printf("%d\t- Send BoundHole\n", my_id_);
 	}
 }
 
