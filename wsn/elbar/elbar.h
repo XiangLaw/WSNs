@@ -60,7 +60,7 @@ private:
     /* math */
     bool isIntersectWithHole(Point *anchor, Point *dest, node* node_list);
     bool isAlphaContainsPoint(Point *x, Point *o, Point *y, Point *d); // check if D is inside xOy
-    bool isPointInsidePolygon(Point *d, node* hole);
+    double detectViewAngle(Point *d, node* hole, node* ai, node* aj);
     /* dump */
     virtual char const *getAgentName();
 

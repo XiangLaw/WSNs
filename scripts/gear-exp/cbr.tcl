@@ -1,6 +1,6 @@
 # udp data
 
-set opt(tn) 201
+set opt(tn) 0
 set opt(interval) 25.0
 
 set s(0)	405	;	set d(0)	1023
