@@ -708,34 +708,23 @@ bool G::lineSegmentIntersection(Point *a, Point *b, Line l, Point &intersection)
 }
 
 
-// directed angle between vector (pa, pb) = (apb) in counterclockwise
-Angle G::directedAngle2(Point *a, Point *p, Point *b) {
-	double x1, x2, y1, y2;
+// clockwise directed angle between vector (pa, px // Ox) in range [-180, 180]
+Angle G::angle_x_axis(Point *a, Point *p) {
+	double x1, y1;
 	x1 = a->x_ - p->x_;
 	y1 = a->y_ - p->y_;
 
-	x2 = b->x_ - p->x_;
-	y2 = b->y_ - p->y_;
-
 	double a1 = atan2(y1, x1);
-	double a2 = atan2(y2, x2);
-
-	a1 = a1 > 0 ? a1 : a1 + 2 * M_PI;
-	a2 = a2 > 0 ? a2 : a2 + 2 * M_PI;
-
-	return a2 - a1 > 0 ? a2 - a1 : a2 - a1 + 2 * M_PI;
+	return a1;
 }
 
-// A C++ program to check if two given line segments intersect
 // Given three colinear points p, q, r, the function checks if
 // point q lies on line segment 'pr'
 bool G::onSegment(Point p, Point q, Point r)
 {
-	if (q.x_ <= max(p.x_, r.x_) && q.x_ >= min(p.x_, r.x_) &&
-		q.y_ <= max(p.y_, r.y_) && q.y_ >= min(p.y_, r.y_))
-		return true;
+	return q.x_ <= max(p.x_, r.x_) && q.x_ >= min(p.x_, r.x_) &&
+    q.y_ <= max(p.y_, r.y_) && q.y_ >= min(p.y_, r.y_);
 
-	return false;
 }
 
 // To find orientation of ordered triplet (p, q, r).
@@ -747,7 +736,7 @@ int G::orientation(Point p, Point q, Point r)
 {
 	// See 10th slides from following link for derivation of the formula
 	// http://www.dcs.gla.ac.uk/~pat/52233/slides/Geometry1x1.pdf
-	int val = (q.y_ - p.y_) * (r.x_ - q.x_) -
+	double val = (q.y_ - p.y_) * (r.x_ - q.x_) -
 			  (q.x_ - p.x_) * (r.y_ - q.y_);
 
 	if (val == 0) return 0; // colinear
@@ -785,3 +774,74 @@ bool G::doIntersect(Point p1, Point q1, Point p2, Point q2)
 
 	return false; // Doesn't fall in any of the above cases
 }
+
+/**
+ * Check if a Point is inside (including lies on edge) of a grid
+ */
+bool G::isPointInsidePolygon(Point *d, node *node_list) {
+	Point y;
+	node *tmp;
+	y.x_ = 0;
+	y.y_ = d->y_;
+
+	int greater_horizontal = 0;
+	int less_horizontal = 0;
+	Line dy = G::line(d, y);
+
+	Point intersect;
+	intersect.x_ = -1;
+	intersect.y_ = -1;
+
+	// count horizontal
+	for (tmp = node_list; tmp != NULL; tmp = tmp->next_) {
+		if (tmp->next_ != NULL) {
+			if( G::is_in_line(tmp, tmp->next_, d)) {
+				if(G::onSegment(tmp, d, tmp->next_)) {
+					return true;
+				} else {
+					if (tmp->x_ > d->x_) greater_horizontal++;
+					else if (tmp->x_ < d->x_) less_horizontal++;
+				}
+			}
+			else if (G::lineSegmentIntersection(tmp, tmp->next_, dy, intersect)) {
+				if (intersect.x_ > d->x_) greater_horizontal++;
+				else if (intersect.x_ < d->x_) less_horizontal++;
+				else return true;
+			}
+
+		}
+		else { // end-point & start-point
+			if( G::is_in_line(tmp, node_list, d)) {
+				if(G::onSegment(tmp, d, node_list)) {
+					return true;
+				} else {
+					if (tmp->x_ > d->x_) greater_horizontal++;
+					else if (tmp->x_ < d->x_) less_horizontal++;
+				}
+			}
+			else if (G::lineSegmentIntersection(tmp, node_list, dy, intersect)) {
+				if (intersect.x_ > d->x_) greater_horizontal++;
+				else if (intersect.x_ < d->x_) less_horizontal++;
+				else return true;
+			}
+
+		}
+	}
+
+	return !(greater_horizontal % 2 == 0 || less_horizontal % 2 == 0);
+}
+
+/**
+ * Check if point is inside P1P2P3 triangle
+ */
+bool G::isPointLiesInTriangle(Point *p, Point *p1, Point *p2, Point *p3) {
+	// barycentric algorithm
+	double alpha = ((p2->y_ - p3->y_) * (p->x_ - p3->x_) + (p3->x_ - p2->x_) * (p->y_ - p3->y_)) /
+				   ((p2->y_ - p3->y_) * (p1->x_ - p3->x_) + (p3->x_ - p2->x_) * (p1->y_ - p3->y_));
+	double beta = ((p3->y_ - p1->y_) * (p->x_ - p3->x_) + (p1->x_ - p3->x_) * (p->y_ - p3->y_)) /
+				  ((p2->y_ - p3->y_) * (p1->x_ - p3->x_) + (p3->x_ - p2->x_) * (p1->y_ - p3->y_));
+	double gamma = 1.0f - alpha - beta;
+
+	return gamma >= 0 && alpha >= 0 && beta >= 0;
+}
+

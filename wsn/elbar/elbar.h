@@ -32,7 +32,7 @@ private:
     // detect covering parallelogram and view angle
     void detectParallelogram();
     int holeAvoidingProb();
-    Elbar_Region regionDetermine(double angle);
+    void regionDetermine(double angle);
 
     void sendPackageToHop(Packet *p, node *nexthop);
     void configDataPacket(Packet *p);
@@ -57,14 +57,10 @@ private:
     Elbar_Region region_;   // region to a specific hole
                             // convert to struct array for multi hole
 
-
     /* math */
     bool isIntersectWithHole(Point *anchor, Point *dest, node* node_list);
     bool isAlphaContainsPoint(Point *x, Point *o, Point *y, Point *d); // check if D is inside xOy
-    bool isPointLiesInTriangle(Point *d, Point *a, Point *b, Point *c);
-    bool isPointInsidePolygon(Point *d, node *hole);
-    bool isBetweenAngle(Point *pPoint, Point *pNode, Point *pMid, Point *pNode1);
-
+    bool isPointInsidePolygon(Point *d, node* hole);
     /* dump */
     virtual char const *getAgentName();
 
@@ -80,6 +76,8 @@ public:
     void dumpAnchorPoint(int id, Point *pPoint);
 
     void dumpParallelogram();
+
+    void dumpRegion();
 };
 
 #endif

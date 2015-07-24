@@ -171,7 +171,11 @@ void ElbarGridOfflineAgent::detectParallelogram() {
         Line lj;
 
         // check if node is inside grid
-        if (!isPointInsidePolygon(this, tmp->node_list_)) {
+        if (isPointInsidePolygon(this, tmp->node_list_)) {
+            alpha_ = -1;
+            parallelogram_ = NULL;
+            region_ = REGION_1;
+        } else {
             // detect view angle
             ai = tmp->node_list_;
             aj = tmp->node_list_;
@@ -181,15 +185,15 @@ void ElbarGridOfflineAgent::detectParallelogram() {
                 if (G::directedAngle(ai, this, item) > 0) {
                     ai = item;
                 }
-                if (G::directedAngle(aj, this, item) < 0)
+                if (G::directedAngle(aj, this, item) < 0) {
                     aj = item;
+                }
                 item = item->next_;
             } while (item && item->next_ != tmp->node_list_);
 
-            angle = G::directedAngle(aj, this, ai);
-            angle = angle > 0 ? angle : angle + M_PI; //change angle from range -180;180 to 0;360
+            angle = fabs(G::directedAngle(aj, this, ai)); // get absolute angle
 
-            region_ = regionDetermine(angle);
+            regionDetermine(angle);
 
             if(REGION_2 != region_)
                 return;
@@ -237,10 +241,6 @@ void ElbarGridOfflineAgent::detectParallelogram() {
             dumpParallelogram();
 
             alpha_ = angle;
-        } else {
-            alpha_ = -1;
-            parallelogram_ = NULL;
-            region_ = REGION_1;
         }
     }
 }
@@ -254,10 +254,10 @@ int ElbarGridOfflineAgent::holeAvoidingProb() {
     }
 }
 
-Elbar_Region ElbarGridOfflineAgent::regionDetermine(double angle) {
-    if (angle < alpha_min_) return REGION_3;
-    if (angle > alpha_max_) return REGION_1;
-    return REGION_2;
+void ElbarGridOfflineAgent::regionDetermine(double angle) {
+    if (angle < alpha_min_) region_ =  REGION_3;
+    else if (angle > alpha_max_) region_ =  REGION_1;
+    else region_ = REGION_2;
 }
 
 /*
@@ -270,7 +270,6 @@ void ElbarGridOfflineAgent::routing(Packet *p) {
     Point *destination = &(egh->destination_);
     Point *anchor_point = &(egh->anchor_point_);
     int routing_mode = egh->forwarding_mode_;
-
 
     // forward by GPSR when have no info about hole
     if (!hole_list_){
@@ -442,12 +441,11 @@ void ElbarGridOfflineAgent::broadcastHci() {
     hdr_elbar_grid *egh;
 
     polygonHole *tmp;
-//
+
     if (hole_list_ == NULL)
         return;
     dumpBoundhole();
 
-//    detect parallelogram
     detectParallelogram();
 
     p = allocpkt();
@@ -623,6 +621,8 @@ void ElbarGridOfflineAgent::initTraceFile() {
     fclose(fp);
     fp = fopen("Parallelogram.tr", "w");
     fclose(fp);
+    fp = fopen("Region.tr", "w");
+    fclose(fp);
 }
 
 void ElbarGridOfflineAgent::dumpParallelogram() {
@@ -637,8 +637,6 @@ void ElbarGridOfflineAgent::dumpParallelogram() {
 }
 
 //********** Math Helpers function ******************//
-// convert to geo_math_helper library
-
 bool ElbarGridOfflineAgent::isIntersectWithHole(Point *anchor, Point *dest, node *node_list) {
 
     node *tmp;
@@ -656,74 +654,40 @@ bool ElbarGridOfflineAgent::isAlphaContainsPoint(Point *x, Point *o, Point *y, P
         return true;
     }
     else { // if D is inside XOY triangle
-        return (isPointLiesInTriangle(d, x, o, y));
+        return (G::isPointLiesInTriangle(d, x, o, y));
     }
 }
 
-bool ElbarGridOfflineAgent::isPointLiesInTriangle(Point *p, Point *p1, Point *p2, Point *p3) {
-    // barycentric algorithm
-    double alpha = ((p2->y_ - p3->y_) * (p->x_ - p3->x_) + (p3->x_ - p2->x_) * (p->y_ - p3->y_)) /
-            ((p2->y_ - p3->y_) * (p1->x_ - p3->x_) + (p3->x_ - p2->x_) * (p1->y_ - p3->y_));
-    double beta = ((p3->y_ - p1->y_) * (p->x_ - p3->x_) + (p1->x_ - p3->x_) * (p->y_ - p3->y_)) /
-            ((p2->y_ - p3->y_) * (p1->x_ - p3->x_) + (p3->x_ - p2->x_) * (p1->y_ - p3->y_));
-    double gamma = 1.0f - alpha - beta;
-
-    return gamma >= 0 && alpha >= 0 && beta >= 0;
-}
-
+/**
+ * kiểm tra 1 điểm có nằm trong hình chữ nhật to bao lưới grid không
+ * hình chữ nhật xác định bằng (min_x, min_y), (max_x, min_y), (max_x, max_y), (min_x, max_y)
+ */
 bool ElbarGridOfflineAgent::isPointInsidePolygon(Point *d, node *hole) {
-    Point y;
+    bool is_in_range_x = false;
+    bool is_in_range_y = false;
+
     node *tmp;
-    y.x_ = 0;
-    y.y_ = d->y_;
+    for(tmp = hole; tmp->next_ != NULL; tmp = tmp->next_)
+    {
+        if(in_range(tmp->x_, d->x_, tmp->next_->x_)) is_in_range_x = true;
+        if(in_range(tmp->y_, d->y_, tmp->next_->y_)) is_in_range_y = true;
 
-    int greater_horizontal = 0;
-    int less_horizontal = 0;
-    Line dy = G::line(d, y);
-
-    Point intersect;
-    intersect.x_ = -1;
-    intersect.y_ = -1;
-
-    // count horizontal
-    for (tmp = hole; tmp != NULL; tmp = tmp->next_) {
-        if (tmp->next_ != NULL) {
-            if (G::lineSegmentIntersection(tmp, tmp->next_, dy, intersect)) {
-                if (intersect.x_ > d->x_) greater_horizontal++;
-                else if (intersect.x_ < d->x_) less_horizontal++;
-                else return true;
-            }
-
-        }
-        else {
-            if (G::lineSegmentIntersection(tmp, hole, dy, intersect)) {
-                if (intersect.x_ > d->x_) greater_horizontal++;
-                else if (intersect.x_ < d->x_) less_horizontal++;
-                else return true;
-            }
-
-        }
+        if(is_in_range_x && is_in_range_y) return true;
     }
+    if(in_range(tmp->x_, d->x_, hole->x_)) is_in_range_x = true;
+    if(in_range(tmp->y_, d->y_, hole->y_)) is_in_range_y = true;
 
-    return !(greater_horizontal % 2 == 0 && less_horizontal % 2 == 0);
-}
-
-bool ElbarGridOfflineAgent::isBetweenAngle(Point *pDes, Point *pNode, Point *pMid, Point *pNode1) {
-    double a1 = G::directedAngle(pDes, pMid, pNode);
-    double a2 = G::directedAngle(pDes, pMid, pNode1);
-    double a3;
-
-    if (a1 * a2 < 0) {
-        a3 = G::directedAngle(pNode, pMid, pNode1);
-        if (fabs(a1) + fabs(a2) - fabs(a3) < 0.000001) { // check if |a1| + |a2| = |a3|
-            return true;
-        }
-    }
-    return false;
+    return is_in_range_x && is_in_range_y;
 }
 
 void ElbarGridOfflineAgent::dumpAnchorPoint(int id, Point *pPoint) {
     FILE *fp = fopen("AnchorPoint.tr", "a+");
     fprintf(fp, "%d\t%f\t%f\n", id, pPoint->x_, pPoint->y_);
+    fclose(fp);
+}
+
+void ElbarGridOfflineAgent::dumpRegion() {
+    FILE *fp = fopen("Region.tr", "a+");
+    fprintf(fp, "%d\t%f\t%f\t%d\n", my_id_, x_, y_, region_);
     fclose(fp);
 }
