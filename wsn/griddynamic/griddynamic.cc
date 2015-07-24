@@ -54,6 +54,7 @@ GridDynamicAgent::GridDynamicAgent() : GPSRAgent(),
     bind("limit_x_", &limit_x_);
     bind("limit_y_", &limit_y_);
     bind("alert_threshold_", &alert_threshold_);
+    bind("sink_threshold_", &sink_threshold_);
     bind("nodeoff_threshold_", &nodeoff_threshold_);
 
     nodeoff_threshold_ = hello_period_*nodeoff_threshold_;

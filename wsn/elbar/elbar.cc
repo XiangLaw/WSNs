@@ -155,8 +155,8 @@ void ElbarGridOfflineAgent::configDataPacket(Packet *p) {
  */
 void ElbarGridOfflineAgent::detectParallelogram() {
     struct polygonHole *tmp;
-    struct node *ai;
-    struct node *aj;
+    struct node *ai = new node();
+    struct node *aj = new node();
 
     struct node *vi;
     struct node *vj;
@@ -176,78 +176,55 @@ void ElbarGridOfflineAgent::detectParallelogram() {
         Line li;
         Line lj;
 
-        // check if node is inside grid
-        if (isPointInsidePolygon(this, tmp->node_list_)) {
-            alpha_ = -1;
-            parallelogram_ = NULL;
-            region_ = REGION_1;
-        } else {
-            // detect view angle
-            ai = tmp->node_list_;
-            aj = tmp->node_list_;
-            item = tmp->node_list_;
+        angle = detectViewAngle(this, tmp->node_list_, ai, aj);
+        regionDetermine(angle);
 
-            do {
-                if (G::directedAngle(ai, this, item) > 0) {
-                    ai = item;
-                }
-                if (G::directedAngle(aj, this, item) < 0) {
-                    aj = item;
-                }
-                item = item->next_;
-            } while (item && item->next_ != tmp->node_list_);
+        if(REGION_2 != region_)
+            return;
 
-            angle = fabs(G::directedAngle(aj, this, ai)); // get absolute angle
+        // detect parallelogram
+        vi = tmp->node_list_;
+        vj = tmp->node_list_;
+        hi = 0;
+        hj = 0;
 
-            regionDetermine(angle);
+        item = tmp->node_list_;
 
-            if(REGION_2 != region_)
-                return;
-
-            // detect parallelogram
-            vi = tmp->node_list_;
-            vj = tmp->node_list_;
-            hi = 0;
-            hj = 0;
-
-            item = tmp->node_list_;
-
-            do {
-                h = G::distance(item->x_, item->y_, this->x_, this->y_, ai->x_, ai->y_);
-                if (h > hi) {
-                    hi = h;
-                    vi = item;
-                }
-                h = G::distance(item->x_, item->y_, this->x_, this->y_, aj->x_, aj->y_);
-                if (h > hj) {
-                    hj = h;
-                    vj = item;
-                }
-                item = item->next_;
-            } while (item && item->next_ != tmp->node_list_);
-
-            li = G::parallel_line(vi, G::line(this, ai));
-            lj = G::parallel_line(vj, G::line(this, aj));
-
-            if (!G::intersection(lj, G::line(this, ai), &a) ||
-                    !G::intersection(li, G::line(this, aj), &c) ||
-                    !G::intersection(li, lj, &b)) {
-                fprintf(stderr, "%d - fail detect parallelogram\n", my_id_);
-                continue;
+        do {
+            h = G::distance(item->x_, item->y_, this->x_, this->y_, ai->x_, ai->y_);
+            if (h > hi) {
+                hi = h;
+                vi = item;
             }
+            h = G::distance(item->x_, item->y_, this->x_, this->y_, aj->x_, aj->y_);
+            if (h > hj) {
+                hj = h;
+                vj = item;
+            }
+            item = item->next_;
+        } while (item && item->next_ != tmp->node_list_);
 
-            /* save Hole information into local memory if this node is in region 2
-             */
-            this->parallelogram_ = new parallelogram();
-            this->parallelogram_->a_ = a;
-            this->parallelogram_->b_ = b;
-            this->parallelogram_->c_ = c;
-            this->parallelogram_->p_.x_ = this->x_;
-            this->parallelogram_->p_.y_ = this->y_;
-            dumpParallelogram();
+        li = G::parallel_line(vi, G::line(this, ai));
+        lj = G::parallel_line(vj, G::line(this, aj));
 
-            alpha_ = angle;
+        if (!G::intersection(lj, G::line(this, ai), &a) ||
+                !G::intersection(li, G::line(this, aj), &c) ||
+                !G::intersection(li, lj, &b)) {
+            fprintf(stderr, "%d - fail detect parallelogram\n", my_id_);
+            continue;
         }
+
+        /* save Hole information into local memory if this node is in region 2
+         */
+        this->parallelogram_ = new parallelogram();
+        this->parallelogram_->a_ = a;
+        this->parallelogram_->b_ = b;
+        this->parallelogram_->c_ = c;
+        this->parallelogram_->p_.x_ = this->x_;
+        this->parallelogram_->p_.y_ = this->y_;
+        dumpParallelogram();
+
+        alpha_ = angle;
     }
 }
 
@@ -264,6 +241,8 @@ void ElbarGridOfflineAgent::regionDetermine(double angle) {
     if (angle < alpha_min_) region_ =  REGION_3;
     else if (angle > alpha_max_) region_ =  REGION_1;
     else region_ = REGION_2;
+
+    dumpRegion();
 }
 
 /*
@@ -675,26 +654,78 @@ bool ElbarGridOfflineAgent::isAlphaContainsPoint(Point *x, Point *o, Point *y, P
     }
 }
 
-/**
- * kiểm tra 1 điểm có nằm trong hình chữ nhật to bao lưới grid không
- * hình chữ nhật xác định bằng (min_x, min_y), (max_x, min_y), (max_x, max_y), (min_x, max_y)
- */
-bool ElbarGridOfflineAgent::isPointInsidePolygon(Point *d, node *hole) {
-    bool is_in_range_x = false;
-    bool is_in_range_y = false;
-
+double ElbarGridOfflineAgent::detectViewAngle(Point *d, node *node_list, node* ai, node* aj) {
+    Point y;
     node *tmp;
-    for(tmp = hole; tmp->next_ != NULL; tmp = tmp->next_)
-    {
-        if(in_range(tmp->x_, d->x_, tmp->next_->x_)) is_in_range_x = true;
-        if(in_range(tmp->y_, d->y_, tmp->next_->y_)) is_in_range_y = true;
+    y.x_ = 0;
+    y.y_ = d->y_;
 
-        if(is_in_range_x && is_in_range_y) return true;
+    bool greater_horizontal = 0;
+    bool less_horizontal = 0;
+    Line dy = G::line(d, y);
+
+    Point intersect;
+    intersect.x_ = -1;
+    intersect.y_ = -1;
+
+    // count horizontal
+    for (tmp = node_list; tmp != NULL; tmp = tmp->next_) {
+        if (tmp->next_ != NULL) {
+            if( G::is_in_line(tmp, tmp->next_, d)) {
+                if(G::onSegment(tmp, d, tmp->next_)) {
+                    return M_PI;
+                } else {
+                    if (tmp->x_ > d->x_) greater_horizontal = true;
+                    else if (tmp->x_ < d->x_) less_horizontal = true;
+                }
+            }
+            else if (G::lineSegmentIntersection(tmp, tmp->next_, dy, intersect)) {
+                if (intersect.x_ > d->x_) greater_horizontal = true;
+                else if (intersect.x_ < d->x_) less_horizontal = true;
+            }
+        }
+        else { // end-point & start-point
+            if( G::is_in_line(tmp, node_list, d)) {
+                if(G::onSegment(tmp, d, node_list)) {
+                    return M_PI;
+                } else {
+                    if (tmp->x_ > d->x_) greater_horizontal = true;
+                    else if (tmp->x_ < d->x_) less_horizontal = true;
+                }
+            }
+            else if (G::lineSegmentIntersection(tmp, node_list, dy, intersect)) {
+                if (intersect.x_ > d->x_) greater_horizontal = true;
+                else if (intersect.x_ < d->x_) less_horizontal = true;
+            }
+
+        }
     }
-    if(in_range(tmp->x_, d->x_, hole->x_)) is_in_range_x = true;
-    if(in_range(tmp->y_, d->y_, hole->y_)) is_in_range_y = true;
 
-    return is_in_range_x && is_in_range_y;
+    if (greater_horizontal && less_horizontal){
+        return M_PI;
+    }
+
+
+    double min, max, angle;
+    min = max = G::directedAngle(&intersect, d, node_list);
+    for(tmp = node_list->next_; tmp != NULL; tmp = tmp->next_){
+        angle = G::directedAngle(&intersect, d, tmp);
+        if (angle > max){
+            ai->x_ = tmp->x_;
+            ai->y_ = tmp->y_;
+            ai->id_ = tmp->id_;
+            max = angle;
+            continue;
+        }
+        if (angle < min){
+            min = angle;
+            aj->x_ = tmp->x_;
+            aj->y_ = tmp->y_;
+            aj->id_ = tmp->id_;
+        }
+    }
+
+    return fabs(max - min);
 }
 
 void ElbarGridOfflineAgent::dumpAnchorPoint(int id, Point *pPoint) {
