@@ -24,8 +24,14 @@ public:
 /**
 * Agent implementation
 */
+void
+ElbarTimer::expire(Event *e) {
+    agent_->forwardElbarBroadcast(packet_);
+}
+
 ElbarGridOfflineAgent::ElbarGridOfflineAgent()
-        : GridOfflineAgent() {
+        : GridOfflineAgent(),
+        broadcast_timer_(this){
     this->alpha_max_ = M_PI * 2 / 3;
     this->alpha_min_ = M_PI / 3;
 
@@ -271,6 +277,16 @@ void ElbarGridOfflineAgent::routing(Packet *p) {
     Point *anchor_point = &(egh->anchor_point_);
     int routing_mode = egh->forwarding_mode_;
 
+    if(cmh->uid() == 2050) {
+        printf("im %d in region %d going to (%f, %f) by routing mode %d with anchor (%f, %f)\n",
+            my_id_, region_,
+            destination->x_, destination->y_,
+        routing_mode, anchor_point->x_, anchor_point->y_);
+    }
+    if(my_id_ == 1478 && cmh->uid() == 2050) {
+        int a = 1;
+    }
+
     // forward by GPSR when have no info about hole
     if (!hole_list_){
         node *nexthop = recvGPSR(p, *destination);
@@ -482,7 +498,7 @@ void ElbarGridOfflineAgent::broadcastHci() {
     send(p, 0);
 }
 
-void ElbarGridOfflineAgent::sendElbar(Packet *p) {
+void ElbarGridOfflineAgent::forwardElbarBroadcast(Packet *p) {
     hdr_cmn *cmh = HDR_CMN(p);
     hdr_ip *iph = HDR_IP(p);
 
@@ -524,7 +540,8 @@ void ElbarGridOfflineAgent::recvHci(Packet *p) {
         drop(p, "ElbarGridOffline_IsInRegion3");
     }
     else if (REGION_1 == region_ || REGION_2 == region_) {
-        sendElbar(p);
+        broadcast_timer_.setParameter(p);
+        broadcast_timer_.resched(randSend_.uniform(0.0, 0.5));
     }
 }
 

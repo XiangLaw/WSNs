@@ -5,6 +5,7 @@
 #include "../geomathhelper/geo_math_helper.h"
 #include "../gridoffline/gridoffline.h"
 
+class ElbarGridOfflineAgent;
 
 #define HOLE_AWARE_MODE 0x01
 #define GREEDY_MODE 0x02
@@ -24,10 +25,28 @@ struct parallelogram {
     struct node c_;
 };
 
+class ElbarTimer : public TimerHandler
+{
+public:
+    ElbarTimer(ElbarGridOfflineAgent *a) : TimerHandler() {
+        agent_ = a;
+    }
+
+    void setParameter(Packet *p) {
+        packet_ = p;
+    }
+
+protected:
+    virtual void expire(Event *e);
+    ElbarGridOfflineAgent *agent_;
+    Packet *packet_;
+};
+
 class ElbarGridOfflineAgent;
 
 class ElbarGridOfflineAgent : public GridOfflineAgent {
 private:
+    ElbarTimer broadcast_timer_;
 
     // detect covering parallelogram and view angle
     void detectParallelogram();
@@ -38,7 +57,6 @@ private:
     void configDataPacket(Packet *p);
     void recvData(Packet *p);
     void recvElbar(Packet *p);
-    void sendElbar(Packet *p);
 
     // gpsr
     void sendGPSR(Packet *p);
@@ -69,6 +87,9 @@ protected:
 
 public:
     ElbarGridOfflineAgent();
+
+    void forwardElbarBroadcast(Packet *p);
+
 
     int command(int, const char *const *);
     void recv(Packet *, Handler *);
