@@ -256,16 +256,6 @@ void ElbarGridOfflineAgent::routing(Packet *p) {
     Point *anchor_point = &(egh->anchor_point_);
     int routing_mode = egh->forwarding_mode_;
 
-    if(cmh->uid() == 2050) {
-        printf("im %d in region %d going to (%f, %f) by routing mode %d with anchor (%f, %f)\n",
-            my_id_, region_,
-            destination->x_, destination->y_,
-        routing_mode, anchor_point->x_, anchor_point->y_);
-    }
-    if(my_id_ == 1478 && cmh->uid() == 2050) {
-        int a = 1;
-    }
-
     // forward by GPSR when have no info about hole
     if (!hole_list_){
         node *nexthop = recvGPSR(p, *destination);

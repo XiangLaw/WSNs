@@ -382,7 +382,7 @@ GPSRAgent::sendGPSR(Packet* p)
 
 	iph->saddr() = my_id_;
 	iph->daddr() = -1;
-	iph->ttl_ = 3 * IP_DEF_TTL;	// max hop-count
+	iph->ttl_ = 4 * IP_DEF_TTL;	// max hop-count
 }
 
 void

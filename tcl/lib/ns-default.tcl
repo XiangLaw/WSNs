@@ -1618,14 +1618,14 @@ Agent/EHDS set hello_period_ 0
 Agent/EHDS set energy_checkpoint_ 995
 Agent/EHDS set range_ 40
 Agent/EHDS set storage_opt_ 0
-Agent/EHDS set limit_boundhole_hop_ 80
+Agent/EHDS set limit_boundhole_hop_ 150
 
 Agent/ELLIPSE set hello_period_ 0
 Agent/ELLIPSE set energy_checkpoint_ 995
 Agent/ELLIPSE set range_ 40
 Agent/ELLIPSE set alpha_ 0.8
-Agent/ELLIPSE set storage_opt_ 1
-Agent/ELLIPSE set limit_boundhole_hop_ 80
+Agent/ELLIPSE set storage_opt_ 0
+Agent/ELLIPSE set limit_boundhole_hop_ 150
 
 Agent/GRIDOFFLINE set hello_period_ 0
 Agent/GRIDOFFLINE set energy_checkpoint_ 995
@@ -1667,15 +1667,12 @@ Agent/DYNAMICPOLYGON set range_ 40
 Agent/DYNAMICPOLYGON set r_ 100
 Agent/DYNAMICPOLYGON set limit_boundhole_hop_ 80
 
-#greedy
-#Agent/GREEDY set
-
 Agent/ELBARGRIDOFFLINE set hello_period_ 0
 Agent/ELBARGRIDOFFLINE set energy_checkpoint_ 995
 Agent/ELBARGRIDOFFLINE set limit_ 0
 Agent/ELBARGRIDOFFLINE set range_ 40
-Agent/ELBARGRIDOFFLINE set r_ 80
-Agent/ELBARGRIDOFFLINE set limit_boundhole_hop_ 80
+Agent/ELBARGRIDOFFLINE set r_ 50
+Agent/ELBARGRIDOFFLINE set limit_boundhole_hop_ 150
 
 Agent/OCTAGON set limit_boundhole_hop_ 80
 Agent/OCTAGON set energy_checkpoint_ 995
