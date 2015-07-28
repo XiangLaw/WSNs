@@ -174,6 +174,8 @@ set ptype(dynamicpolygon) 84\n\
 set pvals(84) DYNAMICPOLYGON\n\
 set ptype(elbargridoffline) 85\n\
 set pvals(85) ELBARGRIDOFFLINE\n\
+set ptype(gear) 86\n\
+set pvals(86) GEAR\n\
 proc ptype2val {str} {\n\
 global ptype\n\
 set str [string tolower $str]\n\

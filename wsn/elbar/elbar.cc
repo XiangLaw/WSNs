@@ -230,7 +230,7 @@ void ElbarGridOfflineAgent::detectParallelogram() {
 
 int ElbarGridOfflineAgent::holeAvoidingProb() {
     RNG rand_;
-    if (rand_.uniform(0, 1) < alpha_ / M_PI) {
+    if (rand_.uniform(0, 1) < alpha_ / (2 * M_PI)) {
         return HOLE_AWARE_MODE;
     } else {
         return GREEDY_MODE;
