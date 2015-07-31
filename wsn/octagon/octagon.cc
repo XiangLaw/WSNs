@@ -419,8 +419,6 @@ void OctagonAgent::recvBroadcast(Packet* p)
 		temp->next_ = newHole->node_list_;
 
 		// ----------- routing
-		// TODO: chỉ thực hiện staticRouting với điểm k có thông tin về hố chứ?
-		// TODO: đáng nhẽ phải gọi hàm sau khi kiểm tra điều kiện (1)?
 		staticRouting();
 
 		// ----------- broadcast hole's information. Check if (1) is satisfy
@@ -646,8 +644,13 @@ void OctagonAgent::dynamicRouting(Packet* p)
 		// calculate i
 		double i = (fsin3pi8 + broadcast_rate_ - 1 / cos(alpha / 2)) * l / h->pc_ - 0.3 / cos(alpha / 2);
 
+		printf("i = %f\n", i);
 		// TODO: recheck formula? because i met a case where i < 1
-		if(i < 1) i = 1; // hardcode i = 1 if i < 1
+		if(i < 1) {
+			printf("got i = 1 with alpha = %f, packet id = %d, source = %d, destination = %d\n",
+					alpha, HDR_CMN(p)->uid(), HDR_IP(p)->saddr(), HDR_IP(p)->daddr());
+			i = 1; // hardcode i = 1 if i < 1
+		}
 
 		// scale hole by I and i
 		scaleHole = new octagonHole();

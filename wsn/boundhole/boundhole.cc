@@ -437,7 +437,6 @@ polygonHole* BoundHoleAgent::createPolygonHole(Packet *p)
 	return hole_item;
 }
 
-//TODO: considering?
 node* BoundHoleAgent::getNeighborByBoundHole(Point * p, Point * prev)
 {
 	// p = p

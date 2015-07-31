@@ -40,6 +40,8 @@
 #ifndef _priqueue_h
 #define _priqueue_h
 
+#define DROP_QUEUE_FULL "PQFULL"
+
 #include "object.h"
 #include "queue.h"
 #include "drop-tail.h"
