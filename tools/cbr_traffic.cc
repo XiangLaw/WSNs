@@ -61,6 +61,7 @@ class CBR_Traffic : public TrafficGenerator {
 	virtual void start();
 	void init();
 	double rate_;     /* send rate during on time (bps) */
+	double first_period_interval_;
 	double interval_; /* packet inter-arrival time during burst (sec) */
 	double random_;
 	int seqno_;
@@ -82,6 +83,7 @@ CBR_Traffic::CBR_Traffic() : seqno_(0)
 	bind("random_", &random_);
 	bind("packetSize_", &size_);
 	bind("maxpkts_", &maxpkts_);
+	bind("first_period_interval_", &first_period_interval_);
 }
 
 void CBR_Traffic::init()
@@ -105,9 +107,17 @@ double CBR_Traffic::next_interval(int& size)
 {
 	// Recompute interval in case rate_ or size_ has changes
 	interval_ = (double)(size_ << 3)/(double)rate_;
-	double t = interval_;
-	if (random_)
-		t += interval_ * Random::uniform(-0.5, 0.5);	
+	double t = 0;
+	if(NOW < 200) { // huyvq: hardcoded first period from 100s to 200s to avoid ARP drop
+		t = first_period_interval_;
+		if (random_)
+			t += first_period_interval_ * Random::uniform(-0.5, 0.5);
+	}
+	else {
+		t = interval_;
+		if (random_)
+			t += interval_ * Random::uniform(-0.5, 0.5);
+	}
 	size = size_;
 	if (++seqno_ < maxpkts_)
 		return(t);

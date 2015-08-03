@@ -2,7 +2,7 @@
 
 set opt(tn) 50
 set opt(first_period_interval) 25.0
-set opt(interval) 1
+set opt(interval) 1 ;# integer, not double
 
 set s(0)	91	;	set d(0)	1313
 set s(1)	92	;	set d(1)	1310

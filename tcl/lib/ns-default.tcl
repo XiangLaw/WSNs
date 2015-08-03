@@ -488,6 +488,7 @@ Application/Traffic/CBR set rate_ 448Kb	;# corresponds to interval of 3.75ms
 Application/Traffic/CBR set packetSize_ 210
 Application/Traffic/CBR set random_ 0
 Application/Traffic/CBR set maxpkts_ 268435456; # 0x10000000
+Application/Traffic/CBR set first_period_interval_ 25.0 ; # first period: from 100s to 200s, run with interval 25.0 to avoid arp drop
 
 Application/Telnet set interval_ 1.0
 
