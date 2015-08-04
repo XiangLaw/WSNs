@@ -62,6 +62,8 @@
 #include "wsn/boundhole/boundhole.h"
 #include "wsn/geomathhelper/geo_math_helper.h"
 
+class OctagonAgent;
+
 struct octagonHole
 {
 	int hole_id_;
@@ -72,9 +74,29 @@ struct octagonHole
 	struct octagonHole* next_;
 };
 
+class OctagonBroadcastTimer : public TimerHandler
+{
+public:
+	OctagonBroadcastTimer(OctagonAgent *a) : TimerHandler() {
+		agent_ = a;
+	}
+
+	void setParameter(Packet *p) {
+		packet_ = p;
+	}
+
+protected:
+	virtual void expire(Event *e);
+	OctagonAgent *agent_;
+	Packet *packet_;
+};
+
+
 class OctagonAgent : public BoundHoleAgent
 {
 private:
+	OctagonBroadcastTimer broadcast_timer_;
+
 	double broadcast_rate_;
 
 	octagonHole* octagonHole_list_;
@@ -104,6 +126,7 @@ private:
 
 public:
 	OctagonAgent();
+	void forwardBroadcast(Packet *p);
 	int command(int, const char*const*);
 	void recv(Packet*, Handler*);
 };

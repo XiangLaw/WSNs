@@ -469,12 +469,9 @@ void ElbarGridOfflineAgent::broadcastHci() {
 
 void ElbarGridOfflineAgent::forwardElbarBroadcast(Packet *p) {
     hdr_cmn *cmh = HDR_CMN(p);
-    hdr_ip *iph = HDR_IP(p);
 
     cmh->direction() = hdr_cmn::DOWN;
     cmh->last_hop_ = my_id_;
-
-    iph->ttl_--;
 
     send(p, 0);
 }
