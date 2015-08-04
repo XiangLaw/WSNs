@@ -1132,7 +1132,6 @@ Simulator instproc create-octagon-agent { node } {
 	$node set ragent_ $ragent
 	$self at 0.0 	"$ragent start"    ;# start updates
 	$self at 30 	"$ragent boundhole"
-	$self at 90 	"$ragent routing"	
 	return $ragent
 }
 

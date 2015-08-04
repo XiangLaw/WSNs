@@ -1,13 +1,13 @@
-# Script for WisSim simulator. Last edit 7/30/2015 5:26:36 PM
+# Script for WisSim simulator. Last edit 7/31/2015 4:32:12 PM
 
-set opt(x)	1000	;# X dimension of the topography
-set opt(y)	1000	;# Y dimension of the topography
+set opt(x)	800	;# X dimension of the topography
+set opt(y)	800	;# Y dimension of the topography
 set opt(stop)	500	;# simulation time
-set opt(nn)	1500	;# number of nodes
+set opt(nn)	971	;# number of nodes
 set opt(tr)	Trace.tr	;# trace file
 set opt(nam)	nam.out.tr
 
-set opt(ifqlen)	5	;# max packet in ifq
+set opt(ifqlen)	50	;# max packet in ifq
 set opt(chan)	Channel/WirelessChannel
 set opt(prop)	Propagation/TwoRayGround
 set opt(netif)	Phy/WirelessPhy
@@ -15,7 +15,7 @@ set opt(mac)	Mac/802_11
 set opt(ifq)	Queue/DropTail/PriQueue
 set opt(ll)	LL
 set opt(ant)	Antenna/OmniAntenna
-set opt(rp)	ELBARGRIDOFFLINE
+set opt(rp)	OCTAGON
 set opt(trans)	UDP
 set opt(apps)	CBR
 
@@ -53,10 +53,6 @@ Antenna/OmniAntenna set Y_ 0
 Antenna/OmniAntenna set Z_ 1.5
 Antenna/OmniAntenna set Gt_ 1
 Antenna/OmniAntenna set Gr_ 1
-
-Agent/GPSR set energy_checkpoint_ 995
-Agent/GPSR set hello_period_ 100
-Agent/GPSR set range_ 40
 
 Agent/UDP set fid_ 2
 

@@ -5,10 +5,33 @@
  *  by Trong Nguyen
  */
 
+/**
+ * octagon in brief:
+1. initial network setup
+	- produce core polygon (8 vertices)
+		1.1 boundhole
+		1.2 construct core polygon
+		1.3 broadcast hole information
+			broadcast condition: (1) formula
+=> region1: has hole information
+=> region2: doesn’t have hole information
+
+2. routing
+routing: greedy until reach region1. transform to hole aware mode.
+ 		 greedy to virtual anchor points which is vertices of _packet-specific_ polygon.
+3. note:
+???scale factor is the same for each CBR (source - dest)
+???point I (random point inside polygon) is random for each _packet_ (even same source - dest)
+ *
+ * source code analysis
+ * after boundhole finished (1.1), run phase 1.2 & 1.3 immediately
+ * staticRouting: calculate _fixed_ scaled polygon for all node in region 1
+ * dynamicRouting: calculate _fixed_ scaled polygon for all node in region 2
+ */
+
 //#define _DEBUG	// allow dump result to file
 
 #include "octagon.h"
-#include "../include/tcl.h"
 
 #define fsin3pi8 1.0824
 
@@ -64,11 +87,6 @@ int OctagonAgent::command(int argc, const char*const* argv)
 {
 	if (argc == 2)
 	{
-		if (strcasecmp(argv[1], "routing") == 0)
-		{
-			staticRouting();
-			return TCL_OK;
-		}
 		if (strcasecmp(argv[1], "dump") == 0)
 		{
 			dumpRoutingTable();
@@ -504,7 +522,7 @@ void OctagonAgent::staticRouting()
 					I.y_ = 0;
 
 					double fr = 0;
-					node* n = h->node_list_;
+					n = h->node_list_;
 					do {
 						int ra = rand();
 						I.x_ += n->x_ * ra;
@@ -566,7 +584,7 @@ void OctagonAgent::dynamicRouting(Packet* p)
 	hdr_octagon_data* odh = HDR_OCTAGON_DATA(p);
 
 	Point D = odh->vertex[0];
-	Point S = odh->vertex[1];
+	Point S = odh->vertex[2];
 
 	Point I;
 	octagonHole* scaleHole;
@@ -592,7 +610,7 @@ void OctagonAgent::dynamicRouting(Packet* p)
 		double l = G::distance(&S, &D);
 
 		double alpha = 0;
-		node* n = h->node_list_;
+		n = h->node_list_;
 		do {
 			for (node* m = n->next_; m != h->node_list_; m = m->next_)
 			{
@@ -647,7 +665,8 @@ void OctagonAgent::dynamicRouting(Packet* p)
 		printf("i = %f\n", i);
 		// TODO: recheck formula? because i met a case where i < 1
 		if(i < 1) {
-			printf("got i = 1 with alpha = %f, packet id = %d, source = %d, destination = %d\n",
+			printf("got packet %d i = 1 with alpha = %f, packet id = %d, source = %d, destination = %d\n",
+				   HDR_CMN(p)->uid(),
 					alpha, HDR_CMN(p)->uid(), HDR_IP(p)->saddr(), HDR_IP(p)->daddr());
 			i = 1; // hardcode i = 1 if i < 1
 		}
@@ -844,10 +863,15 @@ void OctagonAgent::sendData(Packet* p)
 	hdr_octagon_data* 	edh = HDR_OCTAGON_DATA(p);
 
 	//cmh->ptype() = PT_OCTAGON;
+
+	if(cmh->uid() == 1115) {
+		int a = 1;
+	}
+
 	cmh->size() += IP_HDR_LEN + edh->size();
 	cmh->direction() = hdr_cmn::DOWN;
 
-	edh->type_ 			= routing_num_ > 2 ? OCTAGON_DATA_ROUTING : OCTAGON_DATA_GREEDY;
+	edh->type_ 			= (u_int8_t) (routing_num_ > 2 ? OCTAGON_DATA_ROUTING : OCTAGON_DATA_GREEDY);
 	edh->daddr_			= iph->daddr();
 	edh->vertex_num_	= routing_num_;
 	for (int i = 0; i <= routing_num_; i++)
