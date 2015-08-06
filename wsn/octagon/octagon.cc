@@ -497,7 +497,10 @@ void OctagonAgent::staticRouting()
 {
 	// clear routing table
 	routing_num_ = 0;
-
+	if(my_id_ == 5)
+	{
+		int a= 1;
+	}
 	if (dest->x_ || dest->y_)
 	{
 		// Add destination to routing table

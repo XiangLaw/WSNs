@@ -32,7 +32,7 @@ ElbarTimer::expire(Event *e) {
 ElbarGridOfflineAgent::ElbarGridOfflineAgent()
         : GridOfflineAgent(),
         broadcast_timer_(this){
-    this->alpha_max_ = M_PI * 2 / 3;
+    this->alpha_max_ = M_PI * 3 / 4;
     this->alpha_min_ = M_PI / 3;
 
     hole_list_ = NULL;
@@ -144,7 +144,7 @@ void ElbarGridOfflineAgent::configDataPacket(Packet *p) {
 
     iph->saddr() = my_id_;
     iph->daddr() = -1;
-    iph->ttl_ = max(100, limit_boundhole_hop_);
+    iph->ttl_ = 4 * IP_DEF_TTL;
 
     sendGPSR(p);
 }
@@ -230,7 +230,8 @@ void ElbarGridOfflineAgent::detectParallelogram() {
 
 int ElbarGridOfflineAgent::holeAvoidingProb() {
     RNG rand_;
-    if (rand_.uniform(0, 1) < alpha_ / (2 * M_PI)) {
+    double thres = alpha_ / 3;
+    if (rand_.uniform(0, 1) < (thres / M_PI)) {
         return HOLE_AWARE_MODE;
     } else {
         return GREEDY_MODE;
