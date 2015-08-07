@@ -94,9 +94,9 @@ void DropTail::enque(Packet *p) {
         if (drop_front_) { /* remove from head of queue */
             q_->enque(p);
             Packet *pp = q_->deque();
-            drop(pp);
+            drop(pp, DROP_FULL_QUEUE_DROP_TAIL);
         } else {
-            drop(p);
+            drop(p, DROP_FULL_QUEUE_DROP_TAIL);
         }
     } else {
         q_->enque(p);

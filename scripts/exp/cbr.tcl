@@ -1,7 +1,7 @@
 # udp data
 
-set opt(tn) 200
-set opt(interval) 20.0
+set opt(tn) 270
+set opt(interval) 5.0
 
 set s(0)	1252	;	set d(0)	54
 set s(1)	1253	;	set d(1)	54
@@ -203,6 +203,76 @@ set s(196)	957	;	set d(196)	54
 set s(197)	990	;	set d(197)	54
 set s(198)	991	;	set d(198)	54
 set s(199)	1025	;	set d(199)	54
+set s(200)	1192	;	set d(200)	54
+set s(201)	1193	;	set d(201)	54
+set s(202)	1226	;	set d(202)	54
+set s(203)	1227	;	set d(203)	54
+set s(204)	1238	;	set d(204)	54
+set s(205)	1239	;	set d(205)	54
+set s(206)	1263	;	set d(206)	54
+set s(207)	1264	;	set d(207)	54
+set s(208)	1267	;	set d(208)	54
+set s(209)	1270	;	set d(209)	54
+set s(210)	1271	;	set d(210)	54
+set s(211)	1272	;	set d(211)	54
+set s(212)	1274	;	set d(212)	54
+set s(213)	1275	;	set d(213)	54
+set s(214)	1276	;	set d(214)	54
+set s(215)	1298	;	set d(215)	54
+set s(216)	1299	;	set d(216)	54
+set s(217)	1300	;	set d(217)	54
+set s(218)	1301	;	set d(218)	54
+set s(219)	1305	;	set d(219)	54
+set s(220)	1308	;	set d(220)	54
+set s(221)	1338	;	set d(221)	54
+set s(222)	1343	;	set d(222)	54
+set s(223)	1344	;	set d(223)	54
+set s(224)	1346	;	set d(224)	54
+set s(225)	1349	;	set d(225)	54
+set s(226)	1350	;	set d(226)	54
+set s(227)	1491	;	set d(227)	54
+set s(228)	1113	;	set d(228)	54
+set s(229)	1114	;	set d(229)	54
+set s(230)	1115	;	set d(230)	54
+set s(231)	1116	;	set d(231)	54
+set s(232)	1117	;	set d(232)	54
+set s(233)	1119	;	set d(233)	54
+set s(234)	1120	;	set d(234)	54
+set s(235)	1121	;	set d(235)	54
+set s(236)	1149	;	set d(236)	54
+set s(237)	1150	;	set d(237)	54
+set s(238)	1151	;	set d(238)	54
+set s(239)	1152	;	set d(239)	54
+set s(240)	1153	;	set d(240)	54
+set s(241)	1154	;	set d(241)	54
+set s(242)	1155	;	set d(242)	54
+set s(243)	1156	;	set d(243)	54
+set s(244)	1157	;	set d(244)	54
+set s(245)	1158	;	set d(245)	54
+set s(246)	1185	;	set d(246)	54
+set s(247)	1186	;	set d(247)	54
+set s(248)	1187	;	set d(248)	54
+set s(249)	1188	;	set d(249)	54
+set s(250)	1190	;	set d(250)	54
+set s(251)	1191	;	set d(251)	54
+set s(252)	1189	;	set d(252)	54
+set s(253)	1222	;	set d(253)	54
+set s(254)	1223	;	set d(254)	54
+set s(255)	1165	;	set d(255)	54
+set s(256)	1199	;	set d(256)	54
+set s(257)	1200	;	set d(257)	54
+set s(258)	1201	;	set d(258)	54
+set s(259)	1240	;	set d(259)	54
+set s(260)	1241	;	set d(260)	54
+set s(261)	1242	;	set d(261)	54
+set s(262)	1243	;	set d(262)	54
+set s(263)	1244	;	set d(263)	54
+set s(264)	1277	;	set d(264)	54
+set s(265)	1278	;	set d(265)	54
+set s(266)	1279	;	set d(266)	54
+set s(267)	1280	;	set d(267)	54
+set s(268)	1352	;	set d(268)	54
+set s(269)	1492	;	set d(269)	54
 
 for {set i 0} {$i < $opt(tn)} {incr i} {
 	$mnode_($s($i)) setdest [$mnode_($d($i)) set X_] [$mnode_($d($i)) set Y_] 0

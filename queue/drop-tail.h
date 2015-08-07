@@ -41,6 +41,8 @@
 #include "queue.h"
 #include "config.h"
 
+#define DROP_FULL_QUEUE_DROP_TAIL "QDTFULL"
+
 /*
  * A bounded, drop-tail queue
  */

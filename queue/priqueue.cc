@@ -110,7 +110,7 @@ PriQueue::recvHighPriority(Packet *p, Handler *)
     if (q_->length() >= qlim_) {
         Packet *to_drop = q_->lookup(q_->length() - 1);
         q_->remove(to_drop);
-        drop(to_drop);
+        drop(to_drop, DROP_QUEUE_FULL);
     }
 
     if (!blocked_) {

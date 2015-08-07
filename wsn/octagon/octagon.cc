@@ -5,10 +5,31 @@
  *  by Trong Nguyen
  */
 
+/**
+ * octagon in brief:
+1. initial network setup
+	- produce core polygon (8 vertices)
+		1.1 boundhole
+		1.2 construct core polygon
+		1.3 broadcast hole information
+			broadcast condition: (1) formula
+=> region1: has hole information
+=> region2: doesn’t have hole information
+
+2. routing
+routing: greedy until reach region1. transform to hole aware mode.
+ 		 greedy to virtual anchor points which is vertices of _packet-specific_ polygon.
+3. note:
+scale factor is the same for each CBR (source - dest)
+point I (random point inside polygon) is random for each _packet_ (even same source - dest)
+ *
+ * source code analysis
+ * after boundhole finished (1.1), run phase 1.2 & 1.3 immediately
+ */
+
 //#define _DEBUG	// allow dump result to file
 
 #include "octagon.h"
-#include "../include/tcl.h"
 
 #define fsin3pi8 1.0824
 
@@ -31,9 +52,16 @@ public:
 	}
 }class_octagon;
 
+// -------------------------------------- Timer -------------------------------------- //
+void
+OctagonBroadcastTimer::expire(Event *e) {
+	agent_->forwardBroadcast(packet_);
+}
+
+
 // -------------------------------------- Agent -------------------------------------- //
 
-OctagonAgent::OctagonAgent() : BoundHoleAgent()
+OctagonAgent::OctagonAgent() : BoundHoleAgent(), broadcast_timer_(this)
 {
 	octagonHole_list_ = NULL;
 	routing_num_ = 0;
@@ -64,11 +92,6 @@ int OctagonAgent::command(int argc, const char*const* argv)
 {
 	if (argc == 2)
 	{
-		if (strcasecmp(argv[1], "routing") == 0)
-		{
-			staticRouting();
-			return TCL_OK;
-		}
 		if (strcasecmp(argv[1], "dump") == 0)
 		{
 			dumpRoutingTable();
@@ -419,8 +442,6 @@ void OctagonAgent::recvBroadcast(Packet* p)
 		temp->next_ = newHole->node_list_;
 
 		// ----------- routing
-		// TODO: chỉ thực hiện staticRouting với điểm k có thông tin về hố chứ?
-		// TODO: đáng nhẽ phải gọi hàm sau khi kiểm tra điều kiện (1)?
 		staticRouting();
 
 		// ----------- broadcast hole's information. Check if (1) is satisfy
@@ -445,9 +466,8 @@ void OctagonAgent::recvBroadcast(Packet* p)
 		if ((alpha == M_PI) ||
 			(newHole->pc_ / ln * (0.3 / cos(alpha / 2) + 1) + 1 / cos(alpha / 2)) > (fsin3pi8 + broadcast_rate_))
 		{
-			cmh->direction() = hdr_cmn::DOWN;
-			cmh->last_hop_ = my_id_;
-			send(p, 0);
+			broadcast_timer_.setParameter(p);
+			broadcast_timer_.resched(randSend_.uniform(0.0, 0.5));
 		}
 		else
 		{
@@ -463,6 +483,12 @@ void OctagonAgent::recvBroadcast(Packet* p)
 	}
 }
 
+void OctagonAgent::forwardBroadcast(Packet *p) {
+	hdr_cmn *cmh = HDR_CMN(p);
+	cmh->direction() = hdr_cmn::DOWN;
+	cmh->last_hop_ = my_id_;
+	send(p, 0);
+}
 // --------------------- Routing --------------------------------- //
 /*
  * S is source ( S belongs to region 2)
@@ -471,7 +497,10 @@ void OctagonAgent::staticRouting()
 {
 	// clear routing table
 	routing_num_ = 0;
-
+	if(my_id_ == 5)
+	{
+		int a= 1;
+	}
 	if (dest->x_ || dest->y_)
 	{
 		// Add destination to routing table
@@ -480,6 +509,7 @@ void OctagonAgent::staticRouting()
 		for (octagonHole* h = octagonHole_list_; h; h = h->next_)
 		{
 			// check if SD is intersection with hole => need to routing to avoid this hole
+			/// TODO: this scope is wrong
 			int numIntersect = 0;
 			node * n = h->node_list_;
 			do
@@ -506,7 +536,7 @@ void OctagonAgent::staticRouting()
 					I.y_ = 0;
 
 					double fr = 0;
-					node* n = h->node_list_;
+					n = h->node_list_;
 					do {
 						int ra = rand();
 						I.x_ += n->x_ * ra;
@@ -568,7 +598,7 @@ void OctagonAgent::dynamicRouting(Packet* p)
 	hdr_octagon_data* odh = HDR_OCTAGON_DATA(p);
 
 	Point D = odh->vertex[0];
-	Point S = odh->vertex[1];
+	Point S = odh->vertex[2];
 
 	Point I;
 	octagonHole* scaleHole;
@@ -594,7 +624,7 @@ void OctagonAgent::dynamicRouting(Packet* p)
 		double l = G::distance(&S, &D);
 
 		double alpha = 0;
-		node* n = h->node_list_;
+		n = h->node_list_;
 		do {
 			for (node* m = n->next_; m != h->node_list_; m = m->next_)
 			{
@@ -646,8 +676,7 @@ void OctagonAgent::dynamicRouting(Packet* p)
 		// calculate i
 		double i = (fsin3pi8 + broadcast_rate_ - 1 / cos(alpha / 2)) * l / h->pc_ - 0.3 / cos(alpha / 2);
 
-		// TODO: recheck formula? because i met a case where i < 1
-		if(i < 1) i = 1; // hardcode i = 1 if i < 1
+		printf("(s, d) = (%d, %d) uid = %d I(%f, %f) i = %f\n", HDR_IP(p)->saddr(), HDR_IP(p)->daddr(), HDR_CMN(p)->uid(), I.x_, I.y_, i);
 
 		// scale hole by I and i
 		scaleHole = new octagonHole();
@@ -841,10 +870,15 @@ void OctagonAgent::sendData(Packet* p)
 	hdr_octagon_data* 	edh = HDR_OCTAGON_DATA(p);
 
 	//cmh->ptype() = PT_OCTAGON;
+
+	if(cmh->uid() == 1087 || cmh->uid() == 1088) {
+		int a = 1;
+	}
+
 	cmh->size() += IP_HDR_LEN + edh->size();
 	cmh->direction() = hdr_cmn::DOWN;
 
-	edh->type_ 			= routing_num_ > 2 ? OCTAGON_DATA_ROUTING : OCTAGON_DATA_GREEDY;
+	edh->type_ 			= (u_int8_t) (routing_num_ > 2 ? OCTAGON_DATA_ROUTING : OCTAGON_DATA_GREEDY);
 	edh->daddr_			= iph->daddr();
 	edh->vertex_num_	= routing_num_;
 	for (int i = 0; i <= routing_num_; i++)
@@ -871,7 +905,9 @@ void OctagonAgent::recvData(Packet* p)
 	}
 	else
 	{
-		// meet hole
+		// meet region 1
+		// if routing mode (type_) is GREEDY then source node is in region 2
+		// else source node is in region 1 => using staticRouting
 		if (octagonHole_list_ && iph->saddr() != my_id_ && edh->type_ == OCTAGON_DATA_GREEDY)
 		{
 			dynamicRouting(p);

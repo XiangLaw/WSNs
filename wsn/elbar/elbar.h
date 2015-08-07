@@ -42,8 +42,6 @@ protected:
     Packet *packet_;
 };
 
-class ElbarGridOfflineAgent;
-
 class ElbarGridOfflineAgent : public GridOfflineAgent {
 private:
     ElbarTimer broadcast_timer_;

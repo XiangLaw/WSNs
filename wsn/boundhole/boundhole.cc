@@ -35,6 +35,7 @@ BoundHoleAgent::BoundHoleAgent() : GPSRAgent(),
 		boundhole_timer_(this, &BoundHoleAgent::sendBoundHole)
 {
 	stuck_angle_ = NULL;
+	storage_opt_ = STORAGE_ALL; // default storage hole information in all node of hole boundary
 
 	bind("range_", &range_);
 	bind("storage_opt_", &storage_opt_);
@@ -437,7 +438,6 @@ polygonHole* BoundHoleAgent::createPolygonHole(Packet *p)
 	return hole_item;
 }
 
-//TODO: considering?
 node* BoundHoleAgent::getNeighborByBoundHole(Point * p, Point * prev)
 {
 	// p = p

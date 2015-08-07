@@ -1,4 +1,4 @@
-# Script for WisSim simulator. Last edit 7/13/2015 2:47:25 PM
+# Script for WisSim simulator. Last edit 8/5/2015 4:13:08 PM
 
 set opt(x)	1000	;# X dimension of the topography
 set opt(y)	1000	;# Y dimension of the topography
@@ -15,13 +15,13 @@ set opt(mac)	Mac/802_11
 set opt(ifq)	Queue/DropTail/PriQueue
 set opt(ll)	LL
 set opt(ant)	Antenna/OmniAntenna
-set opt(rp)	EHDS
+set opt(rp)	ELBARGRIDOFFLINE
 set opt(trans)	UDP
 set opt(apps)	CBR
 
 set opt(energymodel)	 EnergyModel
 set opt(radiomodel)      RadioModel
-set opt(initialenergy)   5
+set opt(initialenergy)   1000
 set opt(idlePower) 	     0.0096
 set opt(rxPower) 	     0.045
 set opt(txPower) 	     0.0885
@@ -54,12 +54,6 @@ Antenna/OmniAntenna set Z_ 1.5
 Antenna/OmniAntenna set Gt_ 1
 Antenna/OmniAntenna set Gr_ 1
 
-Agent/EHDS set limit_boundhole_hop_ 80
-Agent/EHDS set energy_checkpoint_ 995
-Agent/EHDS set hello_period_ 0
-Agent/EHDS set storage_opt_ 0
-Agent/EHDS set range_ 40
-
 Agent/UDP set fid_ 2
 
 Agent/CBR set packetSize_ 50
@@ -67,7 +61,7 @@ Agent/CBR set type_ CBR
 Agent/CBR set dport_ 0
 Agent/CBR set rate_ 0.1Mb
 Agent/CBR set sport_ 0
-Agent/CBR set interval_ 27
+Agent/CBR set interval_ 1
 
 # ======================================================================
 
