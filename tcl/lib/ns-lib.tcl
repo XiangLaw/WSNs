@@ -1149,7 +1149,7 @@ Simulator instproc create-dynamicpolygon-agent { node } {
 	$node set ragent_ $ragent
 	$self at 0.0 	"$ragent start"    ;# start updates
 	$self at 30	"$ragent boundhole"
-	$self at 90	"$ragent routing"
+	$self at 70	"$ragent broadcast"
 	return $ragent	
 }
 

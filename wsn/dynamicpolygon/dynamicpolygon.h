@@ -8,6 +8,7 @@
 #ifndef DYNAMICPOLYGON_H_
 #define DYNAMICPOLYGON_H_
 
+#include <wsn/convexhull/convexhull.h>
 #include "dynamicpolygon_packet.h"
 
 #include "wsn/geomathhelper/geo_math_helper.h"
@@ -65,7 +66,7 @@ class DynamicPolygonTimer : public TimerHandler
 		firefunction firing_;
 };
 
-class DynamicPolygonAgent : public GPSRAgent {
+class DynamicPolygonAgent : public ConvexHullAgent {
 private:
 	friend class DynamicPolygonHelloTimer;
 	DynamicPolygonTimer findStuck_timer_;
@@ -108,6 +109,10 @@ public:
 	DynamicPolygonAgent();
 	int 	command(int, const char*const*);
 	void 	recv(Packet*, Handler*);
+
+    void broadcastHBI();
+
+    void sendBCH(polygonHole *h);
 };
 
 #endif /* DYNAMICPOLYGON_H_ */

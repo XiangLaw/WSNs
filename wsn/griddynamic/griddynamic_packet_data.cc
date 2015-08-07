@@ -1,6 +1,6 @@
 #include "griddynamic_packet_data.h"
 
-GridDynamicPacketData::GridDynamicPacketData() : AppData(GRIDOFFLINE_DATA)
+GridDynamicPacketData::GridDynamicPacketData() : AppData(GRIDDYNAMIC_DATA)
 {
     data_ = NULL;
     nx_ = 0;

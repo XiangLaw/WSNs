@@ -237,9 +237,6 @@ GridDynamicAgent::sendBoundHole() {
     hdr_cmn *cmh;
     hdr_ip *iph;
     hdr_grid *gh;
-    if (my_id_ == 496) {
-        int i = 0;
-    }
 
     isStuck = true;
     isBoundary = true;
@@ -518,9 +515,7 @@ GridDynamicAgent::sendPivot() {
 void
 GridDynamicAgent::sendAlarm() {
     dumpAlarm();
-    if (my_id_ == 1066){
-        int i = 0;
-    }
+
     isAlerted = true;
     Point *dests = new Point[4];
     Point up, down, left, right;
@@ -574,12 +569,9 @@ GridDynamicAgent::sendAlarm() {
 void
 GridDynamicAgent::recvPivot(Packet *p) {
     hdr_cmn *cmh = HDR_CMN(p);
+    hdr_ip *iph = HDR_IP(p);
     hdr_griddynamic *gdh = HDR_GRIDDYNAMIC(p);
     node *next = NULL;
-
-    if (HDR_IP(p)->saddr() == 1066){
-        int i = 0;
-    }
 
     if (!checkCell(gdh->p_)) {
         // forward to neighbor cell

@@ -19,8 +19,8 @@
  * Linking this file statically or dynamically with other modules is making
  * a combined work based on this file.  Thus, the terms and conditions of
  * the GNU General Public License cover the whole combination.
- *
  * In addition, as a special exception, the copyright holders of this file
+ *
  * give you permission to combine this file with free software programs or
  * libraries that are released under the GNU LGPL and with code included in
  * the standard release of ns-2 under the Apache 2.0 license or under
