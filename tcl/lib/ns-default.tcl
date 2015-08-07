@@ -1664,8 +1664,9 @@ Agent/DYNAMICPOLYGON set hello_period_ 0
 Agent/DYNAMICPOLYGON set energy_checkpoint_ 995
 Agent/DYNAMICPOLYGON set limit_ 0
 Agent/DYNAMICPOLYGON set range_ 40
-Agent/DYNAMICPOLYGON set vertext_num_ 20
+Agent/DYNAMICPOLYGON set alpha_ 1.2
 Agent/DYNAMICPOLYGON set r_ 100
+Agent/DYNAMICPOLYGON set storage_opt_ 1
 Agent/DYNAMICPOLYGON set limit_boundhole_hop_ 80
 
 Agent/ELBARGRIDOFFLINE set hello_period_ 0

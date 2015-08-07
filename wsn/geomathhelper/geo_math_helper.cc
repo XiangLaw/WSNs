@@ -84,6 +84,14 @@ int 	G::position(Point* p, Line* l)
 	return temp ? (temp > 0 ? 1 : -1) : 0;
 }
 
+// side of p1 to p2 through l: >0 if same side, =0 if either p1 or p2 stay on l1, <0 if difference side
+int G::position(Point *p1, Point *p2, Line *l) {
+    int pos1 = G::position(p1, l);
+    int pos2 = G::position(p2, l);
+
+    return pos1*pos2;
+}
+
 // angle of line l with vector ox
 Angle	G::angle(Line* l)
 {

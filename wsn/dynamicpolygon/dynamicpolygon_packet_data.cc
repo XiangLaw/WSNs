@@ -99,6 +99,11 @@ void DynamicPolygonPacketData::removeData(int index)
 	data_len_ -= element_size_;
 }
 
+void DynamicPolygonPacketData::removeAllData() {
+    data_ = NULL;
+    data_len_ = 0;
+}
+
 AppData* DynamicPolygonPacketData::copy()
 {
 	return new DynamicPolygonPacketData(*this);

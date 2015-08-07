@@ -30,6 +30,7 @@ class DynamicPolygonPacketData : public AppData
 		Point getData(int index);
 
 		void removeData(int index);
+        void removeAllData();
 
 		void dump();
 
