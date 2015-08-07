@@ -32,7 +32,7 @@ ElbarTimer::expire(Event *e) {
 ElbarGridOfflineAgent::ElbarGridOfflineAgent()
         : GridOfflineAgent(),
         broadcast_timer_(this){
-    this->alpha_max_ = M_PI * 3 / 4;
+    this->alpha_max_ = M_PI * 8 / 9;
     this->alpha_min_ = M_PI / 3;
 
     hole_list_ = NULL;

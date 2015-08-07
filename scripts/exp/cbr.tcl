@@ -1,7 +1,7 @@
 # udp data
 
 set opt(tn) 270
-set opt(interval) 10.0
+set opt(interval) 5.0
 
 set s(0)	1252	;	set d(0)	54
 set s(1)	1253	;	set d(1)	54
