@@ -23,18 +23,11 @@ static class DynamicPolygonAgentClass : public TclClass
 		{
 			return (new DynamicPolygonAgent());
 		}
-}class_dinamic;
-
-void
-DynamicPolygonTimer::expire(Event *e) {
-	(a_->*firing_)();
-}
+}class_dynamic;
 
 // ------------------------ Agent ------------------------ //
 
-DynamicPolygonAgent::DynamicPolygonAgent() : ConvexHullAgent(),
-		findStuck_timer_(this, &DynamicPolygonAgent::findStuckAngle),
-		boundhole_timer_(this, &DynamicPolygonAgent::sendBoundHole)
+DynamicPolygonAgent::DynamicPolygonAgent() : ConvexHullAgent()
 {
 	stuck_angle_ = NULL;
 	hole_list_ = NULL;
@@ -109,10 +102,6 @@ DynamicPolygonAgent::recv(Packet *p, Handler *h)
 void
 DynamicPolygonAgent::startUp()
 {
-	findStuck_timer_.resched(20);
-
-	makeVector();
-
 	// clear trace file
 	FILE *fp;
 	fp = fopen("DynamicPolygon.tr", "w");	fclose(fp);
@@ -122,7 +111,8 @@ void DynamicPolygonAgent::sendBCH(polygonHole *h) {
 
 }
 
-void
+void DynamicPolygonAgent::recvBCH(Packet *p) {
+}
 
 void DynamicPolygonAgent::recvDynamicPolygon(Packet* p)
 {
@@ -177,6 +167,9 @@ void DynamicPolygonAgent::recvData(Packet* p)
 //	fprintf(fp, "%f\n", Scheduler::instance().clock());
 //	fclose(fp);
 //}
+
+void DynamicPolygonAgent::dumpBroadcast(){
+}
 
 void
 DynamicPolygonAgent::dumpBoundhole()

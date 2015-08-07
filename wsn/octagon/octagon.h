@@ -74,28 +74,11 @@ struct octagonHole
 	struct octagonHole* next_;
 };
 
-class OctagonBroadcastTimer : public TimerHandler
-{
-public:
-	OctagonBroadcastTimer(OctagonAgent *a) : TimerHandler() {
-		agent_ = a;
-	}
-
-	void setParameter(Packet *p) {
-		packet_ = p;
-	}
-
-protected:
-	virtual void expire(Event *e);
-	OctagonAgent *agent_;
-	Packet *packet_;
-};
-
 
 class OctagonAgent : public BoundHoleAgent
 {
 private:
-	OctagonBroadcastTimer broadcast_timer_;
+	AgentBroadcastTimer broadcast_timer_;
 
 	double broadcast_rate_;
 

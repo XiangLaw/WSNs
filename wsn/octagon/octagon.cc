@@ -52,12 +52,6 @@ public:
 	}
 }class_octagon;
 
-// -------------------------------------- Timer -------------------------------------- //
-void
-OctagonBroadcastTimer::expire(Event *e) {
-	agent_->forwardBroadcast(packet_);
-}
-
 
 // -------------------------------------- Agent -------------------------------------- //
 

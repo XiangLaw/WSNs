@@ -21,14 +21,6 @@ public:
     }
 } class_elbargridoffline;
 
-/**
-* Agent implementation
-*/
-void
-ElbarTimer::expire(Event *e) {
-    agent_->forwardElbarBroadcast(packet_);
-}
-
 ElbarGridOfflineAgent::ElbarGridOfflineAgent()
         : GridOfflineAgent(),
         broadcast_timer_(this){
@@ -468,7 +460,7 @@ void ElbarGridOfflineAgent::broadcastHci() {
     send(p, 0);
 }
 
-void ElbarGridOfflineAgent::forwardElbarBroadcast(Packet *p) {
+void ElbarGridOfflineAgent::forwardBroadcast(Packet *p) {
     hdr_cmn *cmh = HDR_CMN(p);
 
     cmh->direction() = hdr_cmn::DOWN;

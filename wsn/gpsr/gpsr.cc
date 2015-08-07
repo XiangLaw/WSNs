@@ -55,6 +55,9 @@ public:
 /*
  * Timer
  */
+void AgentBroadcastTimer::expire(Event *e) {
+    agent_->forwardBroadcast(packet_);
+}
 void
 GPSRHelloTimer::expire(Event *e)
 {
@@ -512,4 +515,8 @@ GPSRAgent::dumpNeighbor()
 	fprintf(fp, "\n");
 
 	fclose(fp);
+}
+
+void forwardBroadcast(Packet *pPacket) {
+
 }

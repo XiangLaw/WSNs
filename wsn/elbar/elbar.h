@@ -25,26 +25,9 @@ struct parallelogram {
     struct node c_;
 };
 
-class ElbarTimer : public TimerHandler
-{
-public:
-    ElbarTimer(ElbarGridOfflineAgent *a) : TimerHandler() {
-        agent_ = a;
-    }
-
-    void setParameter(Packet *p) {
-        packet_ = p;
-    }
-
-protected:
-    virtual void expire(Event *e);
-    ElbarGridOfflineAgent *agent_;
-    Packet *packet_;
-};
-
 class ElbarGridOfflineAgent : public GridOfflineAgent {
 private:
-    ElbarTimer broadcast_timer_;
+    AgentBroadcastTimer broadcast_timer_;
 
     // detect covering parallelogram and view angle
     void detectParallelogram();
@@ -86,7 +69,7 @@ protected:
 public:
     ElbarGridOfflineAgent();
 
-    void forwardElbarBroadcast(Packet *p);
+    void forwardBroadcast(Packet *p);
 
 
     int command(int, const char *const *);

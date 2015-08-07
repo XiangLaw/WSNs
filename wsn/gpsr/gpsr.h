@@ -28,6 +28,24 @@ struct neighbor : node
 	double time_;
 };
 
+class AgentBroadcastTimer : public TimerHandler
+{
+public:
+    AgentBroadcastTimer(GPSRAgent *a) : TimerHandler() {
+        agent_ = a;
+    }
+
+    void setParameter(Packet *p) {
+        packet_ = p;
+    }
+
+protected:
+    // -------------------------------------- Timer -------------------------------------- //
+    virtual void expire(Event *e);
+    GPSRAgent *agent_;
+    Packet *packet_;
+};
+
 /*
  * Hello timer which is used to fire the hello message periodically
  */
@@ -43,6 +61,8 @@ class GPSRHelloTimer : public TimerHandler
 		virtual void expire(Event *e);
 		GPSRAgent* agent_;
 };
+
+
 
 class GPSRAgent : public Point, public Agent
 {
@@ -88,12 +108,14 @@ protected:
 	void checkEnergy();
 
 	void recvGPSR(Packet*, hdr_gpsr*);
-
 public:
 
 	GPSRAgent();
 	int  command(int, const char*const*);
 	void recv(Packet*, Handler*);         //inherited virtual function
+
+    // broadcast timer
+    virtual void forwardBroadcast(Packet *pPacket){};
 };
 
 #endif
