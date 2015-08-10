@@ -516,7 +516,3 @@ GPSRAgent::dumpNeighbor()
 
 	fclose(fp);
 }
-
-void forwardBroadcast(Packet *pPacket) {
-
-}
