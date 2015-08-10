@@ -64,11 +64,6 @@ void
 DynamicPolygonAgent::recv(Packet *p, Handler *h)
 {
 	hdr_cmn *cmh = HDR_CMN(p);
-	hdr_ip	*iph = HDR_IP(p);
-
-    if (cmh->uid() == 862){
-        int i = 0;
-    }
 
 	switch (cmh->ptype())
 	{
@@ -122,7 +117,6 @@ DynamicPolygonAgent::startUp()
 }
 
 void DynamicPolygonAgent::sendBCH(polygonHole *h) {
-    dumpBoundhole();
     broadcastHBI(h);
 }
 
@@ -151,7 +145,7 @@ void DynamicPolygonAgent::broadcastHBI(polygonHole *h) {
     cmh->size() += IP_HDR_LEN + dh->size();
 
     iph->daddr() = IP_BROADCAST;
-    iph->saddr() = my_id_;//236-862
+    iph->saddr() = my_id_;
     iph->sport() = RT_PORT;
     iph->dport() = RT_PORT;
     iph->ttl_ = 100;
@@ -193,7 +187,7 @@ void DynamicPolygonAgent::recvHBI(Packet *pPacket) {
                 l = distanceToPolygon(p_->node_list_);
                 t1 = t2;
                 t2 = calc_g(dh->n_, dh->n_-m+1, d);
-                if (t2 > l && l >= t1) break;
+                if (t2 > l) break;
             }
             hole_list_ = p_;
             f_ = 1;
@@ -208,8 +202,11 @@ void DynamicPolygonAgent::recvHBI(Packet *pPacket) {
             broadcastTimer.resched(randSend_.uniform(0.0, 0.5));
         } else if (l < dh->g0_ && u > v) {
             hole_list_ = hole;
+
+//            printf("%d dropped HBI (1)\n", my_id_);
             drop(pPacket, "DROP_HBI");
         } else {
+//            printf("%d dropped HBI (2)\n", my_id_);
             drop(pPacket, "DROP_HBI");
         }
 
@@ -246,6 +243,7 @@ void
 DynamicPolygonAgent::dumpBoundhole()
 {
 	FILE *fp = fopen("DynamicPolygon.tr", "a+");
+    fprintf(fp, "id:%d\n", my_id_);
 
 	for (polygonHole* p = hole_list_; p != NULL; p = p->next_)
 	{
@@ -270,32 +268,42 @@ void DynamicPolygonAgent::dumpRingG() {
 
 // ------------------------ Helper function ------------------------ //
 
-double DynamicPolygonAgent::distanceToPolygon(node *hole) {
+double DynamicPolygonAgent::    distanceToPolygon(node *polygon) {
     node* tmp0;
     node* tmp1;
     node* tmp2;
     node* tmp3;
     Line l, l1, l2; // l: line P(i+1)P(i+2),l1: parallel with P(i)P(i+1), l2: parallel with P(i+2)P(i+3)
+
+    // check if point inside polygon return 0
+    if (G::isPointInsidePolygon(this, polygon)) return 0;
+
     double distance;
     double d = (double)INT32_MAX;
-    int n = vertex(hole);
+    int n = vertex(polygon);
 
-    for (tmp0 = hole; n; tmp0 = tmp0->next_, n--){
-        tmp1 = tmp0->next_ == NULL ? hole : tmp0->next_;
-        tmp2 = tmp1->next_ == NULL ? hole : tmp1->next_;
+    for (tmp0 = polygon; n; tmp0 = tmp0->next_, n--){
+        tmp1 = tmp0->next_ == NULL ? polygon : tmp0->next_;
+        tmp2 = tmp1->next_ == NULL ? polygon : tmp1->next_;
         l = G::line(tmp1, tmp2);
+
+        if (G::position(this, tmp0, &l) > 0) continue;
+
         distance = G::distance(this, l);
         if (distance < d){
             // detect if node stays on covering polygon's boundary
-            tmp3 = tmp2->next_ == NULL ? hole : tmp2->next_;
+            tmp3 = tmp2->next_ == NULL ? polygon : tmp2->next_;
             l1 = G::line(tmp0, tmp1);
             l2 = G::line(tmp2, tmp3);
 
             int pos1 = G::position(this, tmp2, &l1);
             int pos2 = G::position(this, tmp1, &l2);
 
-            if (pos1*pos2 >= 0){
+            if (pos1*pos2 >= 0 && pos1 >= 0){
                 d = distance;
+            } else if (pos1*pos2 >= 0 && pos1 < 0) {
+                if (G::distance(this, l1) <= distance && G::distance(this, l2) <= distance)
+                    d = distance;
             } else {
                 if ((pos1 < 0 && G::distance(this, l1) <= distance)
                     ||(pos2 < 0 && G::distance(this, l2) <= distance)) {
@@ -354,11 +362,6 @@ bool DynamicPolygonAgent::simpifyPolygon(polygonHole* polygon) {
 
     if (n <= 3) return false;
 
-    // debug
-    if (my_id_ == 737){
-        int i = 0;
-    }
-    printf("%d-%d\t",my_id_, n);
     for (tmp = polygon->node_list_; n; tmp = tmp->next_, n--){
         node* p0 = tmp == NULL ? polygon->node_list_ : tmp;
         node* p1 = p0->next_ == NULL ? polygon->node_list_ : p0->next_;
@@ -398,6 +401,5 @@ bool DynamicPolygonAgent::simpifyPolygon(polygonHole* polygon) {
         }
     }
 
-    printf("%d\n", vertex(polygon->node_list_));
     return true;
 }

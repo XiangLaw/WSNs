@@ -24,7 +24,7 @@ private:
 	double alpha_;					// rotate angle
     int f_;
 
-    double distanceToPolygon(node *hole);
+    double distanceToPolygon(node *polygon);
     int vertex(node* hole) {
         int count = 0;
         for (node* tmp = hole; tmp; tmp = tmp->next_) count++;
