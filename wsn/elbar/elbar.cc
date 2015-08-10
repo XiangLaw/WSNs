@@ -24,7 +24,7 @@ public:
 ElbarGridOfflineAgent::ElbarGridOfflineAgent()
         : GridOfflineAgent(),
         broadcast_timer_(this){
-    this->alpha_max_ = M_PI * 8 / 9;
+    this->alpha_max_ = M_PI * 2 / 3;
     this->alpha_min_ = M_PI / 3;
 
     hole_list_ = NULL;
@@ -222,7 +222,7 @@ void ElbarGridOfflineAgent::detectParallelogram() {
 
 int ElbarGridOfflineAgent::holeAvoidingProb() {
     RNG rand_;
-    double thres = alpha_ / 3;
+    double thres = alpha_;
     if (rand_.uniform(0, 1) < (thres / M_PI)) {
         return HOLE_AWARE_MODE;
     } else {
