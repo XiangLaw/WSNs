@@ -62,6 +62,11 @@
 #include "wsn/boundhole/boundhole.h"
 #include "wsn/geomathhelper/geo_math_helper.h"
 
+enum OCTAGON_REGION {
+	REGION_1 = 1, // broadcast region
+	REGION_2
+};
+
 class OctagonAgent;
 
 struct octagonHole
@@ -86,6 +91,8 @@ private:
 
 	int  	routing_num_;
 	Point	routing_table[8];
+
+	OCTAGON_REGION region_;
 
 	void dynamicRouting(Packet* p);
 	void staticRouting();
