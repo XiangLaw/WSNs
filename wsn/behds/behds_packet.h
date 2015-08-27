@@ -22,10 +22,12 @@ struct hdr_behds_data
     nsaddr_t daddr_;
     u_int8_t vertex_num_;
     Point vertex[3];
+    nsaddr_t saddr;
+    nsaddr_t daddr;
 
     inline int size()
     {
-        return sizeof(nsaddr_t) + 2 * sizeof(u_int8_t) + 3 * sizeof(Point);
+        return 3 * sizeof(nsaddr_t) + 2 * sizeof(u_int8_t) + 3 * sizeof(Point);
     }
 };
 
@@ -37,10 +39,12 @@ struct hdr_behds_ha
 
     int id_;
     Circle circle_;
+    nsaddr_t saddr;
+    nsaddr_t daddr;
 
     inline int size()
     {
-        return sizeof(Circle) + sizeof(int) + sizeof(Point) + sizeof(u_int8_t);
+        return sizeof(Circle) + sizeof(int) + sizeof(Point) + sizeof(u_int8_t) + 2 * sizeof(nsaddr_t);
     };
 };
 
