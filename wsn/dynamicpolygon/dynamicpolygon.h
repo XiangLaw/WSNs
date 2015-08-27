@@ -20,44 +20,38 @@ class DynamicPolygonAgent;
 
 class DynamicPolygonAgent : public ConvexHullAgent {
 private:
-	friend class DynamicPolygonHelloTimer;
+    AgentBroadcastTimer broadcastTimer;
+	double alpha_;					// rotate angle
+    int f_;
 
-	int alpha_;					// rotate angle
-	double range_;				// range of this node
-	int limit_boundhole_hop_;	// boundhole packet will be drop after this hop
-
-	stuckangle* stuck_angle_;
-	polygonHole* hole_list_;
-
-	Vector* vector_;
+    double distanceToPolygon(node *polygon);
+    int vertex(node* hole) {
+        int count = 0;
+        for (node* tmp = hole; tmp; tmp = tmp->next_) count++;
+        return count;
+    }
+    double longestEdge(node* hole);
+    double calc_g(int n, int i, double d){
+        return d/(pow(alpha_, 1.0/i) - 1)*(1/cos(2*M_PI/(n-i+1)) - 1);
+    }
 
 	void startUp();
 
-	void findStuckAngle();
-	node* getNeighborByBoundhole(Point*, Point*);
-
-	void recvDynamicPolygon(Packet*);
-
-	void sendBoundHole();
-	void recvBoundHole(Packet*);
-
-	void makeVector();
-
-	void addData(Packet * p);
-	void addLastData(Packet * p);
-
-	polygonHole* createPolygonHole(Packet*);
-
-    void broadcastHBI();
-
+    // override from convexhull
     void sendBCH(polygonHole *h);
+    void recvBCH(Packet *p){};
 
-    void recvBCH(Packet *p);
+    // broadcast Hole Boundary Information(HBI)
+    void broadcastHBI(polygonHole *h);
+    // handle HBI message
+    void recvHBI(Packet *pPacket);
+
+    polygonHole* createHoleFromPacketData(DynamicPolygonPacketData *data);
+    bool simpifyPolygon(polygonHole* polygon);
 
 	void sendData(Packet* p);
 	void recvData(Packet* p);
 
-	void dumpTime();		// time to boundhole
 	void dumpBoundhole();	// print boundhole
     void dumpBroadcast();
 
@@ -66,6 +60,9 @@ public:
 	int 	command(int, const char*const*);
 	void 	recv(Packet*, Handler*);
 
+    void addData(DynamicPolygonPacketData *pData);
+
+    void dumpRingG();
 };
 
 #endif /* DYNAMICPOLYGON_H_ */

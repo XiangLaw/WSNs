@@ -47,6 +47,13 @@ struct polygonHole
 		while (temp->next_ && temp->next_ != node_list_) temp = temp->next_;
 		temp->next_ = node_list_;
 	}
+
+    void unCircleNodeList(){
+        node* temp = node_list_;
+        do {temp = temp->next_;}
+        while (temp->next_ && temp->next_ != node_list_);
+        temp->next_ = NULL;
+    }
 };
 
 typedef void(BoundHoleAgent::*firefunction)(void);

@@ -314,6 +314,10 @@ public:
 	static bool isPointInsidePolygon(Point *d, node* node_list);
 
 	static bool isPointLiesInTriangle(Point *p, Point *p1, Point *p2, Point *p3);
+
+    static int position(Point *p1, Point *p2, Line *l);
+
+
 };
 
 #endif /* GEO_MATH_HELPER_H_ */

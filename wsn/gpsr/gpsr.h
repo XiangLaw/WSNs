@@ -115,7 +115,13 @@ public:
 	void recv(Packet*, Handler*);         //inherited virtual function
 
     // broadcast timer
-    virtual void forwardBroadcast(Packet *pPacket){};
+    virtual void forwardBroadcast(Packet *p){
+        hdr_cmn *cmh = HDR_CMN(p);
+
+        cmh->direction() = hdr_cmn::DOWN;
+        cmh->last_hop_ = my_id_;
+        send(p, 0);
+    };
 };
 
 #endif

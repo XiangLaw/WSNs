@@ -13,17 +13,12 @@
 
 #define HDR_DYNAMICPOLYGON(p) hdr_dynamicpolygon::access(p)
 
-#define hdr_dynamicpolygon_boundhole 	0x00
-#define hdr_dynamicpolygon_announcement 0x01
-
 struct hdr_dynamicpolygon		// boundhole
 {
-	u_int8_t type;	// type of this paket
-	Point last_;	// Pre-previews node
-	Point prev_;	// Previews node
-	Point i_;
+    int n_;
+    double g0_, g1_;
 
-	inline int size() { return 3 * sizeof(Point); }
+	inline int size() { return 2 * sizeof(double) + sizeof(int); }
 
 	static int offset_;
 	inline static int& offset() { return offset_; }
