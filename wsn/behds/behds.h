@@ -28,6 +28,7 @@ private:
 	void createHole(Packet* p);
 
 	void sendHA(Packet* p, nsaddr_t saddr, Point spos);
+	void updateHeader(Packet *p);
 	void recvBEHDS(Packet* p);
 
 	void sendData(Packet* p);

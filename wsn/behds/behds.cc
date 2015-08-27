@@ -46,6 +46,14 @@ BEHDSAgent::recv(Packet* p, Handler* h)
 int
 BEHDSAgent::command(int argc, const char*const* argv)
 {
+    if (argc == 2)
+    {
+        if (strcasecmp(argv[1], "routing") == 0)
+        {
+            routing();
+            return TCL_OK;
+        }
+    }
     return BoundHoleAgent::command(argc, argv);
 }
 
@@ -100,7 +108,6 @@ BEHDSAgent::sendHA(Packet* p, nsaddr_t saddr, Point spos)
     iph->saddr() = my_id_;
     iph->sport() = RT_PORT;
     iph->dport() = RT_PORT;
-    iph->ttl_	 = IP_DEF_TTL;
 
     ehh->type_              = BEHDS_DATA_HA;
     ehh->id_	 			= circleHole_list_->hole_id_;
@@ -120,7 +127,7 @@ BEHDSAgent::recvBEHDS(Packet* p)
     hdr_behds_ha*	edh = HDR_BEHDS_HA(p);
 
     // forward packet
-    if (cmh->direction() == hdr_cmn::UP	&& iph->daddr() == my_id_)	// up to destination
+    if (cmh->direction() == hdr_cmn::UP	&& iph->daddr() == my_id_)	// up to original source
     {
         // add new circle hole
         circleHole* newHole = (circleHole*)malloc(sizeof(circleHole));
@@ -134,6 +141,7 @@ BEHDSAgent::recvBEHDS(Packet* p)
         routing();
 
         edh->type_ = BEHDS_DATA_ROUTING;
+        updateHeader(p);
         recvData(p);
     }
     else
@@ -230,11 +238,10 @@ BEHDSAgent::sendData(Packet* p)
 
     edh->type_ 			= BEHDS_DATA_GREEDY; // always start with greedy to destination
     edh->daddr_ 		= iph->daddr();
-    edh->vertex_num_	= (u_int8_t) routing_num_;
-    for (int i = 0; i <= routing_num_; i++)
-    {
-        edh->vertex[i] = routing_table[i];
-    }
+    edh->vertex_num_	= 1;
+    edh->vertex[1].x_   = this->x_;
+    edh->vertex[1].y_   = this->y_;
+    edh->vertex[0]      = *dest;
 
     iph->saddr() = my_id_;
     iph->daddr() = -1;
@@ -250,7 +257,6 @@ BEHDSAgent::recvData(Packet* p)
 
     if (cmh->direction() == hdr_cmn::UP	&& edh->daddr_ == my_id_)	// up to destination
     {
-        dumpHopcount(p);
         port_dmux_->recv(p, 0);
         return;
     }
@@ -288,5 +294,14 @@ BEHDSAgent::recvData(Packet* p)
                 send(p, 0);
             }
         }
+    }
+}
+
+void BEHDSAgent::updateHeader(Packet *p) {
+    hdr_behds_data* 	edh = HDR_BEHDS_DATA(p);
+    edh->vertex_num_	= (u_int8_t) routing_num_;
+    for (int i = 0; i <= routing_num_; i++)
+    {
+        edh->vertex[i] = routing_table[i];
     }
 }
