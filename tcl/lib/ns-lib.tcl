@@ -632,33 +632,36 @@ Simulator instproc create-wireless-node args {
     	    		DSR {
 				$self at 0.0 "$node start-dsr"
 			}
-                        AODV {
-                        	set ragent [$self create-aodv-agent $node]
-                        }
-                        AOMDV {
-                        	set ragent [$self create-aomdv-agent $node]
-                        }
-                        GPSR {
+			AODV {
+				set ragent [$self create-aodv-agent $node]
+			}
+			AOMDV {
+				set ragent [$self create-aomdv-agent $node]
+			}
+			GPSR {
 				set ragent [$self create-gpsr-agent $node]
-                        }
-                        GEAR {
-                        			    set ragent [$self create-gear-agent $node]
-                        		    }
-                        EHDS {
+			}
+			GEAR {
+				set ragent [$self create-gear-agent $node]
+			}
+			EHDS {
 				set ragent [$self create-ehds-agent $node]
-                        }
-                        ELLIPSE {
+			}
+			BEHDS {
+				set ragent [$self create-behds-agent $node]
+			}
+            ELLIPSE {
 				set ragent [$self create-ellipse-agent $node]
-                        }
-                        HEXAGON {
-                		set ragent [$self create-hexagon-agent $node]
-                        }
+            }
+            HEXAGON {
+           		set ragent [$self create-hexagon-agent $node]
+            }
 			SCALEHEXAGON {
 				set ragent [$self create-scalehexagon-agent $node]
 			}
-                        OCTAGON {
+            OCTAGON {
 				set ragent [$self create-octagon-agent $node]
-                        }
+            }
 			GOAL {
 				set ragent [$self create-goal-agent $node]
 			}
@@ -1030,6 +1033,24 @@ Simulator instproc create-ehds-agent { node } {
 	$self at 0.0 	"$ragent start"    ;# start updates
 	$self at 30	"$ragent boundhole"
 	$self at 90	"$ragent routing"
+	$self at 99	"$ragent bcenergy"
+	return $ragent
+}
+
+# BEHDS
+Simulator instproc create-behds-agent { node } {
+	set ragent [new Agent/BEHDS]
+	set addr [$node node-addr]
+	$ragent addr $addr
+	$ragent node $node
+	if [Simulator set mobile_ip_] {
+		$ragent port-dmux [$node demux]
+	}
+	$node addr $addr
+	$node set ragent_ $ragent
+	$self at 0.0 	"$ragent start"    ;# start updates
+	$self at 30	"$ragent boundhole"
+	$self at 50	"$ragent routing"
 	$self at 99	"$ragent bcenergy"
 	return $ragent
 }

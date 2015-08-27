@@ -1620,6 +1620,12 @@ Agent/EHDS set range_ 40
 Agent/EHDS set storage_opt_ 0
 Agent/EHDS set limit_boundhole_hop_ 150
 
+Agent/BEHDS set hello_period_ 0
+Agent/BEHDS set energy_checkpoint_ 995
+Agent/BEHDS set range_ 40
+Agent/BEHDS set storage_opt_ 0
+Agent/BEHDS set limit_boundhole_hop_ 80
+
 Agent/ELLIPSE set hello_period_ 0
 Agent/ELLIPSE set energy_checkpoint_ 995
 Agent/ELLIPSE set range_ 40
