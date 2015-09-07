@@ -157,6 +157,8 @@ BEHDSAgent::recvBEHDS(Packet* p)
         edh->type_ = BEHDS_DATA_ROUTING;
         updateHeader(p);
         recvData(p);
+        // clear information of hole at source node
+        circleHole_list_ = NULL;
     }
     else
     {
