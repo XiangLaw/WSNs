@@ -1690,3 +1690,9 @@ Agent/OCTAGON set range_ 40
 Agent/OCTAGON set storage_opt_ 1
 Agent/OCTAGON set broadcast_rate_ 1
 
+Agent/CORBAL set limit_boundhole_hop_ 80
+Agent/CORBAL set energy_checkpoint_ 995
+Agent/CORBAL set hello_period_ 0
+Agent/CORBAL set range_ 40
+Agent/CORBAL set n_ 8
+Agent/CORBAL set min_boundhole_hop_ 10

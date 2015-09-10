@@ -1,4 +1,4 @@
-# Script for WisSim simulator. Last edit 9/7/2015 9:56:29 AM
+# Script for WisSim simulator. Last edit 9/7/2015 10:55:05 AM
 
 set opt(x)	1000	;# X dimension of the topography
 set opt(y)	1000	;# Y dimension of the topography
@@ -15,7 +15,7 @@ set opt(mac)	Mac/802_11
 set opt(ifq)	Queue/DropTail/PriQueue
 set opt(ll)	LL
 set opt(ant)	Antenna/OmniAntenna
-set opt(rp)	BEHDS
+set opt(rp)	CORBAL
 set opt(trans)	UDP
 set opt(apps)	CBR
 
