@@ -205,7 +205,7 @@ void CorbalAgent::sendBoundHole()
         iph = HDR_IP(p);
         bhh = HDR_CORBAL(p);
 
-        cmh->ptype() 	 = PT_BOUNDHOLE;
+        cmh->ptype() 	 = PT_CORBAL;
         cmh->direction() = hdr_cmn::DOWN;
         cmh->size()		 += IP_HDR_LEN + bhh->size() + bhpkt_data->data_len_;
         cmh->next_hop_	 = sa->a_->id_;
