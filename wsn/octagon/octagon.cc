@@ -59,6 +59,7 @@ OctagonAgent::OctagonAgent() : BoundHoleAgent(), broadcast_timer_(this)
 {
 	octagonHole_list_ = NULL;
 	routing_num_ = 0;
+	region_ = REGION_2;
 
 	bind("broadcast_rate_", &broadcast_rate_);
 
@@ -333,8 +334,7 @@ void OctagonAgent::createHole(Packet* p)
 
 	newHole->delta_ = newHole->pc_ - newHole->delta_;
 
-	// routing
-	staticRouting();
+	region_ = REGION_1;
 
 	// Broadcast hole information
 	sendBroadcast(newHole);
@@ -435,9 +435,6 @@ void OctagonAgent::recvBroadcast(Packet* p)
 		while (temp->next_) temp = temp->next_;
 		temp->next_ = newHole->node_list_;
 
-		// ----------- routing
-		staticRouting();
-
 		// ----------- broadcast hole's information. Check if (1) is satisfy
 		double alpha = 0;
 		double ln = 0;
@@ -468,12 +465,14 @@ void OctagonAgent::recvBroadcast(Packet* p)
 			drop(p,"region_limited");
 		}
 
+		region_ = REGION_1;
+
 		// ---------- dump
 		dumpBroadcast();
 	}
 	else
 	{
-		drop(p,"received");
+		drop(p,"broadcast_received");
 	}
 }
 
@@ -863,8 +862,6 @@ void OctagonAgent::sendData(Packet* p)
 	hdr_ip*				iph = HDR_IP(p);
 	hdr_octagon_data* 	edh = HDR_OCTAGON_DATA(p);
 
-	//cmh->ptype() = PT_OCTAGON;
-
 	if(cmh->uid() == 1087 || cmh->uid() == 1088) {
 		int a = 1;
 	}
@@ -882,7 +879,7 @@ void OctagonAgent::sendData(Packet* p)
 
 	iph->saddr() = my_id_;
 	iph->daddr() = -1;
-	iph->ttl_ = 100;
+	iph->ttl_ = 4 * IP_DEF_TTL;
 }
 
 void OctagonAgent::recvData(Packet* p)
@@ -906,6 +903,9 @@ void OctagonAgent::recvData(Packet* p)
 		{
 			dynamicRouting(p);
 			edh->type_ = OCTAGON_DATA_ROUTING;
+		} else
+		{
+			staticRouting();
 		}
 
 		// -------- forward by greedy

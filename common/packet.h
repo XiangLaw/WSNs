@@ -215,8 +215,9 @@ static const packet_t PT_DYNAMICPOLYGON = 84;	// Dynamic polygon
 // wsn-ext
 static const packet_t PT_ELBARGRID = 85; // elbar + gridoffline
 static const packet_t PT_GEAR = 86; // gear
+static const packet_t PT_BEHDS = 87; // basic ehds
 
-static packet_t       PT_NTYPE = 87; 			// This MUST be the LAST one
+static packet_t       PT_NTYPE = 88; 			// This MUST be the LAST one
 
 enum packetClass
 {
@@ -450,6 +451,7 @@ public:
         // wsn-ext
         name_[PT_ELBARGRID] = "ELBARGRIDOFFLINE";
 		name_[PT_GEAR] = "GEAR";
+		name_[PT_BEHDS] = "BEHDS";
 
 		name_[PT_NTYPE]= "undefined";
 	}

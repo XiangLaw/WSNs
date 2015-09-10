@@ -24,13 +24,16 @@ public:
 ElbarGridOfflineAgent::ElbarGridOfflineAgent()
         : GridOfflineAgent(),
         broadcast_timer_(this){
-    this->alpha_max_ = M_PI * 2 / 3;
-    this->alpha_min_ = M_PI / 3;
+    alpha_max_ = M_PI * 2 / 3;
+    alpha_min_ = M_PI / 3;
 
     hole_list_ = NULL;
     parallelogram_ = NULL;
     alpha_ = 0;
     region_ = REGION_3;
+
+    bind("alpha_max_", &alpha_max_);
+    bind("alpha_min_", &alpha_min_);
 }
 
 char const *ElbarGridOfflineAgent::getAgentName() {

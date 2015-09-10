@@ -1,8 +1,8 @@
-# Script for WisSim simulator. Last edit 8/5/2015 4:13:08 PM
+# Script for WisSim simulator. Last edit 9/7/2015 9:56:29 AM
 
 set opt(x)	1000	;# X dimension of the topography
 set opt(y)	1000	;# Y dimension of the topography
-set opt(stop)	1000	;# simulation time
+set opt(stop)	500	;# simulation time
 set opt(nn)	1500	;# number of nodes
 set opt(tr)	Trace.tr	;# trace file
 set opt(nam)	nam.out.tr
@@ -15,7 +15,7 @@ set opt(mac)	Mac/802_11
 set opt(ifq)	Queue/DropTail/PriQueue
 set opt(ll)	LL
 set opt(ant)	Antenna/OmniAntenna
-set opt(rp)	ELBARGRIDOFFLINE
+set opt(rp)	BEHDS
 set opt(trans)	UDP
 set opt(apps)	CBR
 
