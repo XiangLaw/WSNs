@@ -441,9 +441,9 @@ void CorbalAgent::contructCorePolygonSet(Packet *p)
         for(int j = 1; j <= n_; j++) {
             int j_1 = j == n_ ? 1 : j + 1;
 
-            off = data_size + n_ * (i - 1) + j;
+            off = data_size + (n_ + 1) * (i - 1) + j;
             node b_j    = data->get_Bi_data(off);
-            off = data_size + n_ * (i - 1) + j +  1;
+            off = data_size + (n_ + 1) * (i - 1) + j_1;
             node b_j_1  = data->get_Bi_data(off);
 
             Angle b_j_angle     = i * theta_n + j * 2 * M_PI / n_;
@@ -523,12 +523,13 @@ void CorbalAgent::isNodeStayOnBoundaryOfCorePolygon(Packet *p)
                 }
             }
 
+            if(next_index <= 0) break;
             if(flag && !first_time) break;
             if(flag) continue;
 
             first_time = false;
             // add N to set B(i, j)
-            off = (i - 1) * n_ + next_index + data_size;
+            off = (i - 1) * (n_ + 1) + next_index + data_size;
             data->addBiNode(off, my_id_, x_, y_);
             off = data_size + (i - 1) * (n_ + 1);
             data->update_next_index_of_Bi(off, next_index);
