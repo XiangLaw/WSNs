@@ -376,6 +376,7 @@ void CorbalAgent::sendHBA(Packet *p)
     hdr_corbal*     bhh = HDR_CORBAL(p);
 
     // update data payload - alloc memory for set of B(i) nodes
+    data->add(my_id_, x_, y_); // add back H0 to end of array
     data->addHBA(n_, kn);
 
     node n = data->get_data(2);
@@ -404,7 +405,7 @@ void CorbalAgent::recvHBA(Packet *p)
     struct hdr_ip 		*iph = HDR_IP(p);
     CorbalPacketData    *data = (CorbalPacketData*)p->userdata();
 
-    int i = 1;
+    int i = 2;
     while (data->get_data(i).id_ != my_id_) i++;
 
     if (i < data->size() - (n_ + 1) * kn)
@@ -421,8 +422,7 @@ void CorbalAgent::recvHBA(Packet *p)
 
         send(p, 0);
     }
-    else
-    {
+    else { // back to H0
         contructCorePolygonSet(p);
         drop(p, " BOUNDHOLE_HBA");
     }
