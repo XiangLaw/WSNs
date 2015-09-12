@@ -5,6 +5,7 @@
 
 #define CORBAL_BOUNDHOLE	0x01
 #define CORBAL_HBA      	0x02
+#define CORBAL_BROADCAST    0x03
 
 #define HDR_CORBAL(p) hdr_corbal::access(p)
 

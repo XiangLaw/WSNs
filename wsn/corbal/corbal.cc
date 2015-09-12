@@ -40,6 +40,7 @@ CorbalAgent::CorbalAgent() : GPSRAgent(),
     limit_max_hop_ = 80;
     n_ = 8;
     core_polygon_set = NULL;
+    hole_ = NULL;
 
     bind("range_", &range_);
     bind("limit_boundhole_hop_", &limit_max_hop_);
@@ -244,6 +245,7 @@ void CorbalAgent::recvBoundHole(Packet *p)
         }
         else
         {
+            hole_ = createPolygonHole(p);
             data->dump();
             // starting sending HBA to hole boundary
             sendHBA(p);
@@ -406,6 +408,7 @@ void CorbalAgent::recvHBA(Packet *p)
     struct hdr_ip 		*iph = HDR_IP(p);
     CorbalPacketData    *data = (CorbalPacketData*)p->userdata();
 
+    hole_ = createPolygonHole(p);
     int i = 2;
     while (data->get_data(i).id_ != my_id_) i++;
 
@@ -425,7 +428,7 @@ void CorbalAgent::recvHBA(Packet *p)
     }
     else { // back to H0
         contructCorePolygonSet(p);
-        drop(p, " BOUNDHOLE_HBA");
+        drop(p, "BOUNDHOLE_HBA");
     }
 }
 
@@ -540,10 +543,36 @@ void CorbalAgent::isNodeStayOnBoundaryOfCorePolygon(Packet *p)
     }
 }
 
+
+polygonHole* CorbalAgent::createPolygonHole(Packet *p) {
+    CorbalPacketData* data = (CorbalPacketData*)p->userdata();
+
+    // create hole item
+    polygonHole * hole_item = new polygonHole();
+    hole_item->hole_id_ 	= my_id_;
+    hole_item->node_list_ 	= NULL;
+
+    // add node info to hole item
+    struct node* item;
+
+    for (int i = 1; i <= data->size(); i++)
+    {
+        node n = data->get_data(i);
+
+        item = new node();
+        item->x_	= n.x_;
+        item->y_	= n.y_;
+        item->next_ = hole_item->node_list_;
+        hole_item->node_list_ = item;
+    }
+
+    return hole_item;
+}
+
 /*
  * HCI broadcast phase
  */
-void CorbalAgent::sendHCI(Packet *packet) {
+void CorbalAgent::broadcastHCI(Packet *packet) {
 
 }
 

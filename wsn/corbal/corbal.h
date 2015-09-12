@@ -40,8 +40,9 @@ private:
     void contructCorePolygonSet(Packet *);
     void isNodeStayOnBoundaryOfCorePolygon(Packet*);
     void addCorePolygonNode(Point, corePolygon*);
+    polygonHole* createPolygonHole(Packet*);
 
-    void sendHCI(Packet *);
+    void broadcastHCI(Packet *);
     void recvHCI(Packet *);
 
     node* getNeighborByBoundHole(Point*, Point*);
@@ -56,6 +57,7 @@ private:
     int n_;
     int kn;
     double theta_n;
+    polygonHole *hole_;
     corePolygon *core_polygon_set;
 
     stuckangle* stuck_angle_;
