@@ -490,7 +490,7 @@ void CorbalAgent::isNodeStayOnBoundaryOfCorePolygon(Packet *p)
         bool first_time = false;
         // get next index of this B(i)
 
-        off = data_size + n_ * (i-1);
+        off = data_size + (n_ + 1) * (i-1);
         int next_index = data->get_next_index_of_Bi(off);
 
         if(next_index == 1) {
@@ -530,7 +530,7 @@ void CorbalAgent::isNodeStayOnBoundaryOfCorePolygon(Packet *p)
             // add N to set B(i, j)
             off = (i - 1) * n_ + next_index + data_size;
             data->addBiNode(off, my_id_, x_, y_);
-            off = data_size + (i - 1) * n_;
+            off = data_size + (i - 1) * (n_ + 1);
             data->update_next_index_of_Bi(off, next_index);
             dump(angle, i, next_index, l_n);
             printf("i = %d j = %d nodeid = %d\n", i, next_index, my_id_);
