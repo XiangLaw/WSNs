@@ -12,7 +12,7 @@ private:
 public:
     int data_len_;
     int element_size_;
-    int boundhole_data_len_; // data length of boundhole (hole boundary nodes)
+    //int boundhole_data_len_; // data length of boundhole (hole boundary nodes)
 
     CorbalPacketData();
     CorbalPacketData(CorbalPacketData &d);	// Copy
@@ -24,13 +24,15 @@ public:
     void addHBA(int n, int kn);
 
     // add B(i) node information to HBA
-    void addBiNode(int n, int i, int j, nsaddr_t id, double x, double y);
+    void addBiNode(int offset, nsaddr_t id, double x, double y);
 
     // get all ids collected
     void dump();
 
     node get_data(int index);
-    node get_Bi_data(int n, int i, int j);
+    node get_Bi_data(int);
+    int get_next_index_of_Bi(int);
+    void update_next_index_of_Bi(int, int);
 
     int indexOf(node);
     int indexOf(nsaddr_t id, double x, double y);
@@ -39,6 +41,7 @@ public:
 
     AppData* copy();
     int size() const;
+    //int boundhole_size();
 };
 
 #endif

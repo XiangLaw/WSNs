@@ -130,6 +130,8 @@ CorbalAgent::startUp()
     FILE *fp;
     fp = fopen("Neighbors.tr", "w");	fclose(fp);
     fp = fopen("BoundHole.tr", "w");	fclose(fp);
+    fp = fopen("CorePolygon.tr", "w");  fclose(fp);
+    fp = fopen("debug.tr", "w");        fclose(fp);
 }
 
 /*
@@ -242,6 +244,7 @@ void CorbalAgent::recvBoundHole(Packet *p)
         }
         else
         {
+            data->dump();
             // starting sending HBA to hole boundary
             sendHBA(p);
         }
@@ -404,7 +407,7 @@ void CorbalAgent::recvHBA(Packet *p)
     int i = 1;
     while (data->get_data(i).id_ != my_id_) i++;
 
-    if (i < data->size())
+    if (i < data->size() - (n_ + 1) * kn)
     {
         isNodeStayOnBoundaryOfCorePolygon(p);
         nsaddr_t next_id = data->get_data(i+1).id_;
@@ -428,6 +431,8 @@ void CorbalAgent::recvHBA(Packet *p)
 void CorbalAgent::contructCorePolygonSet(Packet *p)
 {
     CorbalPacketData* data = (CorbalPacketData*)p->userdata();
+    int data_size = data->size() - (n_ + 1) * kn;
+    int off = 0;
 
     for(int i = 1; i<= kn; i++) {
         corePolygon *new_core = new corePolygon();
@@ -436,8 +441,10 @@ void CorbalAgent::contructCorePolygonSet(Packet *p)
         for(int j = 1; j <= n_; j++) {
             int j_1 = j == n_ ? 1 : j + 1;
 
-            node b_j    = data->get_Bi_data(n_, i, j);
-            node b_j_1  = data->get_Bi_data(n_, i, j_1);
+            off = data_size + n_ * (i - 1) + j;
+            node b_j    = data->get_Bi_data(off);
+            off = data_size + n_ * (i - 1) + j +  1;
+            node b_j_1  = data->get_Bi_data(off);
 
             Angle b_j_angle     = i * theta_n + j * 2 * M_PI / n_;
             Angle b_j_1_angle   = i * theta_n + j_1 * 2 * M_PI /n_;
@@ -453,6 +460,8 @@ void CorbalAgent::contructCorePolygonSet(Packet *p)
         new_core->next_ = core_polygon_set;
         core_polygon_set = new_core;
     }
+
+    dumpCorePolygon();
 }
 
 void CorbalAgent::addCorePolygonNode(Point newPoint, corePolygon *corePolygon)
@@ -473,12 +482,30 @@ void CorbalAgent::addCorePolygonNode(Point newPoint, corePolygon *corePolygon)
 void CorbalAgent::isNodeStayOnBoundaryOfCorePolygon(Packet *p)
 {
     CorbalPacketData *data = (CorbalPacketData*)p->userdata();
+    int data_size = data->size() - (n_ + 1) * kn;
+    int off = 0;
 
-    int i, j;
-    bool flag = false;
+    int i;
     for(i = 1; i <= kn; i++) {
-        for(j = 1; j <= n_; j++) {
-            double angle = i * theta_n + j * 2 * M_PI / n_;
+        bool first_time = false;
+        // get next index of this B(i)
+
+        off = data_size + n_ * (i-1);
+        int next_index = data->get_next_index_of_Bi(off);
+
+        if(next_index == 1) {
+            next_index = n_ + 1;
+        }
+        else if(next_index == 0) {
+            next_index = n_ + 1;
+            first_time = true;
+        }
+
+        while(true)
+        {
+            next_index--;
+            bool flag = false;
+            double angle = i * theta_n + next_index * 2 * M_PI / n_;
             // draw line goes through this node and make with x-axis angle: mx + n = y
             Line l_n = G::line(this, angle);
 
@@ -486,7 +513,7 @@ void CorbalAgent::isNodeStayOnBoundaryOfCorePolygon(Packet *p)
             int index;
 
             tmp1 = data->get_data(1).id_ == my_id_ ? data->get_data(2) : data->get_data(1);
-            for(index = 1; index < data->size(); index++)
+            for(index = 1; index < data_size; index++)
             {
                 tmp2 = data->get_data(index);
                 if(tmp2.id_ == my_id_) continue;
@@ -495,9 +522,18 @@ void CorbalAgent::isNodeStayOnBoundaryOfCorePolygon(Packet *p)
                     break;
                 }
             }
+
+            if(flag && !first_time) break;
             if(flag) continue;
+
+            first_time = false;
             // add N to set B(i, j)
-            data->addBiNode(n_, i, j, my_id_, x_, y_);
+            off = (i - 1) * n_ + next_index + data_size;
+            data->addBiNode(off, my_id_, x_, y_);
+            off = data_size + (i - 1) * n_;
+            data->update_next_index_of_Bi(off, next_index);
+            dump(angle, i, next_index, l_n);
+            printf("i = %d j = %d nodeid = %d\n", i, next_index, my_id_);
         }
     }
 }
@@ -522,4 +558,26 @@ void CorbalAgent::sendData(Packet *packet) {
 
 void CorbalAgent::recvData(Packet *packet) {
 
+}
+
+/**
+ * Dump methods
+ */
+void CorbalAgent::dumpCorePolygon() {
+    FILE *fp = fopen("CorePolygon.tr", "a+");
+
+    for(corePolygon *tmp = core_polygon_set; tmp != NULL; tmp = tmp->next_) {
+        fprintf(fp, "%d\n", tmp->id_);
+        for(node *node = tmp->node_; node!= NULL; node = node->next_) {
+            fprintf(fp, "%f\t%f\n", node->x_, node->y_);
+        }
+    }
+    fclose(fp);
+}
+
+void CorbalAgent::dump(Angle a, int i, int j, Line ln)
+{
+    FILE *fp = fopen("debug.tr", "a+");
+    fprintf(fp, "%d\t%f\t%f\t%f\t%d\t%d\t%f\t%f\t%f\t\n", my_id_, x_, y_, a, i, j, ln.a_, ln.b_, ln.c_);
+    fclose(fp);
 }

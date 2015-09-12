@@ -59,6 +59,9 @@ private:
     corePolygon *core_polygon_set;
 
     stuckangle* stuck_angle_;
+
+    void dumpCorePolygon();
+    void dump(Angle, int, int, Line);
 public:
     CorbalAgent();
     int 	command(int, const char*const*);
