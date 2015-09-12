@@ -378,6 +378,7 @@ void CorbalAgent::sendHBA(Packet *p)
     // update data payload - alloc memory for set of B(i) nodes
     data->add(my_id_, x_, y_); // add back H0 to end of array
     data->addHBA(n_, kn);
+    isNodeStayOnBoundaryOfCorePolygon(p);
 
     node n = data->get_data(2);
 
