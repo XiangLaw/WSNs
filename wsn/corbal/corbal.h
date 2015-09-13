@@ -5,6 +5,11 @@
 #include <wsn/gpsr/gpsr.h>
 #include "../common/struct.h"
 
+enum CorbalRegion {
+    INSIDE = 1,
+    OUTSITE = 2
+};
+
 class CorbalAgent;
 typedef void(CorbalAgent::*firefunction)(void);
 
@@ -27,13 +32,14 @@ private:
     friend class BoundHoleHelloTimer;
     CorbalTimer findStuck_timer_;
     CorbalTimer boundhole_timer_;
+    AgentBroadcastTimer broadcast_timer_;
 
     void startUp();
 
     void findStuckAngle();
-
     void sendBoundHole();
     void recvBoundHole(Packet*);
+    node* getNeighborByBoundHole(Point*, Point*);
 
     void sendHBA(Packet*);
     void recvHBA(Packet*);
@@ -42,11 +48,11 @@ private:
     void addCorePolygonNode(Point, corePolygon*);
     polygonHole* createPolygonHole(Packet*);
 
-    void broadcastHCI(Packet *);
+    void broadcastHCI();
     void recvHCI(Packet *);
-
-    node* getNeighborByBoundHole(Point*, Point*);
-
+    void corePolygonSelection(Packet*);
+    bool canBroadcast();
+    void updatePayload(Packet*); // update payload with new core polygon information
 
     void sendData(Packet*);
     void recvData(Packet*);
@@ -57,18 +63,20 @@ private:
     int n_;
     int kn;
     double theta_n;
+    double s_;
     polygonHole *hole_;
     corePolygon *core_polygon_set;
-
+    corePolygon *my_core_polygon;
+    int8_t region_;
     stuckangle* stuck_angle_;
 
     void dumpCorePolygon();
     void dump(Angle, int, int, Line);
+    void dumpBroadcastRegion();
 public:
     CorbalAgent();
     int 	command(int, const char*const*);
     void 	recv(Packet*, Handler*);
-
 };
 
 #endif

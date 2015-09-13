@@ -63,8 +63,6 @@ Agent/CBR set rate_ 0.1Mb
 Agent/CBR set sport_ 0
 Agent/CBR set interval_ 1
 
-Agent/CORBAL set n_ 11
-
 # ======================================================================
 
 #

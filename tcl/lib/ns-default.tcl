@@ -1696,3 +1696,4 @@ Agent/CORBAL set hello_period_ 0
 Agent/CORBAL set range_ 40
 Agent/CORBAL set n_ 8
 Agent/CORBAL set min_boundhole_hop_ 10
+Agent/CORBAL set s_ 2.0

@@ -268,7 +268,7 @@ void DynamicPolygonAgent::dumpRingG() {
 
 // ------------------------ Helper function ------------------------ //
 
-double DynamicPolygonAgent::    distanceToPolygon(node *polygon) {
+double DynamicPolygonAgent::distanceToPolygon(node *polygon) {
     node* tmp0;
     node* tmp1;
     node* tmp2;
