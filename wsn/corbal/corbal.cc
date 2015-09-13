@@ -589,10 +589,6 @@ void CorbalAgent::broadcastHCI() {
 void CorbalAgent::recvHCI(Packet *p) {
     struct hdr_ip *iph = HDR_IP(p);
 
-    if(my_id_ == 397) {
-        int a = 1;
-    }
-
     // if the hci packet has came back to the initial node
     if (iph->saddr() == my_id_) {
         drop(p, "CorbalLoopHCI");
@@ -652,8 +648,7 @@ void CorbalAgent::corePolygonSelection(Packet *p) {
 // return true if it can continue broadcast or false if the broadcast range has reached
 bool CorbalAgent::canBroadcast() {
     // if node is inside polygon or in hole boundary, simply return
-    if(hole_ || G::isPointInsidePolygon(this, my_core_polygon->node_))
-    {
+    if (hole_ || G::isPointInsidePolygon(this, my_core_polygon->node_)) {
         return true;
     }
 
@@ -673,17 +668,17 @@ bool CorbalAgent::canBroadcast() {
     } while (tmp && tmp->next_ != my_core_polygon->node_);
 
     Angle alpha = fabs(G::directedAngle(pi, this, pj)); // get absolute angle
-    double l_c = min(G::distance(pi,this), G::distance(pj, this));
+    double l_c = min(G::distance(pi, this), G::distance(pj, this));
     double p_c = 0;
-    node* i = my_core_polygon->node_;
+    node *i = my_core_polygon->node_;
     do {
         node *j = i->next_ == NULL ? my_core_polygon->node_ : i->next_;
         p_c += G::distance(i, j);
         i = j;
     } while (i != my_core_polygon->node_);
 
-    double left_side = cos(alpha/2);
-    double right_side = 1/s_ + p_c * (1 - sin((n_ - 2) * M_PI / (2 * n_)))/l_c;
+    double left_side = cos(alpha / 2);
+    double right_side = 1 / s_ + p_c * (1 - sin((n_ - 2) * M_PI / (2 * n_))) / l_c;
 
     return left_side > right_side;
 }
