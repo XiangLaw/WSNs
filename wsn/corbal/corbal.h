@@ -5,11 +5,6 @@
 #include <wsn/gpsr/gpsr.h>
 #include "../common/struct.h"
 
-enum CorbalRegion {
-    INSIDE = 1,
-    OUTSITE = 2
-};
-
 class CorbalAgent;
 typedef void(CorbalAgent::*firefunction)(void);
 
@@ -56,6 +51,7 @@ private:
 
     void sendData(Packet*);
     void recvData(Packet*);
+    void calculateScaleFactor(Packet*);
 
     double range_;
     int limit_max_hop_; // limit_boundhole_hop_
@@ -67,8 +63,10 @@ private:
     polygonHole *hole_;
     corePolygon *core_polygon_set;
     corePolygon *my_core_polygon;
-    int8_t region_;
     stuckangle* stuck_angle_;
+
+    double scale_factor_;
+    double p_c_;
 
     void dumpCorePolygon();
     void dump(Angle, int, int, Line);

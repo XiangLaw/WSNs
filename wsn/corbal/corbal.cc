@@ -41,8 +41,9 @@ CorbalAgent::CorbalAgent() : GPSRAgent(),
     core_polygon_set = NULL;
     hole_ = NULL;
     my_core_polygon = NULL;
-    region_ = OUTSITE;
     s_ = 2.0;
+    scale_factor_ = 0;
+    p_c_ = 0;
 
     bind("range_", &range_);
     bind("limit_boundhole_hop_", &limit_max_hop_);
@@ -405,7 +406,6 @@ void CorbalAgent::recvHBA(Packet *p) {
         drop(p, "BOUNDHOLE_HBA");
 
         // broadcast HCI
-        region_ = INSIDE;
         broadcastHCI();
     }
 }
@@ -606,7 +606,6 @@ void CorbalAgent::recvHCI(Packet *p) {
         return;
     }
 
-    region_ = INSIDE;
     // select core polygon
     corePolygonSelection(p);
 
@@ -668,17 +667,16 @@ bool CorbalAgent::canBroadcast() {
     } while (tmp && tmp->next_ != my_core_polygon->node_);
 
     Angle alpha = fabs(G::directedAngle(pi, this, pj)); // get absolute angle
-    double l_c = min(G::distance(pi, this), G::distance(pj, this));
-    double p_c = 0;
+    double l_c_n = min(G::distance(pi, this), G::distance(pj, this));
     node *i = my_core_polygon->node_;
     do {
         node *j = i->next_ == NULL ? my_core_polygon->node_ : i->next_;
-        p_c += G::distance(i, j);
+        p_c_ += G::distance(i, j);
         i = j;
     } while (i != my_core_polygon->node_);
 
     double left_side = cos(alpha / 2);
-    double right_side = 1 / s_ + p_c * (1 - sin((n_ - 2) * M_PI / (2 * n_))) / l_c;
+    double right_side = 1 / s_ + p_c_ * (1 - sin((n_ - 2) * M_PI / (2 * n_))) / l_c_n;
 
     return left_side > right_side;
 }
@@ -697,12 +695,145 @@ void CorbalAgent::updatePayload(Packet *p) {
 /**
  * Routing phase
  */
-void CorbalAgent::sendData(Packet *packet) {
+void CorbalAgent::sendData(Packet *p) {
+    hdr_cmn *cmh = HDR_CMN(p);
+    hdr_ip *iph = HDR_IP(p);
+    hdr_corbal *hdc = HDR_CORBAL(p);
 
+    cmh->size() += IP_HDR_LEN + hdc->size();
+    cmh->direction_ = hdr_cmn::DOWN;
+
+    hdc->type_ = CORBAL_CBR_GREEDY;
+
+    iph->saddr() = my_id_;
+    iph->ttl_ = 4 * IP_DEF_TTL;
 }
 
-void CorbalAgent::recvData(Packet *packet) {
+void CorbalAgent::recvData(Packet *p) {
+    struct hdr_cmn *cmh = HDR_CMN(p);
+    struct hdr_ip *iph = HDR_IP(p);
+    struct hdr_corbal *hdc = HDR_CORBAL(p);
 
+    node *tmp;
+
+    if (cmh->direction() == hdr_cmn::UP && iph->daddr() == my_id_)    // up to destination
+    {
+        dumpHopcount(p);
+        port_dmux_->recv(p, 0);
+        return;
+    }
+    else {
+        if (my_core_polygon == NULL) { // outside broadcast region
+            node *nexthop = getNeighborByGreedy(*dest);
+            if (nexthop == NULL)    // no neighbor close
+            {
+                drop(p, DROP_RTR_NO_ROUTE);
+                return;
+            }
+            else {
+                cmh->direction() = hdr_cmn::DOWN;
+                cmh->addr_type() = NS_AF_INET;
+                cmh->last_hop_ = my_id_;
+                cmh->next_hop_ = nexthop->id_;
+                send(p, 0);
+            }
+        }
+        else { // inside broadcast region
+            if (hdc->type_ == CORBAL_CBR_GREEDY) {
+                // calculate routing table
+                hdc->type_ = CORBAL_CBR_ROUTING;
+
+                // calculate scale factor
+                calculateScaleFactor(p);
+                if(scale_factor_ == -1) {
+                    // TODO: routing by GREEDY
+                }
+
+                // random I
+                Point I;
+                I.x_ = 0;
+                I.y_ = 0;
+                double fr = 0;
+                tmp = my_core_polygon->node_;
+                do {
+                    int ra = rand();
+                    I.x_ += tmp->x_ * ra;
+                    I.y_ += tmp->y_ * ra;
+                    fr += ra;
+                    tmp = tmp->next_ == NULL ? my_core_polygon->node_ : tmp->next_;
+                } while (tmp != my_core_polygon->node_);
+
+                I.x_ = I.x_ / fr;
+                I.y_ = I.y_ / fr;
+
+                // scale hole by I and scale_factor_
+                corePolygon *scaleHole = new corePolygon();
+                scaleHole->next_ = NULL;
+                scaleHole->node_ = NULL;
+
+                // add new node
+                tmp = my_core_polygon->node_;
+                do {
+                    node* newNode = new node();
+                    newNode->x_ = scale_factor_ * tmp->x_ + (1 - scale_factor_) * I.x_;
+                    newNode->y_ = scale_factor_ * tmp->y_ + (1 - scale_factor_) * I.y_;
+                    newNode->next_ = scaleHole->node_;
+                    scaleHole->node_ = newNode;
+
+                    tmp = tmp->next_ == NULL ? my_core_polygon->node_ : tmp->next_;
+                } while (tmp != my_core_polygon->node_);
+
+                // circle node list
+                tmp = scaleHole->node_;
+                while (tmp->next_) tmp = tmp->next_;
+                tmp->next_ = scaleHole->node_;
+
+                // TODO: generate routing table
+
+                // free
+                tmp = scaleHole->node_;
+                do {
+                    free(tmp);
+                    tmp = tmp->next_ == NULL ? my_core_polygon->node_ : tmp->next_;
+                } while (tmp != my_core_polygon->node_);
+
+                free(scaleHole);
+            }
+        }
+    }
+}
+
+// scale_factor_ = -1 when SD not intersect with core polygon -> no need to routing
+void CorbalAgent::calculateScaleFactor(Packet *p) {
+    if(scale_factor_ > 0 || scale_factor_ == -1) return; // calculated in the last time
+
+    // check if SD intersect with core polygon
+    int numIntersect = 0;
+    node * n = my_core_polygon->node_;
+    do
+    {
+        node *next = n->next_ == NULL ? my_core_polygon->node_ : n->next_;
+        if (G::is_in_line(n, this, dest) && G::is_in_line(next, this, dest)) break;
+        if (G::is_intersect(n, next, this, dest)) numIntersect++;
+        n = next;
+    }
+    while(n != my_core_polygon->node_);
+    if(numIntersect <= 1) {
+        scale_factor_ = -1;
+        return;
+    }
+
+    struct hdr_ip *iph = HDR_IP(p);
+
+    // calculate l_C(S,P)
+    
+
+    if(iph->saddr() == my_id_) { // source node is inside
+        scale_factor_ = 1;
+    }
+    else { // source node is outside
+        scale_factor_ = 1;
+    }
 }
 
 /**

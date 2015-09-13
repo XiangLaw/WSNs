@@ -7,6 +7,9 @@
 #define CORBAL_HBA      	0x02
 #define CORBAL_BROADCAST    0x03
 
+#define CORBAL_CBR_GREEDY   0x04
+#define CORBAL_CBR_ROUTING  0x05
+
 #define HDR_CORBAL(p) hdr_corbal::access(p)
 
 struct hdr_corbal
