@@ -16,7 +16,8 @@ struct hdr_corbal
 {
     u_int8_t type_;
     Point prev_;
-    inline int size() { return sizeof(u_int8_t) + sizeof(Point); }
+    Point dest;
+    inline int size() { return sizeof(u_int8_t) + 2 * sizeof(Point); }
 
     static int offset_;
     inline static int& offset() { return offset_; }

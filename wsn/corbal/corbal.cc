@@ -651,22 +651,10 @@ bool CorbalAgent::canBroadcast() {
         return true;
     }
 
-    node *pi, *pj, *tmp;
-    pi = my_core_polygon->node_;
-    pj = my_core_polygon->node_;
-    tmp = my_core_polygon->node_;
+    node pi, pj;
+    findViewLimitVertex(this, my_core_polygon, &pi, &pj);
 
-    do {
-        if (G::directedAngle(pi, this, tmp) > 0) {
-            pi = tmp;
-        }
-        if (G::directedAngle(pj, this, tmp) < 0) {
-            pj = tmp;
-        }
-        tmp = tmp->next_;
-    } while (tmp && tmp->next_ != my_core_polygon->node_);
-
-    Angle alpha = fabs(G::directedAngle(pi, this, pj)); // get absolute angle
+    Angle alpha = fabs(G::directedAngle(&pi, this, &pj)); // get absolute angle
     double l_c_n = min(G::distance(pi, this), G::distance(pj, this));
     node *i = my_core_polygon->node_;
     do {
@@ -692,6 +680,26 @@ void CorbalAgent::updatePayload(Packet *p) {
     }
 }
 
+void CorbalAgent::findViewLimitVertex(Point *N, corePolygon *polygon, node *right, node *left) {
+    node *pi, *pj, *tmp;
+    pi = polygon->node_;
+    pj = polygon->node_;
+    tmp = polygon->node_;
+
+    do {
+        if (G::directedAngle(pi, N, tmp) > 0) {
+            pi = tmp;
+        }
+        if (G::directedAngle(pj, N, tmp) < 0) {
+            pj = tmp;
+        }
+        tmp = tmp->next_;
+    } while (tmp && tmp->next_ != polygon->node_);
+
+    *right = *pi;
+    *left = *pj;
+}
+
 /**
  * Routing phase
  */
@@ -704,6 +712,7 @@ void CorbalAgent::sendData(Packet *p) {
     cmh->direction_ = hdr_cmn::DOWN;
 
     hdc->type_ = CORBAL_CBR_GREEDY;
+    hdc->dest = *dest;
 
     iph->saddr() = my_id_;
     iph->ttl_ = 4 * IP_DEF_TTL;
@@ -724,7 +733,7 @@ void CorbalAgent::recvData(Packet *p) {
     }
     else {
         if (my_core_polygon == NULL) { // outside broadcast region
-            node *nexthop = getNeighborByGreedy(*dest);
+            node *nexthop = getNeighborByGreedy(hdc->dest);
             if (nexthop == NULL)    // no neighbor close
             {
                 drop(p, DROP_RTR_NO_ROUTE);
@@ -745,7 +754,7 @@ void CorbalAgent::recvData(Packet *p) {
 
                 // calculate scale factor
                 calculateScaleFactor(p);
-                if(scale_factor_ == -1) {
+                if (scale_factor_ == -1) {
                     // TODO: routing by GREEDY
                 }
 
@@ -774,7 +783,7 @@ void CorbalAgent::recvData(Packet *p) {
                 // add new node
                 tmp = my_core_polygon->node_;
                 do {
-                    node* newNode = new node();
+                    node *newNode = new node();
                     newNode->x_ = scale_factor_ * tmp->x_ + (1 - scale_factor_) * I.x_;
                     newNode->y_ = scale_factor_ * tmp->y_ + (1 - scale_factor_) * I.y_;
                     newNode->next_ = scaleHole->node_;
@@ -792,12 +801,14 @@ void CorbalAgent::recvData(Packet *p) {
 
                 // free
                 tmp = scaleHole->node_;
-                do {
-                    free(tmp);
-                    tmp = tmp->next_ == NULL ? my_core_polygon->node_ : tmp->next_;
-                } while (tmp != my_core_polygon->node_);
+                while (tmp->next_ != scaleHole->node_) tmp = tmp->next_;
+                tmp->next_ = NULL;
 
-                free(scaleHole);
+                do {
+                    tmp = scaleHole->node_;
+                    scaleHole->node_ = scaleHole->node_->next_;
+                    delete tmp;
+                } while (scaleHole->node_);
             }
         }
     }
@@ -805,30 +816,36 @@ void CorbalAgent::recvData(Packet *p) {
 
 // scale_factor_ = -1 when SD not intersect with core polygon -> no need to routing
 void CorbalAgent::calculateScaleFactor(Packet *p) {
-    if(scale_factor_ > 0 || scale_factor_ == -1) return; // calculated in the last time
+    struct hdr_ip *iph = HDR_IP(p);
+    struct hdr_corbal *hdc = HDR_CORBAL(p);
+
+    if (scale_factor_ > 0 || scale_factor_ == -1) return; // calculated in the last time
 
     // check if SD intersect with core polygon
     int numIntersect = 0;
-    node * n = my_core_polygon->node_;
-    do
-    {
+    node *n = my_core_polygon->node_;
+    do {
         node *next = n->next_ == NULL ? my_core_polygon->node_ : n->next_;
-        if (G::is_in_line(n, this, dest) && G::is_in_line(next, this, dest)) break;
-        if (G::is_intersect(n, next, this, dest)) numIntersect++;
+        if (G::is_in_line(n, this, hdc->dest) && G::is_in_line(next, this, hdc->dest)) break;
+        if (G::is_intersect(n, next, this, hdc->dest)) numIntersect++;
         n = next;
-    }
-    while(n != my_core_polygon->node_);
-    if(numIntersect <= 1) {
+    } while (n != my_core_polygon->node_);
+    if (numIntersect <= 1) {
         scale_factor_ = -1;
         return;
     }
 
-    struct hdr_ip *iph = HDR_IP(p);
 
     // calculate l_C(S,P)
-    
+    node s_right, s_left, d_right, d_left;
+    findViewLimitVertex(this, my_core_polygon, &s_right, &s_left);
+    findViewLimitVertex(&(hdc->dest), my_core_polygon, &d_right, &d_left);
+    Line sd = G::line(this, hdc->dest);
+    int s_side = G::position(s_right, sd);
+    int d_side = G::position(d_right, sd);
 
-    if(iph->saddr() == my_id_) { // source node is inside
+
+    if (iph->saddr() == my_id_) { // source node is inside
         scale_factor_ = 1;
     }
     else { // source node is outside
@@ -862,3 +879,4 @@ void CorbalAgent::dumpBroadcastRegion() {
     fprintf(fp, "%d\t%f\t%f\n", my_id_, x_, y_);
     fclose(fp);
 }
+

@@ -53,6 +53,8 @@ private:
     void recvData(Packet*);
     void calculateScaleFactor(Packet*);
 
+    void findViewLimitVertex(Point* N, corePolygon*, node* left, node* right);
+
     double range_;
     int limit_max_hop_; // limit_boundhole_hop_
     int limit_min_hop_; // min_boundhole_hop_
