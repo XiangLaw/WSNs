@@ -104,7 +104,9 @@ GPSRAgent::command(int argc, const char*const* argv)
 		if (strcasecmp(argv[1], "nodeoff") == 0)
 		{
 			hello_timer_.force_cancel();
-			node_->energy_model()->update_off_time(true);
+			if(node_->energy_model()) {
+				node_->energy_model()->update_off_time(true);
+			}
 		}
 	}
 
@@ -195,7 +197,7 @@ GPSRAgent::startUp()
 	dest->x_ = node_->destX();
 	dest->y_ = node_->destY();
 
-	hello_timer_.resched(randSend_.uniform(0.0, 15));
+	hello_timer_.resched(randSend_.uniform(0.0, 20));
 
 	FILE *fp;
 	fp = fopen("Neighbors.tr",	"w");	fclose(fp);
