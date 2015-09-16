@@ -1690,3 +1690,8 @@ Agent/OCTAGON set range_ 40
 Agent/OCTAGON set storage_opt_ 1
 Agent/OCTAGON set broadcast_rate_ 1
 
+Agent/COVERAGE set hello_period_ 0
+Agent/COVERAGE set energy_checkpoint_ 995
+Agent/COVERAGE set range_ 40
+Agent/COVERAGE set limit_boundhole_hop_ 50
+

@@ -715,6 +715,109 @@ bool G::lineSegmentIntersection(Point *a, Point *b, Line l, Point &intersection)
     return false;
 }
 
+int G::circleCircleIntersect(Circle c1, Circle c2, Point *intersect1, Point *intersect2) {
+    return G::circleCircleIntersect(c1, c1.radius_, c2, c2.radius_, intersect1, intersect2);
+}
+
+// see http://mathworld.wolfram.com/Circle-CircleIntersection.html
+int G::circleCircleIntersect(Point c1, double r1, Point c2, double r2, Point *p1, Point *p2)
+{
+    int nsoln = -1;
+
+    Point c;
+    c.x_ = c2.x_ - c1.x_;
+    c.y_ = c2.y_ - c1.y_;
+
+    nsoln = G::circleCircleIntersect0a( r1, c, r2, p1, p2 );
+    /* Translate back. */
+    p1->x_ += c1.x_;
+    p1->y_ += c1.y_;
+    p2->x_ += c1.x_;
+    p2->y_ += c1.y_;
+    return nsoln;
+}
+
+/*---------------------------------------------------------------------
+circleCircleIntersect0a assumes that the first circle is centered on the origin.
+Returns # of intersections: 0, 1, 2, 3 (inf); point in p.
+---------------------------------------------------------------------*/
+int G::circleCircleIntersect0a(double r1, Point c2, double r2, Point* p1, Point *p2 )
+{
+    double dc2;              /* dist to center 2 squared */
+    double rplus2, rminus2;  /* (r1 +/- r2)^2 */
+    double f;                /* fraction along c2 for nsoln=1 */
+
+    /* Handle special cases. */
+    dc2 = c2.x_*c2.x_ + c2.y_*c2.y_;
+    rplus2  = (r1 + r2) * (r1 + r2);
+    rminus2 = (r1 - r2) * (r1 - r2);
+
+    /* No solution if c2 out of reach + or -. */
+    if ( ( dc2 > rplus2 ) || ( dc2 < rminus2 ) )
+        return   0;
+
+    /* One solution if c2 just reached. */
+    /* Then solution is r1-of-the-way (f) to c2. */
+    if ( dc2 == rplus2 ) {
+        f = r1 / (double)(r1 + r2);
+        p1->x_ = p2->x_ = f*c2.x_;
+        p1->y_ = p2->y_ = f*c2.y_;
+        return 1;
+    }
+    if ( dc2 == rminus2 ) {
+        if ( rminus2 == 0 ) {   /* Circles coincide. */
+            p1->x_ = p2->x_ = r1;
+            p1->y_ = p2->y_ = 0;
+            return 3; // infinite
+        }
+        f = r1 / (double)(r1 - r2);
+        p1->x_ = p2->x_ = f * c2.x_;
+        p1->y_ = p2->y_ = f * c2.y_;
+        return 1;
+    }
+
+    /* Two intersections. */
+    return G::circleCircleIntersect0b( r1, c2, r2, p1, p2);
+}
+
+/*---------------------------------------------------------------------
+circleCircleIntersect0b also assumes that the 1st circle is origin-centered.
+---------------------------------------------------------------------*/
+int  G::circleCircleIntersect0b( int r1, Point c2, int r2, Point *p1, Point *p2)
+{
+    double a2;          /* center of 2nd circle when rotated to x-axis */
+    Point q1, q2;          /* solution when c2 on x-axis */
+    double cost, sint;  /* sine and cosine of angle of c2 */
+
+    /* Rotate c2 to a2 on x-axis. */
+    a2 = sqrt( c2.x_*c2.x_ + c2.y_*c2.y_ );
+    cost = c2.x_ / a2;
+    sint = c2.y_ / a2;
+
+    G::circleCircleIntersect00( r1, a2, r2, &q1, &q2);
+
+    /* Rotate back */
+    p1->x_ =  cost * q1.x_ + -sint * q1.y_;
+    p1->y_ =  sint * q1.x_ +  cost * q1.y_;
+
+    return 2;
+}
+
+/*---------------------------------------------------------------------
+circleCircleIntersect00 assumes circle centers are (0,0) and (a2,0).
+---------------------------------------------------------------------*/
+void  G::circleCircleIntersect00( int r1, double a2, int r2, Point* p1, Point *p2 )
+{
+    double r1sq, r2sq;
+    r1sq = r1*r1;
+    r2sq = r2*r2;
+
+    /* Return only positive-y soln in p. */
+    p1->x_ = p2->x_ = ( a2 + ( r1sq - r2sq ) / a2 ) / 2;
+    p1->y_ = sqrt( r1sq + p1->x_*p1->x_ );
+    p2->y_ = sqrt( r1sq - p1->x_*p1->x_ );
+}
+
 
 // clockwise directed angle between vector (pa, px // Ox) in range [-180, 180]
 Angle G::angle_x_axis(Point *a, Point *p) {

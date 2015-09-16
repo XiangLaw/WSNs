@@ -103,6 +103,9 @@ enum AppDataType {
 
     // Elbar
     ELBAR_GRIDOFFLINE_DATA,
+
+    // Coverage Bound hole
+    COVERAGE_DATA,
 };
 
 // Interface for generic application-level data unit. It should know its 

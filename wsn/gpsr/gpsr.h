@@ -73,7 +73,7 @@ protected:
 
 	void startUp();						// Initialize the Agent
 
-	void addNeighbor(nsaddr_t, Point);
+	virtual void addNeighbor(nsaddr_t, Point);
 
 	void sendHello();
 	void recvHello(Packet*);

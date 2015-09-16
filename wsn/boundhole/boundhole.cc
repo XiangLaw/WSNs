@@ -25,7 +25,7 @@ public:
 
 void
 BoundHoleTimer::expire(Event *e) {
-	(a_->*firing_)();
+	((BoundHoleAgent*)a_->*firing_)();
 }
 
 // ------------------------ Agent ------------------------ //
