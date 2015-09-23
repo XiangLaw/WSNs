@@ -56,6 +56,8 @@ private:
     void findViewLimitVertex(Point* N, corePolygon*, node**, node**);
     double distanceToPolygon(Point*, corePolygon*);
     double euclidLengthOfBRSP(Point*, Point*, corePolygon*);
+    void addrouting(Point *p, Point *routingTable, u_int8_t &routingCount);
+    void bypassHole(Point*, Point*, corePolygon*, Point* , u_int8_t &);
 
     double range_;
     int limit_max_hop_; // limit_boundhole_hop_
