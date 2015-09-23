@@ -137,6 +137,8 @@ CorbalAgent::startUp() {
     fclose(fp);
     fp = fopen("BroadcastRegion.tr", "w");
     fclose(fp);
+    fp = fopen("DynamicScaleHole.tr", "w");
+    fclose(fp);
 }
 
 /*
@@ -651,11 +653,12 @@ bool CorbalAgent::canBroadcast() {
         return true;
     }
 
-    node pi, pj;
+    node *pi, *pj;
     findViewLimitVertex(this, my_core_polygon, &pi, &pj);
 
-    Angle alpha = fabs(G::directedAngle(&pi, this, &pj)); // get absolute angle
-    double l_c_n = min(G::distance(pi, this), G::distance(pj, this));
+    Angle alpha = fabs(G::directedAngle(pi, this, pj)); // get absolute angle
+    // double l_c_n = min(G::distance(pi, this), G::distance(pj, this));
+    double l_c_n = distanceToPolygon(this, my_core_polygon);
     node *i = my_core_polygon->node_;
     do {
         node *j = i->next_ == NULL ? my_core_polygon->node_ : i->next_;
@@ -680,7 +683,7 @@ void CorbalAgent::updatePayload(Packet *p) {
     }
 }
 
-void CorbalAgent::findViewLimitVertex(Point *N, corePolygon *polygon, node *right, node *left) {
+void CorbalAgent::findViewLimitVertex(Point *N, corePolygon *polygon, node **right, node **left) {
     node *pi, *pj, *tmp;
     pi = polygon->node_;
     pj = polygon->node_;
@@ -696,8 +699,20 @@ void CorbalAgent::findViewLimitVertex(Point *N, corePolygon *polygon, node *righ
         tmp = tmp->next_;
     } while (tmp && tmp->next_ != polygon->node_);
 
-    *right = *pi;
-    *left = *pj;
+    *right = pi;
+    *left = pj;
+}
+
+double CorbalAgent::distanceToPolygon(Point *p, corePolygon *polygon) {
+    double distance = 0;
+    node *i = polygon->node_;
+    do {
+        double len = G::distance(p, i);
+        i = i->next_ == NULL ? polygon->node_ : i->next_;
+        distance = distance > len ? distance : len;
+    } while (i != polygon->node_);
+
+    return distance;
 }
 
 /**
@@ -797,6 +812,8 @@ void CorbalAgent::recvData(Packet *p) {
                 while (tmp->next_) tmp = tmp->next_;
                 tmp->next_ = scaleHole->node_;
 
+                dumpScaleHole(p, scaleHole);
+
                 // TODO: generate routing table
 
                 // free
@@ -835,15 +852,8 @@ void CorbalAgent::calculateScaleFactor(Packet *p) {
         return;
     }
 
-
     // calculate l_C(S,P)
-    node s_right, s_left, d_right, d_left;
-    findViewLimitVertex(this, my_core_polygon, &s_right, &s_left);
-    findViewLimitVertex(&(hdc->dest), my_core_polygon, &d_right, &d_left);
-    Line sd = G::line(this, hdc->dest);
-    int s_side = G::position(s_right, sd);
-    int d_side = G::position(d_right, sd);
-
+    double l_c_sp = euclidLengthOfBRSP(this, &(hdc->dest), my_core_polygon);
 
     if (iph->saddr() == my_id_) { // source node is inside
         scale_factor_ = 1;
@@ -851,6 +861,59 @@ void CorbalAgent::calculateScaleFactor(Packet *p) {
     else { // source node is outside
         scale_factor_ = 1;
     }
+}
+
+double CorbalAgent::euclidLengthOfBRSP(Point *s, Point *d, corePolygon *polygon) {
+
+    node *S1, *S2, *D1, *D2;
+    findViewLimitVertex(s, polygon, &S1, &S2); // s1 = right, s2 = left
+    findViewLimitVertex(d, polygon, &D2, &D1); // d1 = right, d2 = left
+
+    // TODO: debug side of right, left
+    // Line sd = G::line(s, d);
+    //int s_side = G::position(S1, sd);
+    //int d_side = G::position(D1, sd);
+
+    polygon->circleNodeList();
+
+    double length = 0;
+    double dis = 0;
+
+    /* ---- S S1 D1 D ---- */
+    dis = G::distance(s, S1);
+    for (node *i = S1; i != D1; i = i->next_) {
+        dis += G::distance(i, i->next_);
+    }
+    dis += G::distance(D1, d);
+    length = dis;
+
+    /* ---- D D1 S1 S ---- */
+    dis = G::distance(d, D1);
+    for (node *i = D1; i != S1; i = i->next_) {
+        dis += G::distance(i, i->next_);
+    }
+    dis += G::distance(S1, s);
+    length = min(length, dis);
+
+    /* ---- S S2 D2 D ---- */
+    dis = G::distance(s, S2);
+    for (node *i = S2; i != D2; i = i->next_) {
+        dis += G::distance(i, i->next_);
+    }
+    dis += G::distance(D2, d);
+    length = min(length, dis);
+
+    /* ---- D D2 S2 S ---- */
+    dis = G::distance(d, D2);
+    for (node *i = D2; i != S2; i = i->next_) {
+        dis += G::distance(i, i->next_);
+    }
+    dis += G::distance(S2, s);
+    length = min(length, dis);
+
+    polygon->unCircleNodeList();
+
+    return length;
 }
 
 /**
@@ -877,6 +940,24 @@ void CorbalAgent::dump(Angle a, int i, int j, Line ln) {
 void CorbalAgent::dumpBroadcastRegion() {
     FILE *fp = fopen("BroadcastRegion.tr", "a+");
     fprintf(fp, "%d\t%f\t%f\n", my_id_, x_, y_);
+    fclose(fp);
+}
+
+void CorbalAgent::dumpScaleHole(Packet *p, corePolygon *hole) {
+    hdr_cmn *cmh = HDR_CMN(p);
+
+    FILE *fp = fopen("DynamicScaleHole.tr", "a+");
+
+    node *n = hole->node_;
+    do {
+        fprintf(fp, "%d\t%f\t%f\n", cmh->uid_, n->x_, n->y_);
+        n = n->next_;
+    }
+    while (n != hole->node_);
+
+    fprintf(fp, "%d	%f	%f\n", cmh->uid_, n->x_, n->y_);
+    fprintf(fp, "\n");
+
     fclose(fp);
 }
 

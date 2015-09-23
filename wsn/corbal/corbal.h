@@ -53,7 +53,9 @@ private:
     void recvData(Packet*);
     void calculateScaleFactor(Packet*);
 
-    void findViewLimitVertex(Point* N, corePolygon*, node* left, node* right);
+    void findViewLimitVertex(Point* N, corePolygon*, node**, node**);
+    double distanceToPolygon(Point*, corePolygon*);
+    double euclidLengthOfBRSP(Point*, Point*, corePolygon*);
 
     double range_;
     int limit_max_hop_; // limit_boundhole_hop_
@@ -73,6 +75,7 @@ private:
     void dumpCorePolygon();
     void dump(Angle, int, int, Line);
     void dumpBroadcastRegion();
+    void dumpScaleHole(Packet*, corePolygon*);
 public:
     CorbalAgent();
     int 	command(int, const char*const*);

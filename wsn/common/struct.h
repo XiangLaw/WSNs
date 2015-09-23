@@ -54,6 +54,20 @@ struct corePolygon
             delete tmp;
         } while (tmp && tmp != node_);
     }
+
+    void circleNodeList()
+    {
+        node* temp = node_;
+        while (temp->next_ && temp->next_ != node_) temp = temp->next_;
+        temp->next_ = node_;
+    }
+
+    void unCircleNodeList(){
+        node* temp = node_;
+        do {temp = temp->next_;}
+        while (temp->next_ && temp->next_ != node_);
+        temp->next_ = NULL;
+    }
 };
 
 #endif
