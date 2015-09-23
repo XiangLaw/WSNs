@@ -51,7 +51,8 @@ CorbalAgent::CorbalAgent() : GPSRAgent(),
     bind("n_", &n_);
     bind("s_", &s_);
 
-    theta_n = 2 * M_PI / ((n_ + 1) * floor(12 / (n_ + 1)));
+    // theta_n = 2 * M_PI / ((n_ + 1) * floor(12 / (n_ + 1)));
+    theta_n = 2 * M_PI * 1 / 9;
     kn = (int) floor((n_ - 2) * M_PI / (n_ * theta_n));
 }
 
@@ -697,7 +698,7 @@ void CorbalAgent::findViewLimitVertex(Point *N, corePolygon *polygon, node **rig
             pj = tmp;
         }
         tmp = tmp->next_;
-    } while (tmp && tmp->next_ != polygon->node_);
+    } while (tmp && tmp != polygon->node_);
 
     *right = pi;
     *left = pj;
