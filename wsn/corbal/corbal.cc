@@ -657,9 +657,9 @@ bool CorbalAgent::canBroadcast() {
     node *pi, *pj;
     findViewLimitVertex(this, my_core_polygon, &pi, &pj);
 
-    Angle alpha = fabs(G::directedAngle(pi, this, pj)); // get absolute angle
-    // double l_c_n = min(G::distance(pi, this), G::distance(pj, this));
-    double l_c_n = distanceToPolygon(this, my_core_polygon);
+    alpha_ = fabs(G::directedAngle(pi, this, pj)); // get absolute angle
+    l_c_n_ = min(G::distance(pi, this), G::distance(pj, this));
+    // double l_c_n_ = distanceToPolygon(this, my_core_polygon);
     node *i = my_core_polygon->node_;
     do {
         node *j = i->next_ == NULL ? my_core_polygon->node_ : i->next_;
@@ -667,8 +667,11 @@ bool CorbalAgent::canBroadcast() {
         i = j;
     } while (i != my_core_polygon->node_);
 
-    double left_side = cos(alpha / 2);
-    double right_side = 1 / s_ + p_c_ * (1 - sin((n_ - 2) * M_PI / (2 * n_))) / l_c_n;
+    //double left_side = cos(alpha_ / 2);
+    //double right_side = 1 / s_ + p_c_ * (1 - sin((n_ - 2) * M_PI / (2 * n_))) / l_c_n_;
+
+    double left_side = p_c_ / l_c_n_ * (0.3 / cos(alpha_ /2) + 1) + 1/ cos(alpha_ /2);
+    double right_side = s_;
 
     return left_side > right_side;
 }
@@ -876,8 +879,10 @@ void CorbalAgent::calculateScaleFactor(Packet *p) {
         }
     }
     else { // S is sub-source node
-        double delta = (s_ * l_c_xd - l_c_sd - G::distance(this, &(hdc->source))) / p_c_ -
-                       s_ * (1 - sin((n_ - 2) * M_PI / (2 * n_)));
+        //double delta = (s_ * l_c_xd - l_c_sd - G::distance(this, &(hdc->source))) / p_c_ -
+        //               s_ * (1 - sin((n_ - 2) * M_PI / (2 * n_)));
+        double delta = (s_ - 1 / cos(alpha_ / 2)) * l_c_n_ / p_c_ - 0.3 / cos(alpha_ / 2);
+
         if (delta > 0) {
             scale_factor_ = 1 + delta;
         } else {

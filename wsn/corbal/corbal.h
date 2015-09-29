@@ -70,6 +70,8 @@ private:
     corePolygon *core_polygon_set;
     corePolygon *my_core_polygon;
     stuckangle* stuck_angle_;
+    Angle alpha_;
+    double l_c_n_;
 
     double scale_factor_;
     double p_c_;
