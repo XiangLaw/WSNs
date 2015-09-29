@@ -41,7 +41,7 @@ CorbalAgent::CorbalAgent() : GPSRAgent(),
     core_polygon_set = NULL;
     hole_ = NULL;
     my_core_polygon = NULL;
-    s_ = 2.0;
+    s_ = 1.1;
     scale_factor_ = 0;
     p_c_ = 0;
 
