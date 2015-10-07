@@ -799,6 +799,8 @@ int  G::circleCircleIntersect0b( int r1, Point c2, int r2, Point *p1, Point *p2)
     /* Rotate back */
     p1->x_ =  cost * q1.x_ + -sint * q1.y_;
     p1->y_ =  sint * q1.x_ +  cost * q1.y_;
+    p2->x_ =  cost * q2.x_ + -sint * q2.y_;
+    p2->y_ =  sint * q2.x_ +  cost * q2.y_;
 
     return 2;
 }
@@ -814,8 +816,8 @@ void  G::circleCircleIntersect00( int r1, double a2, int r2, Point* p1, Point *p
 
     /* Return only positive-y soln in p. */
     p1->x_ = p2->x_ = ( a2 + ( r1sq - r2sq ) / a2 ) / 2;
-    p1->y_ = sqrt( r1sq + p1->x_*p1->x_ );
-    p2->y_ = sqrt( r1sq - p1->x_*p1->x_ );
+    p1->y_ = sqrt( r1sq - p1->x_*p1->x_ );
+    p2->y_ = -p1->y_;
 }
 
 

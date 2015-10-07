@@ -27,6 +27,11 @@ struct sensor_neighbor : neighbor{
     Point i2_;
 };
 
+struct list {
+    int e_;
+    struct list* next_;
+};
+
 typedef void(CoverageBoundHoleAgent::*fire)(void);
 
 class CoverageBoundHoleTimer : public TimerHandler
@@ -48,6 +53,8 @@ private:
     friend class BoundHoleHelloTimer;
     CoverageBoundHoleTimer boundhole_timer_;
 
+    bool isBoundary = false;
+
     void startUp();
 
     bool boundaryNodeDetection();
@@ -56,6 +63,7 @@ private:
     void recvCoverage(Packet*);
 
     void dumpSensorNeighbor();
+    void dumpBoundaryDetect();
 protected:
     double communication_range_;
     double sensor_range_;
@@ -69,7 +77,7 @@ protected:
     void addNeighbor(nsaddr_t, Point); // override from GPSRAgent
     node* getNextSensorNeighbor(nsaddr_t prev_node);
 
-    int nodeNumberEstimation();
+    int nodeNumberEstimation(polygonHole*);
 public:
     CoverageBoundHoleAgent();
 

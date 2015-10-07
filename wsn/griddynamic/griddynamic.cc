@@ -293,7 +293,7 @@ GridDynamicAgent::recvBoundHole(Packet *p) {
         //printf("Send collect from 2 BoundHole:%d (%d) %f-%f at %f\n", iph->src_, my_id_, this->x_, this->y_, NOW);
         sendCollect(p);
 
-        drop(p, "reach stuck node");
+        drop(p, "reach_stuck_node");
         return;
     }
 
@@ -309,7 +309,7 @@ GridDynamicAgent::recvBoundHole(Packet *p) {
         //printf("Send collect from 1 BoundHole:%d (%d) %f-%f\n", iph->src_, my_id_, this->x_, this->y_);
         sendCollect(p);
 
-        drop(p, "reach stuck node");
+        drop(p, "reach_stuck_node");
         return;
     }
 
@@ -398,7 +398,7 @@ GridDynamicAgent::recvNotify(Packet *p) {
     if (checkCell(gdh->p_)) {
         // update pivot in case same pivot
         if (pivot.id_ >= 0 && pivot.id_ <= gdh->id_) {
-            drop(p, "repeated notify");
+            drop(p, "repeated_notify");
             return;
         }
 
@@ -419,7 +419,7 @@ GridDynamicAgent::recvNotify(Packet *p) {
 
         send(p, 0);
     } else {
-        drop(p, "different cell");
+        drop(p, "different_cell");
     }
 }
 
@@ -585,7 +585,7 @@ GridDynamicAgent::recvPivot(Packet *p) {
         }
     } else {
         if (pivot.id_ >= 0) {
-            drop(p, "known pivot");
+            drop(p, "known_pivot");
             return;
         }
 
@@ -682,7 +682,7 @@ void GridDynamicAgent::recvUpdate(Packet *p) {
 
     } else {
         if (pivot.id_ == -1) {
-            drop(p, "dont have pivot");
+            drop(p, "dont_have_pivot");
             return;
         }
         // forward

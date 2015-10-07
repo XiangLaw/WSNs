@@ -8,6 +8,11 @@
 #include "packet.h"
 #include "coverageboundhole.h"
 
+#define Up 	 	0
+#define Left	1
+#define Down	2
+#define Right	3
+
 class CoverageBoundHolePacketData : public AppData{
     private:
         unsigned char* data_;

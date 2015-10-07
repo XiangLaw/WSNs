@@ -687,7 +687,7 @@ Simulator instproc create-wireless-node args {
 				set ragent [$self create-greedy-agent $node]
 			}
 			ELBARGRIDOFFLINE {
-            				set ragent [$self create-elbar-gridoffline-agent $node]
+            	set ragent [$self create-elbar-gridoffline-agent $node]
             }
             COVERAGE {
             	set ragent [$self create-coverage-agent $node]
@@ -1222,8 +1222,8 @@ Simulator instproc create-coverage-agent { node } {
 	}
 	$node addr $addr
 	$node set ragent_ $ragent
-	$self at 0.0 	"$ragent start"   # start updates
-	$self at 30	"$ragent coverage"
+	$self at 0.0 	"$ragent start"    ;# start updates
+    $self at 30	"$ragent coverage"
 	return $ragent
 }
 
