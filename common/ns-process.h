@@ -106,6 +106,9 @@ enum AppDataType {
 
     // Coverage Bound hole
     COVERAGE_DATA,
+
+    // BCP Coverage
+    BCPCOVERAGE_DATA
 };
 
 // Interface for generic application-level data unit. It should know its 

@@ -274,6 +274,7 @@ set(OBJ_CC
   wsn/gear/gear.cc wsn/gear/gear_neighbor.cc
   wsn/behds/behds.cc
   wsn/coverage/coverageboundhole.cc wsn/coverage/coverageboundhole_packet_data.cc
+  wsn/bcpcoverage/bcpcoverage.cc wsn/bcpcoverage/bcpcoverage_packet_data.cc
   ${OBJ_STL}
 )
 set(OBJ_C

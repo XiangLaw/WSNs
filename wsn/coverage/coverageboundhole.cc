@@ -86,13 +86,14 @@ void CoverageBoundHoleAgent::recvCoverage(Packet *p) {
 
     // if the boundhole packet has came back to the initial node
     if (iph->saddr() == my_id_) {
-        if (data->size() == 0) {
+        if (data->size() < 3) {
             drop(p);
             return;
         }
 
         node firstNode = data->get_data(0);
-        if (firstNode.id_ == cmh->last_hop_) {
+        node secondNode = data->get_data(1);
+        if (firstNode.id_ == cmh->last_hop_ && secondNode.id_ == my_id_) {
                 node* head = NULL;
                 for (int i = 0; i < data->size(); i++){
                     node n = data->get_data(i);
@@ -134,12 +135,6 @@ void CoverageBoundHoleAgent::recvCoverage(Packet *p) {
 
     sensor_neighbor *n = getSensorNeighbor(cmh->last_hop_);
     data->add(n->id_, n->i2_.x_, n->i2_.y_);
-    int k = data->size();
-    int m = data->get_data(1).id_;
-
-    if (cmh->uid() == 658){
-        int i = 0;
-    }
 
     cmh->direction() = hdr_cmn::DOWN;
     cmh->next_hop_ = nb->id_;
@@ -367,10 +362,9 @@ int CoverageBoundHoleAgent::nodeNumberEstimation(polygonHole *pHole) {
 void
 CoverageBoundHoleAgent::startUp() {
     FILE *fp;
-    fp = fopen("SensorNeighbors.tr", "w");
-    fp = fopen("NodeBoundaryDetect.tr", "w");
-    fp = fopen("CoverageBoundHole.tr", "w");
-    fclose(fp);
+    fp = fopen("SensorNeighbors.tr", "w");fclose(fp);
+    fp = fopen("NodeBoundaryDetect.tr", "w");fclose(fp);
+    fp = fopen("CoverageBoundHole.tr", "w");fclose(fp);
 }
 
 void CoverageBoundHoleAgent::addNeighbor(nsaddr_t addr, Point p) {
