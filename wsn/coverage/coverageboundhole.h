@@ -62,6 +62,8 @@ private:
 
     void recvCoverage(Packet*);
 
+    void reducePolygonHole(polygonHole*);
+
     void dumpSensorNeighbor();
     void dumpBoundaryDetect();
 protected:
@@ -83,6 +85,8 @@ public:
 
     int  command(int, const char*const*);
     void recv(Packet*, Handler*);
+
+    void dumpCoverageBoundHole(polygonHole *pHole);
 };
 
 #endif //NS_CONVERAGEHOLE_H

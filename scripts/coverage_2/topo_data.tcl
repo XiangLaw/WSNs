@@ -236,7 +236,7 @@ $mnode_(233) set X_ 64 ;	$mnode_(233) set Y_ 175 ;	$mnode_(233) set Z_ 0
 $mnode_(234) set X_ 83 ;	$mnode_(234) set Y_ 175 ;	$mnode_(234) set Z_ 0
 $mnode_(235) set X_ 101 ;	$mnode_(235) set Y_ 175 ;	$mnode_(235) set Z_ 0
 $mnode_(236) set X_ 120 ;	$mnode_(236) set Y_ 175 ;	$mnode_(236) set Z_ 0
-$mnode_(237) set X_ 231 ;	$mnode_(237) set Y_ 175 ;	$mnode_(237) set Z_ 0
+$mnode_(237) set X_ 194 ;	$mnode_(237) set Y_ 227 ;	$mnode_(237) set Z_ 0
 $mnode_(238) set X_ 361 ;	$mnode_(238) set Y_ 175 ;	$mnode_(238) set Z_ 0
 $mnode_(239) set X_ 379 ;	$mnode_(239) set Y_ 175 ;	$mnode_(239) set Z_ 0
 $mnode_(240) set X_ 398 ;	$mnode_(240) set Y_ 175 ;	$mnode_(240) set Z_ 0
@@ -627,3 +627,11 @@ $mnode_(624) set X_ 218 ;	$mnode_(624) set Y_ 264 ;	$mnode_(624) set Z_ 0
 $mnode_(625) set X_ 209 ;	$mnode_(625) set Y_ 282 ;	$mnode_(625) set Z_ 0
 $mnode_(626) set X_ 185 ;	$mnode_(626) set Y_ 287 ;	$mnode_(626) set Z_ 0
 $mnode_(627) set X_ 168 ;	$mnode_(627) set Y_ 282 ;	$mnode_(627) set Z_ 0
+#add more
+$mnode_(628) set X_ 160 ;	$mnode_(628) set Y_ 260 ;	$mnode_(628) set Z_ 0
+$mnode_(629) set X_ 180 ;	$mnode_(629) set Y_ 275 ;	$mnode_(629) set Z_ 0
+$mnode_(630) set X_ 200 ;	$mnode_(630) set Y_ 247 ;	$mnode_(630) set Z_ 0
+$mnode_(631) set X_ 180 ;	$mnode_(631) set Y_ 255 ;	$mnode_(631) set Z_ 0
+$mnode_(632) set X_ 160 ;	$mnode_(632) set Y_ 216 ;	$mnode_(632) set Z_ 0
+$mnode_(633) set X_ 170 ;	$mnode_(633) set Y_ 240 ;	$mnode_(633) set Z_ 0
+$mnode_(634) set X_ 182 ;	$mnode_(634) set Y_ 212 ;	$mnode_(634) set Z_ 0

@@ -112,7 +112,7 @@ void BCPCoverageAgent::recvCoverage(Packet *p) {
         hole_list_ = newHole;
 
         dumpCoverageBoundhole(newHole);
-        printf("%d source\n", iph->src());
+//        data->dump();
 //      printf("%d Boundhole is detected, nodeNumberEstimation: %d\n", my_id_, nodeNumberEstimation(newHole));
         drop(p, "BCPCOVERAGE");
         return;
@@ -146,7 +146,7 @@ bool BCPCoverageAgent::checkBCP(node *pNode) {
         double d = G::distance(temp, pNode);
         if (fabs(d - sensor_range_) < EPSILON) continue;
         else if (d < sensor_range_) {
-            printf("Diff: %g\n", sensor_range_ - d);
+//            printf("Diff: %g\n", sensor_range_ - d);
             count++;
         }
 
@@ -358,50 +358,68 @@ void BCPCoverageAgent::addNeighbor(nsaddr_t nid, Point location) {
 }
 
 node *BCPCoverageAgent::reduceBCP(node *list) {
-    node *temp, *nextAdjacent, *prev;
+    node *temp, *nextAdjacent, *n, *prev, *temp2;
+    double min = G::distance(list, list->next_);
+    temp2 = list;
     bool check = true;
-    // reduce in middle
-    for (temp = list; temp->next_; temp = temp->next_) {
-        nextAdjacent = temp->next_->next_ == NULL ? list : temp->next_->next_;
-        prev = temp->next_;
+    Point c, n0_a_, n0_b_;
+    // find the shortest edge
+    for(temp = list->next_; temp; temp = temp->next_){
+        n = temp->next_ == NULL ? list : temp->next_;
+        double d = G::distance(n, temp);
+        if (min > d){
+            temp2 = temp;
+            min = d;
+        }
+    }
 
-        check = true;
-        while (check && G::distance(temp, nextAdjacent) <= 2 * sensor_range_) {
-            // detect N0
-            Point n0_a_, n0_b_;
-            G::circleCircleIntersect(temp, sensor_range_, nextAdjacent, sensor_range_, &n0_a_, &n0_b_);
+    temp = temp2;
 
-            for (node *i = temp->next_; i != nextAdjacent; i = i->next_ == NULL ? list : i->next_) {
-                if (G::distance(n0_a_, i) > sensor_range_) {
-                    check = false;
-                    break;
-                }
-            }
+    n = temp->next_ == NULL ? list : temp->next_;
+    nextAdjacent = n->next_ == NULL ? list : n->next_;
+    prev = n;
+    G::circleCircleIntersect(temp, sensor_range_, prev, sensor_range_, &c, &n0_b_);
 
-            if (!check) {
-                check = true;
-                for (node *i = temp->next_; i != nextAdjacent; i = i->next_ == NULL ? list : i->next_) {
-                    if (G::distance(n0_b_, i) > sensor_range_) {
-                        check = false;
-                        break;
-                    }
-                }
-            }
+    check = true;
+    while (check && G::distance(temp, nextAdjacent) <= 2 * sensor_range_) {
+        // detect N0
+        G::circleCircleIntersect(temp, sensor_range_, nextAdjacent, sensor_range_, &n0_a_, &n0_b_);
 
-            if (nextAdjacent == list) break;
-
-            if (check) {
-                prev = nextAdjacent;
-                nextAdjacent = nextAdjacent->next_ == NULL ? list : nextAdjacent->next_;
+        for (node *i = n; i != nextAdjacent; i = i->next_ == NULL ? list : i->next_) {
+            if (G::distance(n0_a_, i) > sensor_range_) {
+                check = false;
+                break;
             }
         }
 
-        if (!check || G::distance(temp, nextAdjacent) > 2 * sensor_range_) {
-            temp->next_ = prev;
-        } else { // mean nextAdjacent == list
-            temp->next_ = NULL;
-            break;
+//            if (!check) {
+//                check = true;
+//                for (node *i = temp->next_; i != nextAdjacent; i = i->next_ == NULL ? list : i->next_) {
+//                    if (G::distance(n0_b_, i) > sensor_range_) {
+//                        check = false;
+//                        break;
+//                    }
+//                }
+//            } else {
+//                c.x_ = n0_a_.x_;
+//                c.y_ = n0_a_.y_;
+//            }
+
+        if (check){
+            c.x_ = n0_b_.x_;
+            c.y_ = n0_b_.y_;
         }
+
+        if (nextAdjacent == temp) break;
+
+        if (check) {
+            prev = nextAdjacent;
+            nextAdjacent = nextAdjacent->next_ == NULL ? list : nextAdjacent->next_;
+        }
+    }
+
+    if (check){
+        printf("New point: (%f,%f)\n", c.x_, c.y_);
     }
 
     return list;

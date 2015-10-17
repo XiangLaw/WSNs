@@ -112,6 +112,7 @@ void CoverageBoundHoleAgent::recvCoverage(Packet *p) {
                 data->dump();
                 printf("%d source\n", iph->src());
                 printf("%d Boundhole is detected, nodeNumberEstimation: %d\n", my_id_, nodeNumberEstimation(newHole));
+                dumpCoverageBoundHole(newHole);
                 drop(p, "COVERAGE_BOUNDHOLE");
             return;
         }
@@ -220,14 +221,14 @@ void CoverageBoundHoleAgent::holeBoundaryDetection() {
     }
 }
 
-int CoverageBoundHoleAgent::nodeNumberEstimation(polygonHole *pHole) {
-    if (pHole == NULL || pHole->node_list_ == NULL) return 0;
+int CoverageBoundHoleAgent::nodeNumberEstimation(polygonHole *newHole) {
+    if (newHole == NULL || newHole->node_list_ == NULL) return 0;
 
     // find minx, maxx, miny, maxy
     double minx, maxx, miny, maxy;
-    minx = maxx = pHole->node_list_->x_;
-    miny = maxy = pHole->node_list_->y_;
-    for(node* tmp = pHole->node_list_->next_; tmp; tmp = tmp->next_) {
+    minx = maxx = newHole->node_list_->x_;
+    miny = maxy = newHole->node_list_->y_;
+    for(node* tmp = newHole->node_list_->next_; tmp; tmp = tmp->next_) {
         if (minx > tmp->x_) minx = tmp->x_;
         else if (maxx < tmp->x_) maxx = tmp->x_;
         if (miny > tmp->y_) miny = tmp->y_;
@@ -235,7 +236,7 @@ int CoverageBoundHoleAgent::nodeNumberEstimation(polygonHole *pHole) {
     }
 
     node* node_list_ = NULL, *tail_node_;
-    for(node* tmp = pHole->node_list_; tmp; tmp = tmp->next_){
+    for(node* tmp = newHole->node_list_; tmp; tmp = tmp->next_){
         node* item = new node();
         item->id_ = tmp->id_;
         item->x_ = tmp->x_ - minx;
@@ -344,15 +345,110 @@ int CoverageBoundHoleAgent::nodeNumberEstimation(polygonHole *pHole) {
 
     int count = 0;
     for (int i = 0; i < nx; i++) {
-        int j = 0;
-        while (j < ny) {
-            while (!a[i][j] && j < ny) j++;
-            while (a[i][j] && j < ny) {
-                j++;
-                count++;
+        for (int j = 0; j < ny; j++) if (a[i][j]) count++;
+    }
+
+    newHole->node_list_ = NULL;
+    x = nx-1;
+    y = 0;
+    while(x>=0 && a[x][0] == 0) x--;
+    node *sNode = new node();
+    sNode->x_ =  minx + (x + 1) * r_;
+    sNode->y_ = miny;
+    sNode->next_ = newHole->node_list_;
+    newHole->node_list_ = sNode;
+
+    while (x >= 0 && a[x][0] == 1) x--; // find the end cell of serial painted cell from left to right in the lowest row
+    x++;
+    Point n, u;
+    n.x_ = minx + x * r_;
+    n.y_ = miny;
+
+    while (n.x_ != sNode->x_ || n.y_ != sNode->y_) {
+        u = *(newHole->node_list_);
+
+        node *newNode = new node();
+        newNode->x_ = n.x_;
+        newNode->y_ = n.y_;
+        newNode->next_ = newHole->node_list_;
+        newHole->node_list_ = newNode;
+
+        if (u.y_ == n.y_) {
+            if (u.x_ < n.x_)        // >
+            {
+                if (y + 1 < ny && x + 1 < nx && a[x + 1][y + 1]) {
+                    x += 1;
+                    y += 1;
+                    n.y_ += r_;
+                }
+                else if (x + 1 < nx && a[x + 1][y]) {
+                    x += 1;
+                    n.x_ += r_;
+                    newHole->node_list_ = newNode->next_;
+                    delete newNode;
+                }
+                else {
+                    n.y_ -= r_;
+                }
+            }
+            else // u->x_ > v->x_			// <
+            {
+                if (y - 1 >= 0 && x - 1 >= 0 && a[x - 1][y - 1]) {
+                    x -= 1;
+                    y -= 1;
+                    n.y_ -= r_;
+                }
+                else if (x - 1 >= 0 && a[x - 1][y]) {
+                    x -= 1;
+                    n.x_ -= r_;
+                    newHole->node_list_ = newNode->next_;
+                    delete newNode;
+                }
+                else {
+                    n.y_ += r_;
+                }
+            }
+        }
+        else    // u->x_ == v->x_
+        {
+            if (u.y_ < n.y_)        // ^
+            {
+                if (y + 1 < ny && x - 1 >= 0 && a[x - 1][y + 1]) {
+                    x -= 1;
+                    y += 1;
+                    n.x_ -= r_;
+                }
+                else if (y + 1 < ny && a[x][y + 1]) {
+                    y += 1;
+                    n.y_ += r_;
+                    newHole->node_list_ = newNode->next_;
+                    delete newNode;
+                }
+                else {
+                    n.x_ += r_;
+                }
+            }
+            else // u.x > n.x		// v
+            {
+                if (y - 1 >= 0 && x + 1 < nx && a[x + 1][y - 1]) {
+                    x += 1;
+                    y -= 1;
+                    n.x_ += r_;
+                }
+                else if (y - 1 >= 0 && a[x][y - 1]) {
+                    y -= 1;
+                    n.y_ -= r_;
+                    newHole->node_list_ = newNode->next_;
+                    delete newNode;
+                }
+                else {
+                    n.x_ -= r_;
+                }
             }
         }
     }
+//
+//    reducePolygonHole(newHole);
 
     return count;
 }
@@ -365,6 +461,7 @@ CoverageBoundHoleAgent::startUp() {
     fp = fopen("SensorNeighbors.tr", "w");fclose(fp);
     fp = fopen("NodeBoundaryDetect.tr", "w");fclose(fp);
     fp = fopen("CoverageBoundHole.tr", "w");fclose(fp);
+    fp = fopen("CoverageGrid.tr", "w");fclose(fp);
 }
 
 void CoverageBoundHoleAgent::addNeighbor(nsaddr_t addr, Point p) {
@@ -489,6 +586,72 @@ node *CoverageBoundHoleAgent::getNextSensorNeighbor(nsaddr_t prev_node) {
     return NULL;
 }
 
+void CoverageBoundHoleAgent::reducePolygonHole(polygonHole *h) {
+//    int count = 0;
+//    for (node *n = h->node_list_; n != NULL; n = n->next_) count++;
+//
+//    //h->circleNodeList();
+//    node *temp = h->node_list_;
+//    while (temp->next_ && temp->next_ != h->node_list_) temp = temp->next_;
+//    temp->next_ = h->node_list_;
+//
+//    // reduce hole
+//    node *gmin;
+//    int min;
+//    Point r;
+//
+//    for (; count > limit_; count -= 2) {
+//        min = MAXINT;
+//
+//        node *g = h->node_list_;
+//        do {
+//            node *g1 = g->next_;
+//            node *g2 = g1->next_;
+//            node *g3 = g2->next_;
+//
+//            if (G::angle(g2, g1, g2, g3) > M_PI) {
+//                //	int t = fabs(g3->x_ - g2->x_) + fabs(g2->y_ - g1->y_) + fabs(g3->y_ - g2->y_) + fabs(g2->x_ - g1->x_);	// conditional is boundary length
+//                int t = fabs(g3->x_ - g2->x_) * fabs(g2->y_ - g1->y_) + fabs(g3->y_ - g2->y_) * fabs(g2->x_ - g1->x_);    // conditional is area
+//                if (t < min) {
+//                    gmin = g;
+//                    min = t;
+//                    r.x_ = g1->x_ + g3->x_ - g2->x_;
+//                    r.y_ = g1->y_ + g3->y_ - g2->y_;
+//                }
+//            }
+//
+//            g = g1;
+//        }
+//        while (g != h->node_list_);
+//
+//        if (r == *(gmin->next_->next_->next_->next_)) {
+//            node *temp = gmin->next_;
+//            gmin->next_ = gmin->next_->next_->next_->next_->next_;
+//
+//            delete temp->next_->next_->next_;
+//            delete temp->next_->next_;
+//            delete temp->next_;
+//            delete temp;
+//
+//            count -= 2;
+//        }
+//        else {
+//            node *newNode = new node();
+//            newNode->x_ = r.x_;
+//            newNode->y_ = r.y_;
+//            newNode->next_ = gmin->next_->next_->next_->next_;
+//
+//            delete gmin->next_->next_->next_;
+//            delete gmin->next_->next_;
+//            delete gmin->next_;
+//
+//            gmin->next_ = newNode;
+//        }
+//
+//        h->node_list_ = gmin;
+//    }
+}
+
 /*----------------- DUMP --------------------------*/
 void CoverageBoundHoleAgent::dumpSensorNeighbor() {
     FILE *fp = fopen("SensorNeighbors.tr", "a");
@@ -508,5 +671,16 @@ void CoverageBoundHoleAgent::dumpBoundaryDetect(){
         fprintf(fp,"\t%d-%d",pair->a_->id_,pair->b_->id_);
     }
     fprintf(fp,"\n");
+    fclose(fp);
+}
+
+void CoverageBoundHoleAgent::dumpCoverageBoundHole(polygonHole *pHole) {
+    FILE* fp;
+    fp = fopen("CoverageGrid.tr", "a");
+    for(node* temp = pHole->node_list_; temp; temp = temp->next_){
+        fprintf(fp,"%f\t%f\n", temp->x_, temp->y_);
+    }
+    fprintf(fp,"%f\t%f\n", pHole->node_list_->x_, pHole->node_list_->y_);
+    fprintf(fp, "\n");
     fclose(fp);
 }
