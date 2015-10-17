@@ -124,7 +124,7 @@ void BCPCoverageAgent::recvCoverage(Packet *p) {
     }
 
     if (iph->saddr() < my_id_) {
-        drop(p, " REPEAT");
+        drop(p, "REPEAT");
         return;
     }
 
@@ -139,7 +139,7 @@ void BCPCoverageAgent::recvCoverage(Packet *p) {
     send(p, 0);
 }
 
-/*----------------------------BOUNDARY DETECTION------------------------------------------------------*/
+/*----------------BCP DETECTION------------------------*/
 bool BCPCoverageAgent::checkBCP(node *pNode) {
     int count = 0;
     for (node *temp = neighbor_list_; temp; temp = temp->next_) {
@@ -247,6 +247,7 @@ void BCPCoverageAgent::bcpDetection() {
     }
 }
 
+/*----------------Coverage Hole DETECTION------------------------*/
 node *BCPCoverageAgent::getNextBCP(node *pNode) {
     neighbor *n = getNeighbor(pNode->id_);
     if (G::angle(this, pNode, this, n) >= M_PI) {
