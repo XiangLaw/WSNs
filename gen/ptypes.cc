@@ -176,6 +176,8 @@ set ptype(elbargridoffline) 85\n\
 set pvals(85) ELBARGRIDOFFLINE\n\
 set ptype(gear) 86\n\
 set pvals(86) GEAR\n\
+set ptype(behds) 87\n\
+set pvals(87) BEHDS\n\
 proc ptype2val {str} {\n\
 global ptype\n\
 set str [string tolower $str]\n\
