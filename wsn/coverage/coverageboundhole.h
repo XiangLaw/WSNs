@@ -69,7 +69,7 @@ private:
 protected:
     double communication_range_;
     double sensor_range_;
-    int limit_hop;
+    int limit_hop_;
     sensor_neighbor *sensor_neighbor_list_; // list of the neighbors by sensor range, fixed: sensor range = 1/2*communication range
     polygonHole *hole_list_;
     stuckangle *cover_neighbors_; // pair of neighbors make with node to create a fragment of hole boundary
@@ -79,7 +79,7 @@ protected:
     void addNeighbor(nsaddr_t, Point); // override from GPSRAgent
     node* getNextSensorNeighbor(nsaddr_t prev_node);
 
-    int nodeNumberEstimation(polygonHole*);
+    int gridConstruction(polygonHole *);
 public:
     CoverageBoundHoleAgent();
 

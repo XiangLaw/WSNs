@@ -46,7 +46,7 @@ CoverageBoundHoleAgent::CoverageBoundHoleAgent() : GPSRAgent(),
     sensor_neighbor_list_ = NULL;
 
     bind("range_", &communication_range_);
-    bind("limit_boundhole_hop_", &limit_hop);
+    bind("limit_boundhole_hop_", &limit_hop_);
 //    bind("sensor_range_", &sensor_range_);
     sensor_range_ = 0.5 * communication_range_;
 }
@@ -67,7 +67,6 @@ int CoverageBoundHoleAgent::command(int argc, const char *const *argv) {
 
 void CoverageBoundHoleAgent::recv(Packet *p, Handler *h) {
     struct hdr_cmn *cmh = HDR_CMN(p);
-    struct hdr_ip *iph = HDR_IP(p);
 
     switch (cmh->ptype()) {
         case PT_COVERAGE:
@@ -110,8 +109,7 @@ void CoverageBoundHoleAgent::recvCoverage(Packet *p) {
                 hole_list_ = newHole;
 
                 data->dump();
-                printf("%d source\n", iph->src());
-                printf("%d Boundhole is detected, nodeNumberEstimation: %d\n", my_id_, nodeNumberEstimation(newHole));
+                printf("%d Boundhole is detected, gridConstruction: %d\n", my_id_, gridConstruction(newHole));
                 dumpCoverageBoundHole(newHole);
                 drop(p, "COVERAGE_BOUNDHOLE");
             return;
@@ -124,7 +122,7 @@ void CoverageBoundHoleAgent::recvCoverage(Packet *p) {
     }
 
     if (iph->saddr() < my_id_) {
-        drop(p, " REPEAT");
+        drop(p, "REPEAT");
         return;
     }
 
@@ -148,7 +146,6 @@ void CoverageBoundHoleAgent::recvCoverage(Packet *p) {
 
 /*----------------------------BOUNDARY DETECTION------------------------------------------------------*/
 bool CoverageBoundHoleAgent::boundaryNodeDetection() {
-    Point c1, c2;
     bool isOnBoundary = false;
     if (sensor_neighbor_list_ == NULL) return true;
     if (sensor_neighbor_list_->next_ == NULL) {
@@ -212,17 +209,17 @@ void CoverageBoundHoleAgent::holeBoundaryDetection() {
             iph->daddr() = sa->b_->id_;
             iph->sport() = RT_PORT;
             iph->dport() = RT_PORT;
-            iph->ttl_ = limit_hop;            // more than ttl_ hop => boundary => remove
+            iph->ttl_ = limit_hop_;            // more than ttl_ hop => boundary => remove
 
             send(p, 0);
-
-//            printf("%d\t- Send Coverage to %d(%d)\n", my_id_, cmh->next_hop(),cmh->uid());
         }
     }
 }
 
-int CoverageBoundHoleAgent::nodeNumberEstimation(polygonHole *newHole) {
+int CoverageBoundHoleAgent::gridConstruction(polygonHole *newHole) {
     if (newHole == NULL || newHole->node_list_ == NULL) return 0;
+
+    int number_of_patching_node = 0;
 
     // find minx, maxx, miny, maxy
     double minx, maxx, miny, maxy;
@@ -235,7 +232,7 @@ int CoverageBoundHoleAgent::nodeNumberEstimation(polygonHole *newHole) {
         else if (maxy < tmp->y_) maxy = tmp->y_;
     }
 
-    node* node_list_ = NULL, *tail_node_;
+    node *node_list_ = NULL, *tail_node_ = NULL;
     for(node* tmp = newHole->node_list_; tmp; tmp = tmp->next_){
         node* item = new node();
         item->id_ = tmp->id_;
@@ -251,7 +248,7 @@ int CoverageBoundHoleAgent::nodeNumberEstimation(polygonHole *newHole) {
     }
 
     Point prev_cell_ = *node_list_;
-    double r_ = sensor_range_*sqrt(2);
+    double r_ = sensor_range_*sqrt(2) / 2;
 
     if (fmod(prev_cell_.x_, r_) == 0)    // i lies in vertical line
     {
@@ -277,7 +274,7 @@ int CoverageBoundHoleAgent::nodeNumberEstimation(polygonHole *newHole) {
     prev_cell_.x_ = ((int) (prev_cell_.x_ / r_) + 0.5) * r_;
     prev_cell_.y_ = ((int) (prev_cell_.y_ / r_) + 0.5) * r_;
 
-    struct list *head = NULL, *tail;
+    struct list *head = NULL, *tail = NULL;
     for (node* tmp = node_list_; tmp; tmp = tmp->next_){
         node* cur = tmp->next_ == NULL ? node_list_ : tmp->next_;
         Point i[4];
@@ -310,8 +307,8 @@ int CoverageBoundHoleAgent::nodeNumberEstimation(polygonHole *newHole) {
         }
     }
 
-    int nx = floor((maxx - minx)/r_) + 1;
-    int ny = floor((maxy - miny)/r_) + 1;
+    int nx = (int)floor((maxx - minx)/r_) + 1;
+    int ny = (int)floor((maxy - miny)/r_) + 1;
     bool **a = (bool **) malloc((nx) * sizeof(bool *));
     for (int i = 0; i < nx; i++)
         a[i] = (bool *) malloc((ny) * sizeof(bool));
@@ -322,8 +319,8 @@ int CoverageBoundHoleAgent::nodeNumberEstimation(polygonHole *newHole) {
         }
     }
 
-    int x = floor(node_list_->x_/r_);
-    int y = floor(node_list_->y_/r_);
+    int x = (int)floor(node_list_->x_/r_);
+    int y = (int)floor(node_list_->y_/r_);
     a[x][y] = 1;
     for (struct list* tmp = head; tmp; tmp=tmp->next_) {
         switch (tmp->e_) {
@@ -339,13 +336,9 @@ int CoverageBoundHoleAgent::nodeNumberEstimation(polygonHole *newHole) {
             case Right:
                 x++;
                 break;
+            default:break;
         }
         a[x][y] = 1;
-    }
-
-    int count = 0;
-    for (int i = 0; i < nx; i++) {
-        for (int j = 0; j < ny; j++) if (a[i][j]) count++;
     }
 
     newHole->node_list_ = NULL;
@@ -450,7 +443,7 @@ int CoverageBoundHoleAgent::nodeNumberEstimation(polygonHole *newHole) {
 //
 //    reducePolygonHole(newHole);
 
-    return count;
+    return number_of_patching_node;
 }
 
 /*----------------Utils function----------------------*/

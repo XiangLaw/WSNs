@@ -78,7 +78,6 @@ protected:
     polygonHole *hole_list_;
 
     void addNeighbor(nsaddr_t, Point); // override from GPSRAgent
-    int nodeNumberEstimation(polygonHole*);
 public:
     BCPCoverageAgent();
 

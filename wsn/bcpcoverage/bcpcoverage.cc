@@ -112,8 +112,6 @@ void BCPCoverageAgent::recvCoverage(Packet *p) {
         hole_list_ = newHole;
 
         dumpCoverageBoundhole(newHole);
-//        data->dump();
-//      printf("%d Boundhole is detected, nodeNumberEstimation: %d\n", my_id_, nodeNumberEstimation(newHole));
         drop(p, "BCPCOVERAGE");
         return;
     }
@@ -146,7 +144,6 @@ bool BCPCoverageAgent::checkBCP(node *pNode) {
         double d = G::distance(temp, pNode);
         if (fabs(d - sensor_range_) < EPSILON) continue;
         else if (d < sensor_range_) {
-//            printf("Diff: %g\n", sensor_range_ - d);
             count++;
         }
 
@@ -298,12 +295,7 @@ void BCPCoverageAgent::holeBoundaryDetection() {
     }
 }
 
-int BCPCoverageAgent::nodeNumberEstimation(polygonHole *pHole) {
-    return 0;
-}
-
 /*----------------Utils function----------------------*/
-
 void
 BCPCoverageAgent::startUp() {
     FILE *fp;
