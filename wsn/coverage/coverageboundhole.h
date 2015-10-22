@@ -79,7 +79,8 @@ protected:
     void addNeighbor(nsaddr_t, Point); // override from GPSRAgent
     node* getNextSensorNeighbor(nsaddr_t prev_node);
 
-    int gridConstruction(polygonHole *);
+    void gridConstruction(polygonHole *);
+    void patchingHole(polygonHole *);
 public:
     CoverageBoundHoleAgent();
 
