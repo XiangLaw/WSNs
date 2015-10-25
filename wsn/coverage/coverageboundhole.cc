@@ -310,13 +310,11 @@ void CoverageBoundHoleAgent::gridConstruction(polygonHole *newHole) {
     int nx = (int) floor((maxx - minx) / r_) + 1;
     int ny = (int) floor((maxy - miny) / r_) + 1;
 
-    nx = nx % 2 == 0 ? nx : (nx + 1);
-
-    int8_t **a = new int8_t *[nx];
-    for (int i = 0; i < nx; i++)
+    int8_t **a = new int8_t *[nx + 1];
+    for (int i = 0; i < nx + 1; i++)
         a[i] = new int8_t[ny + 1];
 
-    for (int i = 0; i < nx; i++) {
+    for (int i = 0; i < nx + 1; i++) {
         for (int j = 0; j < ny + 1; j++) {
             a[i][j] = 0;
         }
@@ -510,6 +508,42 @@ void CoverageBoundHoleAgent::patchingHole(polygonHole *hole, double base_x, doub
         if (y > ny) {
             x += 2;
             y = 0;
+        }
+    }
+
+    for (x = 0; x < nx; x++) {
+        for (y = 0; y < ny; y++) {
+            if (grid[x][y] != C_WHITE) continue;
+            if (grid[x + 1][y] == C_WHITE) {
+                int size = 0;
+                for (; grid[x + size][y] == C_WHITE; size++) {
+                    grid[x + size][y] = C_RED;
+                }
+                size = (int) floor(size / sqrt(7)) + 1;
+                for (int i = 0; i < size; i++) {
+                    patching_point.x_ = base_x + (x + 1) * r_ + r_ / 2;
+                    patching_point.y_ = base_y + (y + 1) * r_ + r_ * sqrt(7) / 2 + i * r_ * sqrt(7);
+                    dumpPatchingHole(patching_point);
+                }
+            }
+            else if (grid[x][y + 1] == C_WHITE) {
+                int size = 0;
+                for (; grid[x][y + size] == C_WHITE; size++) {
+                    grid[x][y + size] = C_RED;
+                }
+                size = (int) floor(size / sqrt(7)) + 1;
+                for (int i = 0; i < size; i++) {
+                    patching_point.y_ = base_y + (y + 1) * r_ + r_ / 2;
+                    patching_point.x_ = base_x + (y + 1) * r_ + r_ * sqrt(7) / 2 + i * r_ * sqrt(7);
+                    dumpPatchingHole(patching_point);
+                }
+            }
+            else {
+                patching_point.x_ = base_x + x * r_;
+                patching_point.y_ = base_y + y * r_;
+                dumpPatchingHole(patching_point);
+                grid[x][y] = C_RED;
+            }
         }
     }
 
