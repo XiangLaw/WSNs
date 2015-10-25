@@ -20,6 +20,10 @@
 
 #include "wsn/geomathhelper/geo_math_helper.h"
 
+#define C_RED     2
+#define C_WHITE   1
+#define C_BLACK   0
+
 class CoverageBoundHoleAgent;
 
 struct sensor_neighbor : neighbor{
@@ -80,7 +84,7 @@ protected:
     node* getNextSensorNeighbor(nsaddr_t prev_node);
 
     void gridConstruction(polygonHole *);
-    void patchingHole(polygonHole *);
+    void patchingHole(polygonHole *, int, int, bool**, int, int);
 public:
     CoverageBoundHoleAgent();
 

@@ -111,7 +111,6 @@ void CoverageBoundHoleAgent::recvCoverage(Packet *p) {
 
             data->dump();
             gridConstruction(newHole);
-            patchingHole(newHole);
             drop(p, "COVERAGE_BOUNDHOLE");
             dumpCoverageBoundHole(newHole);
             return;
@@ -221,8 +220,6 @@ void CoverageBoundHoleAgent::holeBoundaryDetection() {
 void CoverageBoundHoleAgent::gridConstruction(polygonHole *newHole) {
     if (newHole == NULL || newHole->node_list_ == NULL) return;
 
-    int number_of_patching_node = 0;
-
     // find minx, maxx, miny, maxy
     double minx, maxx, miny, maxy;
     minx = maxx = newHole->node_list_->x_;
@@ -312,9 +309,13 @@ void CoverageBoundHoleAgent::gridConstruction(polygonHole *newHole) {
     /* construct array of color of grid */
     int nx = (int) floor((maxx - minx) / r_) + 1;
     int ny = (int) floor((maxy - miny) / r_) + 1;
-    bool **a = (bool **) malloc((nx) * sizeof(bool *));
+
+    nx = nx % 2 == 0 ? nx : (nx + 1);
+    ny = ny % 2 == 0 ? ny : (ny + 1);
+
+    bool **a = new bool *[nx];
     for (int i = 0; i < nx; i++)
-        a[i] = (bool *) malloc((ny) * sizeof(bool));
+        a[i] = new bool[ny];
 
     for (int i = 0; i < nx; i++) {
         for (int j = 0; j < ny; j++) {
@@ -343,7 +344,7 @@ void CoverageBoundHoleAgent::gridConstruction(polygonHole *newHole) {
                 break;
         }
         a[x][y] = 1;
-    } // done. a array is now grid color
+    } // done. a array is now grid boundary
 
     newHole->node_list_ = NULL;
     x = nx - 1;
@@ -447,10 +448,42 @@ void CoverageBoundHoleAgent::gridConstruction(polygonHole *newHole) {
     }
 //
 //    reducePolygonHole(newHole);
+    patchingHole(newHole, minx, miny, a, nx, ny);
+    // free memory
+    for (int i = 0; i < nx; i++)
+        delete[] a[i];
+    delete[] a;
 }
 
-void CoverageBoundHoleAgent::patchingHole(polygonHole *grid) {
+void CoverageBoundHoleAgent::patchingHole(polygonHole *hole, int minx, int miny, bool **grid, int nx, int ny) {
+    int x = 0;
+    int y = 0;
+    // fill the grid with color
+    for (y = 1; y < ny - 1; y++) {
+        for (x = 1; x < nx - 1; x++) {
+            if (grid[x][y] == 1 || grid[x - 1][y] != 1 || grid[x][y - 1] != 1) continue;
+            int flag = 0;
+            for (int i = x + 1; i < nx; i++) {
+                if (grid[i][y] == 1) {
+                    flag++;
+                    break;
+                }
+            }
+            for (int i = y + 1; i < ny; i++) {
+                if (grid[x][i] == 1) {
+                    flag++;
+                    break;
+                }
+            }
+            if (flag >= 2) grid[x][y] = 1;
+        }
+    }
     
+    for (int j = ny - 1; j >= 0; j--) {
+        for (int i = 0; i < nx; i++)
+            printf("%d", grid[i][j]);
+        printf("\n");
+    }
 }
 
 /*----------------Utils function----------------------*/

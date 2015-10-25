@@ -75,7 +75,7 @@ Agent/CBR set interval_ 1
 #
 
 # set start time
-set startTime [clock seconds]
+set startTime [clock microseconds]
 
 # set up ns simulator and nam trace
 set ns_		[new Simulator]
@@ -156,13 +156,15 @@ proc stop {} {
 
 	puts "end simulation"
 
-	set runTime [clock second]
+	set runTime [clock microseconds]
 	set runTime [expr $runTime - $startTime]
 
-	set s [expr $runTime % 60];	set runTime [expr $runTime / 60];
-	set m [expr $runTime % 60];	set runTime [expr $runTime / 60];
+	#set s [expr $runTime % 60];	set runTime [expr $runTime / 60];
+	#set m [expr $runTime % 60];	set runTime [expr $runTime / 60];
 
-	puts "Runtime: $runTime hours, $m minutes, $s seconds"
+	#puts "Runtime: $runTime hours, $m minutes, $s seconds"
+
+	puts "Runtime: $runTime"
 
 	$ns_ halt
 	exit 0
