@@ -70,6 +70,9 @@ private:
 
     void dumpSensorNeighbor();
     void dumpBoundaryDetect();
+    void dumpCoverageBoundHole(polygonHole *pHole);
+    void dumpPatchingHole(Point);
+
 protected:
     double communication_range_;
     double sensor_range_;
@@ -84,14 +87,14 @@ protected:
     node* getNextSensorNeighbor(nsaddr_t prev_node);
 
     void gridConstruction(polygonHole *);
-    void patchingHole(polygonHole *, int, int, bool**, int, int);
+    void patchingHole(polygonHole *, double, double, double, int8_t**, int, int);
+
+    int white_node_count(int, int, int, int);
 public:
     CoverageBoundHoleAgent();
 
     int  command(int, const char*const*);
     void recv(Packet*, Handler*);
-
-    void dumpCoverageBoundHole(polygonHole *pHole);
 };
 
 #endif //NS_CONVERAGEHOLE_H

@@ -311,14 +311,13 @@ void CoverageBoundHoleAgent::gridConstruction(polygonHole *newHole) {
     int ny = (int) floor((maxy - miny) / r_) + 1;
 
     nx = nx % 2 == 0 ? nx : (nx + 1);
-    ny = ny % 2 == 0 ? ny : (ny + 1);
 
-    bool **a = new bool *[nx];
+    int8_t **a = new int8_t *[nx];
     for (int i = 0; i < nx; i++)
-        a[i] = new bool[ny];
+        a[i] = new int8_t[ny + 1];
 
     for (int i = 0; i < nx; i++) {
-        for (int j = 0; j < ny; j++) {
+        for (int j = 0; j < ny + 1; j++) {
             a[i][j] = 0;
         }
     }
@@ -448,48 +447,91 @@ void CoverageBoundHoleAgent::gridConstruction(polygonHole *newHole) {
     }
 //
 //    reducePolygonHole(newHole);
-    patchingHole(newHole, minx, miny, a, nx, ny);
+    patchingHole(newHole, minx, miny, r_, a, nx, ny);
     // free memory
     for (int i = 0; i < nx; i++)
         delete[] a[i];
     delete[] a;
 }
 
-void CoverageBoundHoleAgent::patchingHole(polygonHole *hole, int minx, int miny, bool **grid, int nx, int ny) {
+void CoverageBoundHoleAgent::patchingHole(polygonHole *hole, double base_x, double base_y, double r_,
+                                          int8_t **grid, int nx, int ny) {
     int x = 0;
     int y = 0;
     // fill the grid with color
     for (y = 1; y < ny - 1; y++) {
         for (x = 1; x < nx - 1; x++) {
-            if (grid[x][y] == 1 || grid[x - 1][y] != 1 || grid[x][y - 1] != 1) continue;
+            if (grid[x][y] == C_WHITE || grid[x - 1][y] != C_WHITE || grid[x][y - 1] != C_WHITE) continue;
             int flag = 0;
             for (int i = x + 1; i < nx; i++) {
-                if (grid[i][y] == 1) {
+                if (grid[i][y] == C_WHITE) {
                     flag++;
                     break;
                 }
             }
             for (int i = y + 1; i < ny; i++) {
-                if (grid[x][i] == 1) {
+                if (grid[x][i] == C_WHITE) {
                     flag++;
                     break;
                 }
             }
-            if (flag >= 2) grid[x][y] = 1;
+            if (flag >= 2) grid[x][y] = C_WHITE;
         }
     }
-    
-    for (int j = ny - 1; j >= 0; j--) {
+
+    x = 0;
+    y = 0;
+    Point patching_point;
+    while (x < nx) {
+        if (white_node_count(grid[x][y], grid[x + 1][y], grid[x][y + 1], grid[x + 1][y + 1]) >= 3) {
+            grid[x][y] = grid[x + 1][y] = grid[x][y + 1] = grid[x + 1][y + 1] = C_RED;
+            patching_point.x_ = base_x + (x + 1) * r_;
+            patching_point.y_ = base_y + (y + 1) * r_;
+            patching_point.x_ = x + 1;
+            patching_point.y_ = y + 1;
+            dumpPatchingHole(patching_point);
+            y += 2;
+        }
+        else {
+            if ((x - 1 > 0) &&
+                (white_node_count(grid[x][y], grid[x][y + 1], grid[x - 1][y], grid[x - 1][y + 1]) >= 3)) {
+                grid[x][y] = grid[x - 1][y] = grid[x][y + 1] = grid[x - 1][y + 1] = C_RED;
+                patching_point.x_ = base_x + x * r_;
+                patching_point.y_ = base_y + (y + 1) * r_;
+                patching_point.x_ = x;
+                patching_point.y_ = y + 1;
+                dumpPatchingHole(patching_point);
+                y += 2;
+            }
+            else {
+                y += 1;
+            }
+        }
+        if (y > ny) {
+            x += 2;
+            y = 0;
+        }
+    }
+
+    for (int j = ny; j >= 0; j--) {
         for (int i = 0; i < nx; i++)
             printf("%d", grid[i][j]);
         printf("\n");
     }
+
+}
+
+int CoverageBoundHoleAgent::white_node_count(int a, int b, int c, int d) {
+    int count = 0;
+    if (a == C_WHITE) count++;
+    if (b == C_WHITE) count++;
+    if (c == C_WHITE) count++;
+    if (d == C_WHITE) count++;
+    return count;
 }
 
 /*----------------Utils function----------------------*/
-
-void
-CoverageBoundHoleAgent::startUp() {
+void CoverageBoundHoleAgent::startUp() {
     FILE *fp;
     fp = fopen("SensorNeighbors.tr", "w");
     fclose(fp);
@@ -498,6 +540,8 @@ CoverageBoundHoleAgent::startUp() {
     fp = fopen("CoverageBoundHole.tr", "w");
     fclose(fp);
     fp = fopen("CoverageGrid.tr", "w");
+    fclose(fp);
+    fp = fopen("PatchingHole.tr", "w");
     fclose(fp);
 }
 
@@ -719,5 +763,12 @@ void CoverageBoundHoleAgent::dumpCoverageBoundHole(polygonHole *pHole) {
     }
     fprintf(fp, "%f\t%f\n", pHole->node_list_->x_, pHole->node_list_->y_);
     fprintf(fp, "\n");
+    fclose(fp);
+}
+
+void CoverageBoundHoleAgent::dumpPatchingHole(Point point) {
+    FILE *fp;
+    fp = fopen("PatchingHole.tr", "a");
+    fprintf(fp, "%f\t%f\n", point.x_, point.y_);
     fclose(fp);
 }
