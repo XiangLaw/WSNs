@@ -485,8 +485,6 @@ void CoverageBoundHoleAgent::patchingHole(polygonHole *hole, double base_x, doub
             grid[x][y] = grid[x + 1][y] = grid[x][y + 1] = grid[x + 1][y + 1] = C_RED;
             patching_point.x_ = base_x + (x + 1) * r_;
             patching_point.y_ = base_y + (y + 1) * r_;
-            patching_point.x_ = x + 1;
-            patching_point.y_ = y + 1;
             dumpPatchingHole(patching_point);
             y += 2;
         }
@@ -496,8 +494,6 @@ void CoverageBoundHoleAgent::patchingHole(polygonHole *hole, double base_x, doub
                 grid[x][y] = grid[x - 1][y] = grid[x][y + 1] = grid[x - 1][y + 1] = C_RED;
                 patching_point.x_ = base_x + x * r_;
                 patching_point.y_ = base_y + (y + 1) * r_;
-                patching_point.x_ = x;
-                patching_point.y_ = y + 1;
                 dumpPatchingHole(patching_point);
                 y += 2;
             }
