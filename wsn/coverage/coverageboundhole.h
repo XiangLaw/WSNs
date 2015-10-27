@@ -5,6 +5,7 @@
 #ifndef NS_CONVERAGEHOLE_H
 #define NS_CONVERAGEHOLE_H
 
+#include <wsn/runtimecounter/runtimecounter.h>
 #include "config.h"
 
 #include "agent.h"
@@ -56,6 +57,7 @@ class CoverageBoundHoleAgent : public GPSRAgent{
 private:
     friend class BoundHoleHelloTimer;
     CoverageBoundHoleTimer boundhole_timer_;
+    RunTimeCounter runTimeCounter;
 
     bool isBoundary = false;
 

@@ -57,6 +57,7 @@ int BCPCoverageAgent::command(int argc, const char *const *argv) {
     } else if (strcasecmp(argv[1], "dump") == 0) {
         dumpSensorNeighbor();
     } else if (strcasecmp(argv[1], "coverage") == 0) {
+        runTimeCounter.start();
         bcpDetection();
         boundhole_timer_.resched(10 + randSend_.uniform(0.0, 5));
         return TCL_OK;
@@ -113,6 +114,7 @@ void BCPCoverageAgent::recvCoverage(Packet *p) {
 
         dumpCoverageBoundhole(newHole);
         drop(p, "BCPCOVERAGE");
+        runTimeCounter.finish();
         return;
     }
 

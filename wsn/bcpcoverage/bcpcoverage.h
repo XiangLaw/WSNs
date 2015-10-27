@@ -5,6 +5,7 @@
 #ifndef NS_BCPCOVERAGE_H
 #define NS_BCPCOVERAGE_H
 
+#include <wsn/runtimecounter/runtimecounter.h>
 #include "config.h"
 
 #include "agent.h"
@@ -52,6 +53,7 @@ class BCPCoverageAgent : public GPSRAgent{
 private:
     friend class BCPCoverageTimer;
     BCPCoverageTimer boundhole_timer_;
+    RunTimeCounter runTimeCounter;
 
     void startUp();
 

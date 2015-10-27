@@ -58,6 +58,7 @@ int CoverageBoundHoleAgent::command(int argc, const char *const *argv) {
     } else if (strcasecmp(argv[1], "dump") == 0) {
         dumpSensorNeighbor();
     } else if (strcasecmp(argv[1], "coverage") == 0) {
+        runTimeCounter.start();
         boundaryNodeDetection();
         boundhole_timer_.resched(10 + randSend_.uniform(0.0, 5));
         return TCL_OK;
@@ -113,6 +114,7 @@ void CoverageBoundHoleAgent::recvCoverage(Packet *p) {
             gridConstruction(newHole);
             drop(p, "COVERAGE_BOUNDHOLE");
             dumpCoverageBoundHole(newHole);
+            runTimeCounter.finish();
             return;
         }
     }
