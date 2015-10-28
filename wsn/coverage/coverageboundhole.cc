@@ -512,27 +512,27 @@ void CoverageBoundHoleAgent::patchingHole(polygonHole *hole, double base_x, doub
     for (x = 0; x < nx; x++) {
         for (y = 0; y < ny; y++) {
             if (grid[x][y] != C_WHITE) continue;
-            if (grid[x + 1][y] == C_WHITE) {
+            if (grid[x + 1][y] == C_WHITE) { // (m, 1)
                 int size = 0;
                 for (; grid[x + size][y] == C_WHITE; size++) {
                     grid[x + size][y] = C_RED;
                 }
                 size = (int) floor(size / sqrt(7)) + 1;
                 for (int i = 0; i < size; i++) {
-                    patching_point.x_ = base_x + (x + 1) * r_ + r_ / 2;
-                    patching_point.y_ = base_y + (y + 1) * r_ + r_ * sqrt(7) / 2 + i * r_ * sqrt(7);
+                    patching_point.x_ = base_x + (x) * r_ + r_ * sqrt(7) / 2 + i * r_ * sqrt(7);
+                    patching_point.y_ = base_y + (y) * r_ + r_ / 2;
                     dumpPatchingHole(patching_point);
                 }
             }
-            else if (grid[x][y + 1] == C_WHITE) {
+            else if (grid[x][y + 1] == C_WHITE) { // (1, m)
                 int size = 0;
                 for (; grid[x][y + size] == C_WHITE; size++) {
                     grid[x][y + size] = C_RED;
                 }
                 size = (int) floor(size / sqrt(7)) + 1;
                 for (int i = 0; i < size; i++) {
-                    patching_point.y_ = base_y + (y + 1) * r_ + r_ / 2;
-                    patching_point.x_ = base_x + (y + 1) * r_ + r_ * sqrt(7) / 2 + i * r_ * sqrt(7);
+                    patching_point.x_ = base_x + (x) * r_ + r_ / 2;
+                    patching_point.y_ = base_y + (y) * r_ + r_ * sqrt(7) / 2 + i * r_ * sqrt(7);
                     dumpPatchingHole(patching_point);
                 }
             }
