@@ -59,6 +59,7 @@ private:
     CoverageBoundHoleTimer boundhole_timer_;
     RunTimeCounter runTimeCounter;
 
+    node* boundhole_node_list_; // list of node on bound hole
     bool isBoundary = false;
 
     void startUp();
@@ -69,10 +70,11 @@ private:
     void recvCoverage(Packet*);
 
     void reducePolygonHole(polygonHole*);
+    bool isInRange(Point, double);
 
     void dumpSensorNeighbor();
     void dumpBoundaryDetect();
-    void dumpCoverageBoundHole(polygonHole *pHole);
+    void dumpCoverageBoundHole(polygonHole*);
     void dumpPatchingHole(Point);
 
 protected:
@@ -97,6 +99,7 @@ public:
 
     int  command(int, const char*const*);
     void recv(Packet*, Handler*);
+
 };
 
 #endif //NS_CONVERAGEHOLE_H

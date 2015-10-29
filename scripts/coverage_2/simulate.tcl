@@ -54,10 +54,10 @@ Antenna/OmniAntenna set Z_ 1.5
 Antenna/OmniAntenna set Gt_ 1
 Antenna/OmniAntenna set Gr_ 1
 
-Agent/BCPCOVERAGE set energy_checkpoint_ 995
-Agent/BCPCOVERAGE set hello_period_ 0
-Agent/BCPCOVERAGE set limit_boundhole_hop_ 80
-Agent/BCPCOVERAGE set range_ 40
+Agent/COVERAGE set energy_checkpoint_ 995
+Agent/COVERAGE set hello_period_ 0
+Agent/COVERAGE set limit_boundhole_hop_ 80
+Agent/COVERAGE set range_ 40
 
 Agent/UDP set fid_ 2
 

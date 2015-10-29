@@ -958,3 +958,55 @@ bool G::isPointLiesInTriangle(Point *p, Point *p1, Point *p2, Point *p3) {
 	return gamma >= 0 && alpha >= 0 && beta >= 0;
 }
 
+bool G::isPointReallyInsidePolygon(Point *d, node *node_list) {
+    Point y;
+    node *tmp;
+    y.x_ = 0;
+    y.y_ = d->y_;
+
+    int greater_horizontal = 0;
+    int less_horizontal = 0;
+    Line dy = G::line(d, y);
+
+    Point intersect;
+    intersect.x_ = -1;
+    intersect.y_ = -1;
+
+    // count horizontal
+    for (tmp = node_list; tmp != NULL; tmp = tmp->next_) {
+        if (tmp->next_ != NULL) {
+            if( G::is_in_line(tmp, tmp->next_, d)) {
+                if(G::onSegment(tmp, d, tmp->next_)) {
+                    return true;
+                } else {
+                    if (tmp->x_ > d->x_) greater_horizontal++;
+                    else if (tmp->x_ < d->x_) less_horizontal++;
+                }
+            }
+            else if (G::lineSegmentIntersection(tmp, tmp->next_, dy, intersect)) {
+                if (intersect.x_ > d->x_) greater_horizontal++;
+                else if (intersect.x_ < d->x_) less_horizontal++;
+                else return true;
+            }
+
+        }
+        else { // end-point & start-point
+            if( G::is_in_line(tmp, node_list, d)) {
+                if(G::onSegment(tmp, d, node_list)) {
+                    return true;
+                } else {
+                    if (tmp->x_ > d->x_) greater_horizontal++;
+                    else if (tmp->x_ < d->x_) less_horizontal++;
+                }
+            }
+            else if (G::lineSegmentIntersection(tmp, node_list, dy, intersect)) {
+                if (intersect.x_ > d->x_) greater_horizontal++;
+                else if (intersect.x_ < d->x_) less_horizontal++;
+                else return true;
+            }
+
+        }
+    }
+
+    return !(greater_horizontal % 2 == 0 || less_horizontal % 2 == 0);
+}

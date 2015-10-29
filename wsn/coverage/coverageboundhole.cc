@@ -92,18 +92,27 @@ void CoverageBoundHoleAgent::recvCoverage(Packet *p) {
             return;
         }
 
-        node firstNode = data->get_data(0);
-        node secondNode = data->get_data(1);
+        node firstNode = data->get_intersect_data(0);
+        node secondNode = data->get_intersect_data(1);
         if (firstNode.id_ == cmh->last_hop_ && secondNode.id_ == my_id_) {
             node *head = NULL;
+            boundhole_node_list_ = NULL;
             for (int i = 0; i < data->size(); i++) {
-                node n = data->get_data(i);
-                node *item = new node();
-                item->x_ = n.x_;
-                item->y_ = n.y_;
-                item->id_ = n.id_;
-                item->next_ = head;
-                head = item;
+                node n_intersect = data->get_intersect_data(i);
+                node *intersect = new node();
+                intersect->x_ = n_intersect.x_;
+                intersect->y_ = n_intersect.y_;
+                intersect->id_ = n_intersect.id_;
+                intersect->next_ = head;
+                head = intersect;
+
+                node n_node = data->get_node_data(i);
+                node *node_ = new node();
+                node_->x_ = n_node.x_;
+                node_->y_ = n_node.y_;
+                node_->id_ = n_node.id_;
+                node_->next_ = boundhole_node_list_;
+                boundhole_node_list_ = node_;
             }
             polygonHole *newHole = new polygonHole();
             newHole->node_list_ = head;
@@ -136,7 +145,7 @@ void CoverageBoundHoleAgent::recvCoverage(Packet *p) {
     }
 
     sensor_neighbor *n = getSensorNeighbor(cmh->last_hop_);
-    data->add(n->id_, n->i2_.x_, n->i2_.y_);
+    data->add(n->id_, n->i2_.x_, n->i2_.y_, n->x_, n->y_);
 
     cmh->direction() = hdr_cmn::DOWN;
     cmh->next_hop_ = nb->id_;
@@ -194,7 +203,7 @@ void CoverageBoundHoleAgent::holeBoundaryDetection() {
 
             CoverageBoundHolePacketData *chpkt_data = new CoverageBoundHolePacketData();
             sensor_neighbor *n = getSensorNeighbor(sa->a_->id_);
-            chpkt_data->add(n->id_, n->i2_.x_, n->i2_.y_);
+            chpkt_data->add(n->id_, n->i2_.x_, n->i2_.y_, n->x_, n->y_);
             p->setdata(chpkt_data);
 
             cmh = HDR_CMN(p);
@@ -215,6 +224,57 @@ void CoverageBoundHoleAgent::holeBoundaryDetection() {
             iph->ttl_ = limit_hop_;            // more than ttl_ hop => boundary => remove
 
             send(p, 0);
+        }
+    }
+}
+
+/*
+ * check if cell is in range of one of boundhole node list
+ * @cell is center of cell
+ */
+bool CoverageBoundHoleAgent::isInRange(Point cell, double edge){
+    Point v[4];
+    v[0].x_ = cell.x_ - edge/2; v[0].y_ = cell.y_ + edge/2;
+    v[1].x_ = cell.x_ + edge/2; v[1].y_ = cell.y_ + edge/2;
+    v[2].x_ = cell.x_ + edge/2; v[2].y_ = cell.y_ - edge/2;
+    v[3].x_ = cell.x_ - edge/2; v[3].y_ = cell.y_ - edge/2;
+
+    node *vertices = NULL;
+    for(int i = 0; i < 4; i++){
+        node* n = new node();
+        n->x_ = v[i].x_;
+        n->y_ = v[i].y_;
+        n->next_ = vertices;
+        vertices = n;
+    }
+
+    for (node* tmp = boundhole_node_list_; tmp; tmp = tmp->next_){
+        int flag = 0;
+        for(node*vertex = vertices; vertex; vertex = vertex->next_){
+            if (G::distance(tmp, vertex) <= sensor_range_) flag++;
+        }
+        // check if cell inside 1 sensor range
+        if (flag==4) {
+            printf("inside 1 sensor\n");
+            return true;
+        }
+        // check if cell inside 2 adjacent sensors range
+        if (flag != 0){
+            flag = 1;
+            node* next = tmp->next_ == NULL ? boundhole_node_list_: tmp->next_;
+            for(node*vertex = vertices; vertex; vertex = vertex->next_){
+                if (G::distance(tmp, vertex) > sensor_range_ && G::distance(next, vertex) > sensor_range_){
+                    flag = 0;
+                    break;
+                }
+            }
+
+            Point intersect1, intersect2;
+            G::circleCircleIntersect(tmp, sensor_range_, next, sensor_range_, &intersect1, &intersect2);
+            if (flag && G::isPointInsidePolygon(&intersect1, vertices) && G::isPointInsidePolygon(&intersect2, vertices)){
+                printf("inside 2 sensor\n");
+                return true;
+            }
         }
     }
 }
@@ -355,96 +415,96 @@ void CoverageBoundHoleAgent::gridConstruction(polygonHole *newHole) {
     sNode->next_ = newHole->node_list_;
     newHole->node_list_ = sNode;
 
-    /* construct grid boundary */
-    while (x >= 0 && a[x][0] == 1) x--; // find the end cell of serial painted cell from left to right in the lowest row
-    x++;
-    Point n, u;
-    n.x_ = minx + x * r_;
-    n.y_ = miny;
-
-    while (n.x_ != sNode->x_ || n.y_ != sNode->y_) {
-        u = *(newHole->node_list_);
-
-        node *newNode = new node();
-        newNode->x_ = n.x_;
-        newNode->y_ = n.y_;
-        newNode->next_ = newHole->node_list_;
-        newHole->node_list_ = newNode;
-
-        if (u.y_ == n.y_) {
-            if (u.x_ < n.x_)        // >
-            {
-                if (y + 1 < ny && x + 1 < nx && a[x + 1][y + 1]) {
-                    x += 1;
-                    y += 1;
-                    n.y_ += r_;
-                }
-                else if (x + 1 < nx && a[x + 1][y]) {
-                    x += 1;
-                    n.x_ += r_;
-                    newHole->node_list_ = newNode->next_;
-                    delete newNode;
-                }
-                else {
-                    n.y_ -= r_;
-                }
-            }
-            else // u->x_ > v->x_			// <
-            {
-                if (y - 1 >= 0 && x - 1 >= 0 && a[x - 1][y - 1]) {
-                    x -= 1;
-                    y -= 1;
-                    n.y_ -= r_;
-                }
-                else if (x - 1 >= 0 && a[x - 1][y]) {
-                    x -= 1;
-                    n.x_ -= r_;
-                    newHole->node_list_ = newNode->next_;
-                    delete newNode;
-                }
-                else {
-                    n.y_ += r_;
-                }
-            }
-        }
-        else    // u->x_ == v->x_
-        {
-            if (u.y_ < n.y_)        // ^
-            {
-                if (y + 1 < ny && x - 1 >= 0 && a[x - 1][y + 1]) {
-                    x -= 1;
-                    y += 1;
-                    n.x_ -= r_;
-                }
-                else if (y + 1 < ny && a[x][y + 1]) {
-                    y += 1;
-                    n.y_ += r_;
-                    newHole->node_list_ = newNode->next_;
-                    delete newNode;
-                }
-                else {
-                    n.x_ += r_;
-                }
-            }
-            else // u.x > n.x		// v
-            {
-                if (y - 1 >= 0 && x + 1 < nx && a[x + 1][y - 1]) {
-                    x += 1;
-                    y -= 1;
-                    n.x_ += r_;
-                }
-                else if (y - 1 >= 0 && a[x][y - 1]) {
-                    y -= 1;
-                    n.y_ -= r_;
-                    newHole->node_list_ = newNode->next_;
-                    delete newNode;
-                }
-                else {
-                    n.x_ -= r_;
-                }
-            }
-        }
-    }
+//    /* construct grid boundary */
+//    while (x >= 0 && a[x][0] == 1) x--; // find the end cell of serial painted cell from left to right in the lowest row
+//    x++;
+//    Point n, u;
+//    n.x_ = minx + x * r_;
+//    n.y_ = miny;
+//
+//    while (n.x_ != sNode->x_ || n.y_ != sNode->y_) {
+//        u = *(newHole->node_list_);
+//
+//        node *newNode = new node();
+//        newNode->x_ = n.x_;
+//        newNode->y_ = n.y_;
+//        newNode->next_ = newHole->node_list_;
+//        newHole->node_list_ = newNode;
+//
+//        if (u.y_ == n.y_) {
+//            if (u.x_ < n.x_)        // >
+//            {
+//                if (y + 1 < ny && x + 1 < nx && a[x + 1][y + 1]) {
+//                    x += 1;
+//                    y += 1;
+//                    n.y_ += r_;
+//                }
+//                else if (x + 1 < nx && a[x + 1][y]) {
+//                    x += 1;
+//                    n.x_ += r_;
+//                    newHole->node_list_ = newNode->next_;
+//                    delete newNode;
+//                }
+//                else {
+//                    n.y_ -= r_;
+//                }
+//            }
+//            else // u->x_ > v->x_			// <
+//            {
+//                if (y - 1 >= 0 && x - 1 >= 0 && a[x - 1][y - 1]) {
+//                    x -= 1;
+//                    y -= 1;
+//                    n.y_ -= r_;
+//                }
+//                else if (x - 1 >= 0 && a[x - 1][y]) {
+//                    x -= 1;
+//                    n.x_ -= r_;
+//                    newHole->node_list_ = newNode->next_;
+//                    delete newNode;
+//                }
+//                else {
+//                    n.y_ += r_;
+//                }
+//            }
+//        }
+//        else    // u->x_ == v->x_
+//        {
+//            if (u.y_ < n.y_)        // ^
+//            {
+//                if (y + 1 < ny && x - 1 >= 0 && a[x - 1][y + 1]) {
+//                    x -= 1;
+//                    y += 1;
+//                    n.x_ -= r_;
+//                }
+//                else if (y + 1 < ny && a[x][y + 1]) {
+//                    y += 1;
+//                    n.y_ += r_;
+//                    newHole->node_list_ = newNode->next_;
+//                    delete newNode;
+//                }
+//                else {
+//                    n.x_ += r_;
+//                }
+//            }
+//            else // u.x > n.x		// v
+//            {
+//                if (y - 1 >= 0 && x + 1 < nx && a[x + 1][y - 1]) {
+//                    x += 1;
+//                    y -= 1;
+//                    n.x_ += r_;
+//                }
+//                else if (y - 1 >= 0 && a[x][y - 1]) {
+//                    y -= 1;
+//                    n.y_ -= r_;
+//                    newHole->node_list_ = newNode->next_;
+//                    delete newNode;
+//                }
+//                else {
+//                    n.x_ -= r_;
+//                }
+//            }
+//        }
+//    }
 //
 //    reducePolygonHole(newHole);
     patchingHole(newHole, minx, miny, r_, a, nx, ny);
@@ -476,6 +536,17 @@ void CoverageBoundHoleAgent::patchingHole(polygonHole *hole, double base_x, doub
                 }
             }
             if (flag >= 2) grid[x][y] = C_WHITE;
+        }
+    }
+
+    for (int i = 0; i < nx; ++i) {
+        for(int j = 0; j < ny; j++){
+            if(grid[i][j]){
+                Point cell;
+                cell.x_ = base_x + (i+0.5)*r_;
+                cell.y_ = base_y + (j+0.5)*r_;
+                if (isInRange(cell, r_)) grid[i][j] = C_BLACK;
+            }
         }
     }
 

@@ -406,5 +406,7 @@ public:
     }
 
     static int circleCircleIntersect(Point c1, double r1, Point c2, double r2, Point *p1, Point *p2);
+
+    static bool isPointReallyInsidePolygon(Point *d, node *node_list);
 };
 #endif /* GEO_MATH_HELPER_H_ */
