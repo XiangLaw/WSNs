@@ -91,7 +91,7 @@ protected:
     node* getNextSensorNeighbor(nsaddr_t prev_node);
 
     void gridConstruction(polygonHole *);
-    void patchingHole(polygonHole *, double, double, double, int8_t**, int, int);
+    void patchingHole(double, double, double, int8_t**, int, int);
 
     int white_node_count(int, int, int, int);
 public:

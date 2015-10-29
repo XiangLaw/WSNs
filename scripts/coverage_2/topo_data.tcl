@@ -635,3 +635,4 @@ $mnode_(631) set X_ 180 ;	$mnode_(631) set Y_ 255 ;	$mnode_(631) set Z_ 0
 $mnode_(632) set X_ 160 ;	$mnode_(632) set Y_ 216 ;	$mnode_(632) set Z_ 0
 $mnode_(633) set X_ 170 ;	$mnode_(633) set Y_ 240 ;	$mnode_(633) set Z_ 0
 $mnode_(634) set X_ 182 ;	$mnode_(634) set Y_ 212 ;	$mnode_(634) set Z_ 0
+$mnode_(634) set X_ 297 ;	$mnode_(634) set Y_ 307 ;	$mnode_(634) set Z_ 0
