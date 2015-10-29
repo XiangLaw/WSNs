@@ -71,6 +71,7 @@ private:
     void dumpSensorNeighbor();
     void dumpBoundaryDetect();
     void dumpCoverageBoundhole(polygonHole*);
+    void dumpPatchingHole(Point);
 protected:
     double communication_range_;
     double sensor_range_;

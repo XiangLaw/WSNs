@@ -305,7 +305,9 @@ BCPCoverageAgent::startUp() {
     fclose(fp);
     fp = fopen("NodeBoundaryDetect.tr", "w");
     fclose(fp);
-    fp = fopen("BCPCoverage.tr", "w");
+    fp = fopen("BCPCoverageHole.tr", "w");
+    fclose(fp);
+    fp = fopen("PatchingHole.tr", "a");
     fclose(fp);
 }
 
@@ -414,7 +416,9 @@ node *BCPCoverageAgent::reduceBCP(node *list) {
     }
 
     if (check){
-        printf("New point: (%f,%f)\n", c.x_, c.y_);
+        printf("NewPointX:%f a\n", c.x_);
+        printf("NewPointY:%f a\n", c.y_);
+        dumpPatchingHole(c);
     }
 
     return list;
@@ -438,10 +442,17 @@ void BCPCoverageAgent::dumpBoundaryDetect() {
 
 void BCPCoverageAgent::dumpCoverageBoundhole(polygonHole* hole) {
     FILE *fp;
-    fp = fopen("BCPCoverage.tr", "a");
+    fp = fopen("BCPCoverageHole.tr", "a");
     for(node* temp = hole->node_list_; temp; temp= temp->next_){
-        fprintf(fp, "%d\t%f\t%f\n", temp->id_, temp->x_, temp->y_);
+        fprintf(fp, "%f\t%f\n", temp->x_, temp->y_);
     }
     fprintf(fp, "\n");
+    fclose(fp);
+}
+
+void BCPCoverageAgent::dumpPatchingHole(Point p){
+    FILE *fp;
+    fp = fopen("PatchingHole.tr", "a");
+    fprintf(fp, "%f\t%f\n", p.x_, p.y_);
     fclose(fp);
 }
