@@ -92,18 +92,27 @@ void CoverageBoundHoleAgent::recvCoverage(Packet *p) {
             return;
         }
 
-        node firstNode = data->get_data(0);
-        node secondNode = data->get_data(1);
+        node firstNode = data->get_intersect_data(0);
+        node secondNode = data->get_intersect_data(1);
         if (firstNode.id_ == cmh->last_hop_ && secondNode.id_ == my_id_) {
             node *head = NULL;
+            boundhole_node_list_ = NULL;
             for (int i = 0; i < data->size(); i++) {
-                node n = data->get_data(i);
-                node *item = new node();
-                item->x_ = n.x_;
-                item->y_ = n.y_;
-                item->id_ = n.id_;
-                item->next_ = head;
-                head = item;
+                node n_intersect = data->get_intersect_data(i);
+                node *intersect = new node();
+                intersect->x_ = n_intersect.x_;
+                intersect->y_ = n_intersect.y_;
+                intersect->id_ = n_intersect.id_;
+                intersect->next_ = head;
+                head = intersect;
+
+                node n_node = data->get_node_data(i);
+                node *node_ = new node();
+                node_->x_ = n_node.x_;
+                node_->y_ = n_node.y_;
+                node_->id_ = n_node.id_;
+                node_->next_ = boundhole_node_list_;
+                boundhole_node_list_ = node_;
             }
             polygonHole *newHole = new polygonHole();
             newHole->node_list_ = head;
@@ -136,7 +145,7 @@ void CoverageBoundHoleAgent::recvCoverage(Packet *p) {
     }
 
     sensor_neighbor *n = getSensorNeighbor(cmh->last_hop_);
-    data->add(n->id_, n->i2_.x_, n->i2_.y_);
+    data->add(n->id_, n->i2_.x_, n->i2_.y_, n->x_, n->y_);
 
     cmh->direction() = hdr_cmn::DOWN;
     cmh->next_hop_ = nb->id_;
@@ -194,7 +203,7 @@ void CoverageBoundHoleAgent::holeBoundaryDetection() {
 
             CoverageBoundHolePacketData *chpkt_data = new CoverageBoundHolePacketData();
             sensor_neighbor *n = getSensorNeighbor(sa->a_->id_);
-            chpkt_data->add(n->id_, n->i2_.x_, n->i2_.y_);
+            chpkt_data->add(n->id_, n->i2_.x_, n->i2_.y_, n->x_, n->y_);
             p->setdata(chpkt_data);
 
             cmh = HDR_CMN(p);
@@ -215,6 +224,60 @@ void CoverageBoundHoleAgent::holeBoundaryDetection() {
             iph->ttl_ = limit_hop_;            // more than ttl_ hop => boundary => remove
 
             send(p, 0);
+        }
+    }
+}
+
+/*
+ * check if cell is in range of one of boundhole node list
+ * @cell is center of cell
+ */
+bool CoverageBoundHoleAgent::isInRange(Point cell, double edge){
+    Point v[4];
+    v[0].x_ = cell.x_ - edge/2; v[0].y_ = cell.y_ + edge/2;
+    v[1].x_ = cell.x_ + edge/2; v[1].y_ = cell.y_ + edge/2;
+    v[2].x_ = cell.x_ + edge/2; v[2].y_ = cell.y_ - edge/2;
+    v[3].x_ = cell.x_ - edge/2; v[3].y_ = cell.y_ - edge/2;
+
+    node *vertices = NULL;
+    for(int i = 0; i < 4; i++){
+        node* n = new node();
+        n->x_ = v[i].x_;
+        n->y_ = v[i].y_;
+        n->next_ = vertices;
+        vertices = n;
+    }
+
+    for (node* tmp = boundhole_node_list_; tmp; tmp = tmp->next_){
+        int flag = 0;
+        if(tmp->id_ == 634 || tmp->id_ == 620 || tmp->id_ == 621){
+            int k = 0;
+        }
+        for(node*vertex = vertices; vertex; vertex = vertex->next_){
+            if (G::distance(tmp, vertex) <= sensor_range_) flag++;
+        }
+        // check if cell inside 1 sensor range
+        if (flag==4) {
+//            printf("inside 1 sensor\n");
+            return true;
+        }
+        // check if cell inside 2 adjacent sensors range
+        if (flag != 0){
+            flag = 1;
+            node* next = tmp->next_ == NULL ? boundhole_node_list_: tmp->next_;
+            for(node*vertex = vertices; vertex; vertex = vertex->next_){
+                if (G::distance(tmp, vertex) > sensor_range_ && G::distance(next, vertex) > sensor_range_){
+                    flag = 0;
+                    break;
+                }
+            }
+
+            Point intersect1, intersect2;
+            G::circleCircleIntersect(tmp, sensor_range_, next, sensor_range_, &intersect1, &intersect2);
+            if (flag && !G::isPointReallyInsidePolygon(&intersect1, vertices) && !G::isPointReallyInsidePolygon(&intersect2, vertices)){
+//                printf("inside 2 sensor\n");
+                return true;
+            }
         }
     }
 }
@@ -251,26 +314,6 @@ void CoverageBoundHoleAgent::gridConstruction(polygonHole *newHole) {
     Point prev_cell_ = *node_list_;
     double r_ = sensor_range_ * sqrt(2) / 2;
 
-    /*if (fmod(prev_cell_.x_, r_) == 0)    // i lies in vertical line
-    {
-        if (this->x_ > prev_cell_.x_) prev_cell_.x_ += r_ / 2;
-        else if (this->x_ < prev_cell_.x_) prev_cell_.x_ -= r_ / 2;
-        else // (this->x_ == prev_cell_.x_)
-        {
-            if (this->y_ > prev_cell_.y_) prev_cell_.x_ += r_ / 2;
-            else prev_cell_.x_ -= r_ / 2;
-        }
-    }
-    if (fmod(prev_cell_.y_, r_) == 0)    // i lies in h line
-    {
-        if (this->y_ > prev_cell_.y_) prev_cell_.y_ += r_ / 2;
-        else if (this->y_ < prev_cell_.y_) prev_cell_.y_ -= r_ / 2;
-        else // (this->y_ == prev_cell_.y_)
-        {
-            if (this->x_ > prev_cell_.x_) prev_cell_.y_ -= r_ / 2;
-            else prev_cell_.y_ += r_ / 2;
-        }
-    }*/
     if (fmod(prev_cell_.x_, r_) == 0)    // i lies in vertical line
     {
         prev_cell_.x_ -= r_ / 2;
@@ -453,16 +496,16 @@ void CoverageBoundHoleAgent::gridConstruction(polygonHole *newHole) {
             }
         }
     }
-//
-//    reducePolygonHole(newHole);
-    patchingHole(newHole, minx, miny, r_, a, nx, ny);
+
+    patchingHole(minx, miny, r_, a, nx, ny);
+
     // free memory
     for (int i = 0; i < nx; i++)
         delete[] a[i];
     delete[] a;
 }
 
-void CoverageBoundHoleAgent::patchingHole(polygonHole *hole, double base_x, double base_y, double r_,
+void CoverageBoundHoleAgent::patchingHole(double base_x, double base_y, double r_,
                                           int8_t **grid, int nx, int ny) {
     int x = 0;
     int y = 0;
@@ -484,6 +527,28 @@ void CoverageBoundHoleAgent::patchingHole(polygonHole *hole, double base_x, doub
                 }
             }
             if (flag >= 2) grid[x][y] = C_WHITE;
+        }
+    }
+
+    for (int i = 0; i < nx; ++i) {
+        for(int j = 0; j < ny; j++){
+            if(grid[i][j]){
+                Point cell;
+                cell.x_ = base_x + (i+0.5)*r_;
+                cell.y_ = base_y + (j+0.5)*r_;
+                if ((i==4 || i==5) && j ==4){
+                    int debug = 0;
+                }
+                if (isInRange(cell, r_)) {
+                    printf("%f\t%f\n", cell.x_ - r_/2, cell.y_ + r_/2);
+                    printf("%f\t%f\n", cell.x_ + r_/2, cell.y_ + r_/2);
+                    printf("%f\t%f\n", cell.x_ + r_/2, cell.y_ - r_/2);
+                    printf("%f\t%f\n", cell.x_ - r_/2, cell.y_ - r_/2);
+                    printf("%f\t%f\n", cell.x_ - r_/2, cell.y_ + r_/2);
+                    printf("\n");
+                    grid[i][j] = C_BLACK;
+                }
+            }
         }
     }
 
@@ -707,72 +772,6 @@ node *CoverageBoundHoleAgent::getNextSensorNeighbor(nsaddr_t prev_node) {
     return NULL;
 }
 
-void CoverageBoundHoleAgent::reducePolygonHole(polygonHole *h) {
-//    int count = 0;
-//    for (node *n = h->node_list_; n != NULL; n = n->next_) count++;
-//
-//    //h->circleNodeList();
-//    node *temp = h->node_list_;
-//    while (temp->next_ && temp->next_ != h->node_list_) temp = temp->next_;
-//    temp->next_ = h->node_list_;
-//
-//    // reduce hole
-//    node *gmin;
-//    int min;
-//    Point r;
-//
-//    for (; count > limit_; count -= 2) {
-//        min = MAXINT;
-//
-//        node *g = h->node_list_;
-//        do {
-//            node *g1 = g->next_;
-//            node *g2 = g1->next_;
-//            node *g3 = g2->next_;
-//
-//            if (G::angle(g2, g1, g2, g3) > M_PI) {
-//                //	int t = fabs(g3->x_ - g2->x_) + fabs(g2->y_ - g1->y_) + fabs(g3->y_ - g2->y_) + fabs(g2->x_ - g1->x_);	// conditional is boundary length
-//                int t = fabs(g3->x_ - g2->x_) * fabs(g2->y_ - g1->y_) + fabs(g3->y_ - g2->y_) * fabs(g2->x_ - g1->x_);    // conditional is area
-//                if (t < min) {
-//                    gmin = g;
-//                    min = t;
-//                    r.x_ = g1->x_ + g3->x_ - g2->x_;
-//                    r.y_ = g1->y_ + g3->y_ - g2->y_;
-//                }
-//            }
-//
-//            g = g1;
-//        }
-//        while (g != h->node_list_);
-//
-//        if (r == *(gmin->next_->next_->next_->next_)) {
-//            node *temp = gmin->next_;
-//            gmin->next_ = gmin->next_->next_->next_->next_->next_;
-//
-//            delete temp->next_->next_->next_;
-//            delete temp->next_->next_;
-//            delete temp->next_;
-//            delete temp;
-//
-//            count -= 2;
-//        }
-//        else {
-//            node *newNode = new node();
-//            newNode->x_ = r.x_;
-//            newNode->y_ = r.y_;
-//            newNode->next_ = gmin->next_->next_->next_->next_;
-//
-//            delete gmin->next_->next_->next_;
-//            delete gmin->next_->next_;
-//            delete gmin->next_;
-//
-//            gmin->next_ = newNode;
-//        }
-//
-//        h->node_list_ = gmin;
-//    }
-}
-
 /*----------------- DUMP --------------------------*/
 void CoverageBoundHoleAgent::dumpSensorNeighbor() {
     FILE *fp = fopen("SensorNeighbors.tr", "a");
@@ -809,6 +808,14 @@ void CoverageBoundHoleAgent::dumpCoverageBoundHole(polygonHole *pHole) {
 void CoverageBoundHoleAgent::dumpPatchingHole(Point point) {
     FILE *fp;
     fp = fopen("PatchingHole.tr", "a");
+    double r_ = sensor_range_*sqrt(2);
     fprintf(fp, "%f\t%f\n", point.x_, point.y_);
+//    fprintf(fp, "\n");
+//    fprintf(fp, "%f\t%f\n", point.x_-r_/2, point.y_-r_/2);
+//    fprintf(fp, "%f\t%f\n", point.x_-r_/2, point.y_+r_/2);
+//    fprintf(fp, "%f\t%f\n", point.x_+r_/2, point.y_+r_/2);
+//    fprintf(fp, "%f\t%f\n", point.x_+r_/2, point.y_-r_/2);
+//    fprintf(fp, "%f\t%f\n", point.x_-r_/2, point.y_-r_/2);
+//    fprintf(fp, "\n");
     fclose(fp);
 }
