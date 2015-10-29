@@ -545,7 +545,10 @@ void CoverageBoundHoleAgent::patchingHole(polygonHole *hole, double base_x, doub
                 Point cell;
                 cell.x_ = base_x + (i+0.5)*r_;
                 cell.y_ = base_y + (j+0.5)*r_;
-                if (isInRange(cell, r_)) grid[i][j] = C_BLACK;
+                if (isInRange(cell, r_)) {
+                    printf("cell: %f, %f\n", cell.x_, cell.y_);
+                    grid[i][j] = C_BLACK;
+                }
             }
         }
     }
