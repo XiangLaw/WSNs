@@ -311,7 +311,7 @@ void CoverageBoundHoleAgent::gridConstruction(polygonHole *newHole) {
     Point prev_cell_ = *node_list_;
     double r_ = sensor_range_ * sqrt(2) / 2;
 
-    if (fmod(prev_cell_.x_, r_) == 0)    // i lies in vertical line
+    /*if (fmod(prev_cell_.x_, r_) == 0)    // i lies in vertical line
     {
         if (this->x_ > prev_cell_.x_) prev_cell_.x_ += r_ / 2;
         else if (this->x_ < prev_cell_.x_) prev_cell_.x_ -= r_ / 2;
@@ -330,6 +330,14 @@ void CoverageBoundHoleAgent::gridConstruction(polygonHole *newHole) {
             if (this->x_ > prev_cell_.x_) prev_cell_.y_ -= r_ / 2;
             else prev_cell_.y_ += r_ / 2;
         }
+    }*/
+    if (fmod(prev_cell_.x_, r_) == 0)    // i lies in vertical line
+    {
+        prev_cell_.x_ -= r_ / 2;
+    }
+    if (fmod(prev_cell_.y_, r_) == 0)    // i lies in h line
+    {
+        prev_cell_.y_ += r_ / 2;
     }
 
     prev_cell_.x_ = ((int) (prev_cell_.x_ / r_) + 0.5) * r_;
