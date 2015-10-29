@@ -82,6 +82,10 @@ void BCPCoverageAgent::recv(Packet *p, Handler *h) {
 void BCPCoverageAgent::recvCoverage(Packet *p) {
     struct hdr_ip *iph = HDR_IP(p);
     struct hdr_cmn *cmh = HDR_CMN(p);
+    if(cmh->uid() == 669)
+    {
+        int a =1;
+    }
 
     BCPCoveragePacketData *data = (BCPCoveragePacketData *) p->userdata();
 
@@ -266,6 +270,9 @@ void BCPCoverageAgent::holeBoundaryDetection() {
     hdr_ip *iph;
     hdr_bcpcoverage *ch;
 
+    if(my_id_ == 635) {
+        int a = 1;
+    }
     for (node *n = bcp_list; n; n = n->next_) {
         node *nextBCP = getNextBCP(n);
         if (nextBCP != NULL) continue;
