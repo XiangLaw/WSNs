@@ -423,8 +423,7 @@ node *BCPCoverageAgent::reduceBCP(node *list) {
         }
     }
 
-    printf("NewPointX:%f a\n", patching_point.x_);
-    printf("NewPointY:%f a\n", patching_point.y_);
+    printf("NewPointX:%fNewPointY:%f\n", patching_point.x_, patching_point.y_);
     dumpPatchingHole(patching_point);
 
     return list;
