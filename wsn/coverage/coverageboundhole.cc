@@ -528,9 +528,10 @@ void CoverageBoundHoleAgent::patchingHole(double base_x, double base_y, double r
         }
     }
 
+    // reduce grid
     for (int i = 0; i < nx; ++i) {
         for (int j = 0; j < ny; j++) {
-            if (grid[i][j]) {
+            if (grid[i][j] == C_WHITE) {
                 Point cell;
                 cell.x_ = base_x + (i + 0.5) * r_;
                 cell.y_ = base_y + (j + 0.5) * r_;
