@@ -61,7 +61,7 @@ private:
 
     bool checkBCP(node*);
     node *getBCP(Point point);
-    void updateBCP(node *pNode);
+    void updateBCP(node *pNode, node*);
     node *getNextBCP(node *pNode);
     node *reduceBCP(node *pNode);
 

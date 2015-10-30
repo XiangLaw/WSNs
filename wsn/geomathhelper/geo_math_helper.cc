@@ -715,10 +715,6 @@ bool G::lineSegmentIntersection(Point *a, Point *b, Line l, Point &intersection)
     return false;
 }
 
-int G::circleCircleIntersect(Circle c1, Circle c2, Point *intersect1, Point *intersect2) {
-    return G::circleCircleIntersect(c1, c1.radius_, c2, c2.radius_, intersect1, intersect2);
-}
-
 // see http://mathworld.wolfram.com/Circle-CircleIntersection.html
 int G::circleCircleIntersect(Point c1, double r1, Point c2, double r2, Point *p1, Point *p2)
 {
@@ -783,7 +779,7 @@ int G::circleCircleIntersect0a(double r1, Point c2, double r2, Point* p1, Point 
 /*---------------------------------------------------------------------
 circleCircleIntersect0b also assumes that the 1st circle is origin-centered.
 ---------------------------------------------------------------------*/
-int  G::circleCircleIntersect0b( int r1, Point c2, int r2, Point *p1, Point *p2)
+int  G::circleCircleIntersect0b( double r1, Point c2, double r2, Point *p1, Point *p2)
 {
     double a2;          /* center of 2nd circle when rotated to x-axis */
     Point q1, q2;          /* solution when c2 on x-axis */
@@ -808,7 +804,7 @@ int  G::circleCircleIntersect0b( int r1, Point c2, int r2, Point *p1, Point *p2)
 /*---------------------------------------------------------------------
 circleCircleIntersect00 assumes circle centers are (0,0) and (a2,0).
 ---------------------------------------------------------------------*/
-void  G::circleCircleIntersect00( int r1, double a2, int r2, Point* p1, Point *p2 )
+void  G::circleCircleIntersect00( double r1, double a2, double r2, Point* p1, Point *p2 )
 {
     double r1sq, r2sq;
     r1sq = r1*r1;
@@ -818,6 +814,45 @@ void  G::circleCircleIntersect00( int r1, double a2, int r2, Point* p1, Point *p
     p1->x_ = p2->x_ = ( a2 + ( r1sq - r2sq ) / a2 ) / 2;
     p1->y_ = sqrt( r1sq - p1->x_*p1->x_ );
     p2->y_ = -p1->y_;
+}
+
+// see at http://mathworld.wolfram.com/Circle-LineIntersection.html
+int G::circleLineIntersect(Point c, double r, Point i1, Point i2, Point *p1, Point *p2){
+    i1.x_ = i1.x_ - c.x_;
+    i2.x_ = i2.x_ - c.x_;
+    i1.y_ = i1.y_ - c.y_;
+    i2.y_ = i2.y_ - c.y_;
+
+    int re = circleLineIntersect00(r, i1, i2, p1, p2);
+    p1->x_ += c.x_;
+    p2->x_ += c.x_;
+    p1->y_ += c.y_;
+    p2->y_ += c.y_;
+    return re;
+}
+
+// intersect of line l and circle ((0,0), r)
+int G::circleLineIntersect00(double r, Point i1, Point i2, Point *p1, Point *p2) {
+    double dx = i2.x_ - i1.x_;
+    double dy = i2.y_ - i1.y_;
+    double dr = sqrt(dx*dx + dy*dy);
+    double d =  i1.x_*i2.y_ - i1.y_*i2.x_;
+    double delta = r*r*dr*dr - d*d;
+
+    if (delta < 0){
+        return 0;
+    } else if (delta == 0){
+        p1->x_ = p2->x_ = d*dy/(dr*dr);
+        p1->y_ = p2->y_ = -d*dx/(dr*dr);
+        return 1;
+    } else {
+        int sgn = dy < 0 ? -1 : 1;
+        p1->x_ = (d * dy + sgn * dx * sqrt(delta)) / (dr * dr);
+        p2->x_ = (d * dy - sgn * dx * sqrt(delta)) / (dr * dr);
+        p1->y_ = (-d * dx + fabs(dy) * sqrt(delta)) / (dr * dr);
+        p2->y_ = (-d * dx - fabs(dy) * sqrt(delta)) / (dr * dr);
+        return 2;
+    }
 }
 
 
@@ -1009,4 +1044,40 @@ bool G::isPointReallyInsidePolygon(Point *d, node *node_list) {
     }
 
     return !(greater_horizontal % 2 == 0 || less_horizontal % 2 == 0);
+}
+
+// get agrregation between segment [a1, a2] and [b1, b2]
+// return to a1, a2
+int G::segmentAggregation(Point *a1, Point *a2, Point *b1, Point *b2) {
+    Point tmp;
+    if (a1->x_ > a2->x_ || (a1->x_ == a2->y_ && a1->y_ > a2->y_)){
+        tmp = *a1;
+        *a1 = *a2;
+        *a2 = tmp;
+    }
+
+    if (b1->x_ > b2->x_ || (b1->x_ == b2->y_ && b1->y_ > b2->y_)){
+        tmp = *b1;
+        *b1 = *b2;
+        *b2 = tmp;
+    }
+
+    if (onSegment(a1, b1, a2)){
+        *a1 = *b1;
+        if (onSegment(a1, b2, a2)){
+            *a2 = * b2;
+        }
+        return 1;
+    } else {
+        if (onSegment(a1, b2, a2)){
+            *a2 = *b2;
+            return 1;
+        } else {
+            if (onSegment(b1, a1, b2)){
+                return 1;
+            }
+        }
+    }
+
+    return 0;
 }

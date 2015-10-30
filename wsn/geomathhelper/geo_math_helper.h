@@ -104,9 +104,11 @@ class G {
 private:
     static int circleCircleIntersect0a(double r1, Point c2, double r2, Point *p1, Point *p2);
 
-    static int circleCircleIntersect0b(int r1, Point c2, int r2, Point *p1, Point *p2);
+    static int circleCircleIntersect0b(double r1, Point c2, double r2, Point *p1, Point *p2);
 
-    static void circleCircleIntersect00(int r1, double a2, int r2, Point *p1, Point *p2);
+    static void circleCircleIntersect00(double r1, double a2, double r2, Point *p1, Point *p2);
+
+    static int circleLineIntersect00(double r, Point i1, Point i2, Point *p1, Point *p2);
 
 public:
 
@@ -399,13 +401,18 @@ public:
 
     static int position(Point *p1, Point *p2, Line *l);
 
-    static int circleCircleIntersect(Circle c1, Circle c2, Point *intersect1, Point *intersect2);
+    static int circleCircleIntersect(Circle c1, Circle c2, Point *intersect1, Point *intersect2){
+        return G::circleCircleIntersect(c1, c1.radius_, c2, c2.radius_, intersect1, intersect2);
+    }
 
     static int circleCircleIntersect(Point* c1, double r1, Point* c2, double r2, Point *p1, Point *p2){
         return circleCircleIntersect(*c1, r1, *c2, r2, p1, p2);
     }
 
     static int circleCircleIntersect(Point c1, double r1, Point c2, double r2, Point *p1, Point *p2);
+    static int circleLineIntersect(Point c, double r, Point i1, Point i2, Point *p1, Point *p2);
+
+    static int segmentAggregation(Point *a1, Point *a2, Point *b1, Point *b2);
 
     static bool isPointReallyInsidePolygon(Point *d, node *node_list);
 };

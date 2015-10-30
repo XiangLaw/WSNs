@@ -1226,7 +1226,7 @@ Simulator instproc create-coverage-agent { node } {
 	$node addr $addr
 	$node set ragent_ $ragent
 	$self at 0.0 	"$ragent start"    ;# start updates
-    $self at 30	"$ragent coverage"
+    $self at 50	"$ragent coverage"
 	return $ragent
 }
 
@@ -1242,7 +1242,7 @@ Simulator instproc create-bcp-coverage-agent { node } {
 	$node addr $addr
 	$node set ragent_ $ragent
 	$self at 0.0 	"$ragent start"    ;# start updates
-    $self at 30	"$ragent coverage"
+    $self at 50	"$ragent coverage"
 	return $ragent
 }
 

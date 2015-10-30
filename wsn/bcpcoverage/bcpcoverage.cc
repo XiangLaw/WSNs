@@ -59,6 +59,7 @@ int BCPCoverageAgent::command(int argc, const char *const *argv) {
     } else if (strcasecmp(argv[1], "coverage") == 0) {
         runTimeCounter.start();
         bcpDetection();
+        dumpBoundaryDetect();
         boundhole_timer_.resched(10 + randSend_.uniform(0.0, 5));
         return TCL_OK;
     }
@@ -97,7 +98,7 @@ void BCPCoverageAgent::recvCoverage(Packet *p) {
     node *nextBCP = getNextBCP(&lastNode);
     if (data->size() >= 3 && firstNode.id_ == nextBCP->id_) {
         node *head = NULL;
-        for (int i = 0; i < data->size(); i++) {
+        for (int i = data->size()-1; i >= 0; i--) {
             node n = data->get_data(i);
             node *item = new node();
             item->x_ = n.x_;
@@ -161,17 +162,13 @@ node *BCPCoverageAgent::getBCP(Point point) {
     return NULL;
 }
 
-void BCPCoverageAgent::updateBCP(node *pNode) {
-    Angle max = 0;
-    int32_t addr = -1;
-    for (node *tmp = neighbor_list_; tmp; tmp = tmp->next_) {
-        Angle angle = G::angle(this, tmp, this, pNode);
-        if (max < angle) {
-            max = angle;
-            addr = tmp->id_;
-        }
+void BCPCoverageAgent::updateBCP(node *pNode, node* compare) {
+    neighbor *n = getNeighbor(pNode->id_);
+    Angle angle = G::angle(this, n, this, pNode);
+    Angle angle1 = G::angle(this, compare, this, pNode);
+    if (angle1 > angle){
+        pNode->id_ = compare->id_;
     }
-    pNode->id_ = addr;
 }
 
 void BCPCoverageAgent::bcpDetection() {
@@ -206,7 +203,7 @@ void BCPCoverageAgent::bcpDetection() {
                 }
             }
         } else {
-            updateBCP(temp);
+            updateBCP(temp, n);
         }
 
         // check intersect 2
@@ -241,7 +238,7 @@ void BCPCoverageAgent::bcpDetection() {
                 }
             }
         } else {
-            updateBCP(temp);
+            updateBCP(temp, n);
         }
     }
 }
@@ -251,7 +248,10 @@ node *BCPCoverageAgent::getNextBCP(node *pNode) {
     neighbor *n = getNeighbor(pNode->id_);
     if (G::angle(this, pNode, this, n) >= M_PI) {
         node *bcp = getBCP(*pNode);
-        return bcp->next_ == NULL ? bcp_list : bcp->next_;
+        node* next = bcp->next_ == NULL ? bcp_list : bcp->next_;
+        neighbor *next_n = getNeighbor(next->id_);
+        if (G::angle(this, next, this, next_n) >= M_PI) return bcp;
+        else return next;
     }
 
     return NULL;
@@ -259,8 +259,6 @@ node *BCPCoverageAgent::getNextBCP(node *pNode) {
 
 void BCPCoverageAgent::holeBoundaryDetection() {
     if (bcp_list == NULL) return;
-
-    dumpBoundaryDetect();
     Packet *p;
     hdr_cmn *cmh;
     hdr_ip *iph;
@@ -357,9 +355,10 @@ void BCPCoverageAgent::addNeighbor(nsaddr_t nid, Point location) {
 node *BCPCoverageAgent::reduceBCP(node *list) {
     node *temp, *nextAdjacent, *n, *prev, *temp2;
     double min = G::distance(list, list->next_);
+    double r_ = sensor_range_ - 0.01;
     temp2 = list;
     bool check = true;
-    Point c, n0_a_, n0_b_;
+    Point c, n0_a_, n0_b_, p1, p2;
     // find the shortest edge
     for(temp = list->next_; temp; temp = temp->next_){
         n = temp->next_ == NULL ? list : temp->next_;
@@ -374,52 +373,54 @@ node *BCPCoverageAgent::reduceBCP(node *list) {
 
     n = temp->next_ == NULL ? list : temp->next_;
     nextAdjacent = n->next_ == NULL ? list : n->next_;
-    prev = n;
-    G::circleCircleIntersect(temp, sensor_range_, prev, sensor_range_, &c, &n0_b_);
+    G::circleCircleIntersect(temp, r_, n, r_, &c, &n0_b_);
 
     check = true;
-    while (check && G::distance(temp, nextAdjacent) <= 2 * sensor_range_) {
+    while (check && G::distance(temp, nextAdjacent) <= 2 * r_) {
         // detect N0
-        G::circleCircleIntersect(temp, sensor_range_, nextAdjacent, sensor_range_, &n0_a_, &n0_b_);
+        G::circleCircleIntersect(temp, r_, nextAdjacent, r_, &n0_a_, &n0_b_);
 
         for (node *i = n; i != nextAdjacent; i = i->next_ == NULL ? list : i->next_) {
-            if (G::distance(n0_a_, i) > sensor_range_) {
-                check = false;
-                break;
+            if (n0_a_.x_ == n0_b_.x_ && n0_a_.y_ == n0_b_.y_){ //N0 is an arbitrary point
+                if (G::distance(n0_a_, n) > r_){
+                    check = false;
+                    break;
+                }
+            } else { // N0 belongs a range
+                int re = G::circleLineIntersect(*n, r_, n0_a_, n0_b_, &p1, &p2);
+                if (re == 2) {
+                    if (!G::segmentAggregation(&n0_a_, &n0_b_, &p1, &p2)) {
+                        check = false;
+                        break;
+                    }
+                } else if (re == 1){
+                    if (G::onSegment(n0_a_, p1, n0_b_)){
+                        n0_a_ = n0_b_ = p1;
+                    } else {
+                        check = false;
+                        break;
+                    }
+                } else {
+                    check = false;
+                    break;
+                }
             }
         }
 
-//            if (!check) {
-//                check = true;
-//                for (node *i = temp->next_; i != nextAdjacent; i = i->next_ == NULL ? list : i->next_) {
-//                    if (G::distance(n0_b_, i) > sensor_range_) {
-//                        check = false;
-//                        break;
-//                    }
-//                }
-//            } else {
-//                c.x_ = n0_a_.x_;
-//                c.y_ = n0_a_.y_;
-//            }
-
         if (check){
-            c.x_ = n0_b_.x_;
-            c.y_ = n0_b_.y_;
+            c.x_ = n0_a_.x_;
+            c.y_ = n0_a_.y_;
         }
 
         if (nextAdjacent == temp) break;
 
         if (check) {
-            prev = nextAdjacent;
             nextAdjacent = nextAdjacent->next_ == NULL ? list : nextAdjacent->next_;
         }
     }
 
-    if (check){
-        printf("NewPointX:%f a\n", c.x_);
-        printf("NewPointY:%f a\n", c.y_);
-        dumpPatchingHole(c);
-    }
+    printf("$mnode_(xxx) set X_ %f ;\t$mnode_(xxx) set Y_ %f ;\t$mnode_(xxx) set Z_ 0\n", c.x_, c.y_);
+    dumpPatchingHole(c);
 
     return list;
 }
@@ -430,6 +431,7 @@ void BCPCoverageAgent::dumpSensorNeighbor() {
 }
 
 void BCPCoverageAgent::dumpBoundaryDetect() {
+    if (bcp_list == NULL) return;
     FILE *fp;
     fp = fopen("NodeBoundaryDetect.tr", "a");
     fprintf(fp, "%d\t%f\t%f", my_id_, x_, y_);
