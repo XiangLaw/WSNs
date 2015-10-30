@@ -69,11 +69,8 @@ private:
 
     void recvCoverage(Packet*);
 
-    void reducePolygonHole(polygonHole*);
     bool isInRange(Point, double);
 
-    void dumpSensorNeighbor();
-    void dumpBoundaryDetect();
     void dumpCoverageBoundHole(polygonHole*);
     void dumpPatchingHole(Point);
 

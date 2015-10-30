@@ -54,8 +54,6 @@ CoverageBoundHoleAgent::CoverageBoundHoleAgent() : GPSRAgent(),
 int CoverageBoundHoleAgent::command(int argc, const char *const *argv) {
     if (strcasecmp(argv[1], "start") == 0) {
         startUp();
-    } else if (strcasecmp(argv[1], "dump") == 0) {
-        dumpSensorNeighbor();
     } else if (strcasecmp(argv[1], "coverage") == 0) {
         runTimeCounter.start();
         boundaryNodeDetection();
@@ -191,7 +189,6 @@ bool CoverageBoundHoleAgent::boundaryNodeDetection() {
 
 void CoverageBoundHoleAgent::holeBoundaryDetection() {
     if (isBoundary) {
-        dumpBoundaryDetect();
         Packet *p;
         hdr_cmn *cmh;
         hdr_ip *iph;
@@ -231,37 +228,41 @@ void CoverageBoundHoleAgent::holeBoundaryDetection() {
  * check if cell is in range of one of boundhole node list
  * @cell is center of cell
  */
-bool CoverageBoundHoleAgent::isInRange(Point cell, double edge){
+bool CoverageBoundHoleAgent::isInRange(Point cell, double edge) {
     Point v[4];
-    v[0].x_ = cell.x_ - edge/2; v[0].y_ = cell.y_ + edge/2;
-    v[1].x_ = cell.x_ + edge/2; v[1].y_ = cell.y_ + edge/2;
-    v[2].x_ = cell.x_ + edge/2; v[2].y_ = cell.y_ - edge/2;
-    v[3].x_ = cell.x_ - edge/2; v[3].y_ = cell.y_ - edge/2;
+    v[0].x_ = cell.x_ - edge / 2;
+    v[0].y_ = cell.y_ + edge / 2;
+    v[1].x_ = cell.x_ + edge / 2;
+    v[1].y_ = cell.y_ + edge / 2;
+    v[2].x_ = cell.x_ + edge / 2;
+    v[2].y_ = cell.y_ - edge / 2;
+    v[3].x_ = cell.x_ - edge / 2;
+    v[3].y_ = cell.y_ - edge / 2;
 
     node *vertices = NULL;
-    for(int i = 0; i < 4; i++){
-        node* n = new node();
+    for (int i = 0; i < 4; i++) {
+        node *n = new node();
         n->x_ = v[i].x_;
         n->y_ = v[i].y_;
         n->next_ = vertices;
         vertices = n;
     }
 
-    for (node* tmp = boundhole_node_list_; tmp; tmp = tmp->next_){
+    for (node *tmp = boundhole_node_list_; tmp; tmp = tmp->next_) {
         int flag = 0;
-        for(node*vertex = vertices; vertex; vertex = vertex->next_){
+        for (node *vertex = vertices; vertex; vertex = vertex->next_) {
             if (G::distance(tmp, vertex) <= sensor_range_) flag++;
         }
         // check if cell inside 1 sensor range
-        if (flag==4) {
+        if (flag == 4) {
             return true;
         }
         // check if cell inside 2 adjacent sensors range
-        if (flag != 0){
+        if (flag != 0) {
             flag = 1;
-            node* next = tmp->next_ == NULL ? boundhole_node_list_: tmp->next_;
-            for(node*vertex = vertices; vertex; vertex = vertex->next_){
-                if (G::distance(tmp, vertex) > sensor_range_ && G::distance(next, vertex) > sensor_range_){
+            node *next = tmp->next_ == NULL ? boundhole_node_list_ : tmp->next_;
+            for (node *vertex = vertices; vertex; vertex = vertex->next_) {
+                if (G::distance(tmp, vertex) > sensor_range_ && G::distance(next, vertex) > sensor_range_) {
                     flag = 0;
                     break;
                 }
@@ -269,11 +270,14 @@ bool CoverageBoundHoleAgent::isInRange(Point cell, double edge){
 
             Point intersect1, intersect2;
             G::circleCircleIntersect(tmp, sensor_range_, next, sensor_range_, &intersect1, &intersect2);
-            if (flag && !G::isPointReallyInsidePolygon(&intersect1, vertices) && !G::isPointReallyInsidePolygon(&intersect2, vertices)){
+            if (flag && !G::isPointReallyInsidePolygon(&intersect1, vertices) &&
+                !G::isPointReallyInsidePolygon(&intersect2, vertices)) {
                 return true;
             }
         }
     }
+
+    return false;
 }
 
 void CoverageBoundHoleAgent::gridConstruction(polygonHole *newHole) {
@@ -525,11 +529,11 @@ void CoverageBoundHoleAgent::patchingHole(double base_x, double base_y, double r
     }
 
     for (int i = 0; i < nx; ++i) {
-        for(int j = 0; j < ny; j++){
-            if(grid[i][j]){
+        for (int j = 0; j < ny; j++) {
+            if (grid[i][j]) {
                 Point cell;
-                cell.x_ = base_x + (i+0.5)*r_;
-                cell.y_ = base_y + (j+0.5)*r_;
+                cell.x_ = base_x + (i + 0.5) * r_;
+                cell.y_ = base_y + (j + 0.5) * r_;
                 if (isInRange(cell, r_)) {
                     grid[i][j] = C_BLACK;
                 }
@@ -602,13 +606,6 @@ void CoverageBoundHoleAgent::patchingHole(double base_x, double base_y, double r
             }
         }
     }
-
-    for (int j = ny; j >= 0; j--) {
-        for (int i = 0; i < nx; i++)
-            printf("%d", grid[i][j]);
-        printf("\n");
-    }
-
 }
 
 int CoverageBoundHoleAgent::white_node_count(int a, int b, int c, int d) {
@@ -623,12 +620,6 @@ int CoverageBoundHoleAgent::white_node_count(int a, int b, int c, int d) {
 /*----------------Utils function----------------------*/
 void CoverageBoundHoleAgent::startUp() {
     FILE *fp;
-    fp = fopen("SensorNeighbors.tr", "w");
-    fclose(fp);
-    fp = fopen("NodeBoundaryDetect.tr", "w");
-    fclose(fp);
-    fp = fopen("CoverageBoundHole.tr", "w");
-    fclose(fp);
     fp = fopen("CoverageGrid.tr", "w");
     fclose(fp);
     fp = fopen("PatchingHole.tr", "w");
@@ -758,27 +749,6 @@ node *CoverageBoundHoleAgent::getNextSensorNeighbor(nsaddr_t prev_node) {
 }
 
 /*----------------- DUMP --------------------------*/
-void CoverageBoundHoleAgent::dumpSensorNeighbor() {
-    FILE *fp = fopen("SensorNeighbors.tr", "a");
-    fprintf(fp, "%d	%f\t%f\t", this->my_id_, this->x_, this->y_);
-    for (sensor_neighbor *temp = sensor_neighbor_list_; temp; temp = (sensor_neighbor *) temp->next_) {
-        fprintf(fp, "%d(%f,%f\t%f,%f),", temp->id_, temp->i1_.x_, temp->i1_.y_, temp->i2_.x_, temp->i2_.y_);
-    }
-    fprintf(fp, "\n");
-    fclose(fp);
-}
-
-void CoverageBoundHoleAgent::dumpBoundaryDetect() {
-    FILE *fp;
-    fp = fopen("NodeBoundaryDetect.tr", "a");
-    fprintf(fp, "%d\t%f\t%f", my_id_, x_, y_);
-    for (stuckangle *pair = cover_neighbors_; pair; pair = pair->next_) {
-        fprintf(fp, "\t%d-%d", pair->a_->id_, pair->b_->id_);
-    }
-    fprintf(fp, "\n");
-    fclose(fp);
-}
-
 void CoverageBoundHoleAgent::dumpCoverageBoundHole(polygonHole *pHole) {
     FILE *fp;
     fp = fopen("CoverageGrid.tr", "a");
@@ -793,14 +763,6 @@ void CoverageBoundHoleAgent::dumpCoverageBoundHole(polygonHole *pHole) {
 void CoverageBoundHoleAgent::dumpPatchingHole(Point point) {
     FILE *fp;
     fp = fopen("PatchingHole.tr", "a");
-    double r_ = sensor_range_*sqrt(2);
     fprintf(fp, "%f\t%f\n", point.x_, point.y_);
-//    fprintf(fp, "\n");
-//    fprintf(fp, "%f\t%f\n", point.x_-r_/2, point.y_-r_/2);
-//    fprintf(fp, "%f\t%f\n", point.x_-r_/2, point.y_+r_/2);
-//    fprintf(fp, "%f\t%f\n", point.x_+r_/2, point.y_+r_/2);
-//    fprintf(fp, "%f\t%f\n", point.x_+r_/2, point.y_-r_/2);
-//    fprintf(fp, "%f\t%f\n", point.x_-r_/2, point.y_-r_/2);
-//    fprintf(fp, "\n");
     fclose(fp);
 }
