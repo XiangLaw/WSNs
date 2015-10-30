@@ -85,7 +85,6 @@ protected:
 	void dumpNeighbor();
 	void dumpEnergy(char * filename);
 	void dumpEnergy();
-	void dumpHopcount(Packet* p);
 
 	double hello_period_;
 	double energy_checkpoint_;

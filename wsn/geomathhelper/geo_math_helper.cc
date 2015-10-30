@@ -1046,7 +1046,7 @@ bool G::isPointReallyInsidePolygon(Point *d, node *node_list) {
     return !(greater_horizontal % 2 == 0 || less_horizontal % 2 == 0);
 }
 
-// get agrregation between segment [a1, a2] and [b1, b2]
+// get aggregation between segment [a1, a2] and [b1, b2]
 // return to a1, a2
 int G::segmentAggregation(Point *a1, Point *a2, Point *b1, Point *b2) {
     Point tmp;

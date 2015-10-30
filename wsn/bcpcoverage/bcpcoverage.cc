@@ -3,7 +3,6 @@
 //
 
 #include "bcpcoverage.h"
-#include "../include/tcl.h"
 #include "bcpcoverage_packet_data.h"
 
 #define EPSILON 0.0001
@@ -54,12 +53,10 @@ BCPCoverageAgent::BCPCoverageAgent() : GPSRAgent(), boundhole_timer_(this, &BCPC
 int BCPCoverageAgent::command(int argc, const char *const *argv) {
     if (strcasecmp(argv[1], "start") == 0) {
         startUp();
-    } else if (strcasecmp(argv[1], "dump") == 0) {
-        dumpSensorNeighbor();
     } else if (strcasecmp(argv[1], "coverage") == 0) {
         runTimeCounter.start();
         bcpDetection();
-        dumpBoundaryDetect();
+        // dumpBoundaryDetect();
         boundhole_timer_.resched(10 + randSend_.uniform(0.0, 5));
         return TCL_OK;
     }
@@ -83,10 +80,6 @@ void BCPCoverageAgent::recv(Packet *p, Handler *h) {
 void BCPCoverageAgent::recvCoverage(Packet *p) {
     struct hdr_ip *iph = HDR_IP(p);
     struct hdr_cmn *cmh = HDR_CMN(p);
-    if(cmh->uid() == 669)
-    {
-        int a =1;
-    }
 
     BCPCoveragePacketData *data = (BCPCoveragePacketData *) p->userdata();
 
@@ -102,7 +95,7 @@ void BCPCoverageAgent::recvCoverage(Packet *p) {
     node *nextBCP = getNextBCP(&lastNode);
     if (data->size() >= 3 && firstNode.id_ == nextBCP->id_) {
         node *head = NULL;
-        for (int i = data->size()-1; i >= 0; i--) {
+        for (int i = data->size() - 1; i >= 0; i--) {
             node n = data->get_data(i);
             node *item = new node();
             item->x_ = n.x_;
@@ -166,11 +159,11 @@ node *BCPCoverageAgent::getBCP(Point point) {
     return NULL;
 }
 
-void BCPCoverageAgent::updateBCP(node *pNode, node* compare) {
+void BCPCoverageAgent::updateBCP(node *pNode, node *compare) {
     neighbor *n = getNeighbor(pNode->id_);
     Angle angle = G::angle(this, n, this, pNode);
     Angle angle1 = G::angle(this, compare, this, pNode);
-    if (angle1 > angle){
+    if (angle1 > angle) {
         pNode->id_ = compare->id_;
     }
 }
@@ -252,7 +245,7 @@ node *BCPCoverageAgent::getNextBCP(node *pNode) {
     neighbor *n = getNeighbor(pNode->id_);
     if (G::angle(this, pNode, this, n) >= M_PI) {
         node *bcp = getBCP(*pNode);
-        node* next = bcp->next_ == NULL ? bcp_list : bcp->next_;
+        node *next = bcp->next_ == NULL ? bcp_list : bcp->next_;
         neighbor *next_n = getNeighbor(next->id_);
         if (G::angle(this, next, this, next_n) >= M_PI) return bcp;
         else return next;
@@ -268,9 +261,6 @@ void BCPCoverageAgent::holeBoundaryDetection() {
     hdr_ip *iph;
     hdr_bcpcoverage *ch;
 
-    if(my_id_ == 635) {
-        int a = 1;
-    }
     for (node *n = bcp_list; n; n = n->next_) {
         node *nextBCP = getNextBCP(n);
         if (nextBCP != NULL) continue;
@@ -306,10 +296,6 @@ void BCPCoverageAgent::holeBoundaryDetection() {
 void
 BCPCoverageAgent::startUp() {
     FILE *fp;
-    fp = fopen("SensorNeighbors.tr", "w");
-    fclose(fp);
-    fp = fopen("NodeBoundaryDetect.tr", "w");
-    fclose(fp);
     fp = fopen("BCPCoverageHole.tr", "w");
     fclose(fp);
     fp = fopen("PatchingHole.tr", "a");
@@ -360,17 +346,17 @@ void BCPCoverageAgent::addNeighbor(nsaddr_t nid, Point location) {
 }
 
 node *BCPCoverageAgent::reduceBCP(node *list) {
-    node *temp, *nextAdjacent, *n, *prev, *temp2;
+    node *temp, *nextAdjacent, *n, *temp2;
     double min = G::distance(list, list->next_);
     double r_ = sensor_range_ - 0.01;
     temp2 = list;
     bool check = true;
     Point c, n0_a_, n0_b_, p1, p2;
     // find the shortest edge
-    for(temp = list->next_; temp; temp = temp->next_){
+    for (temp = list->next_; temp; temp = temp->next_) {
         n = temp->next_ == NULL ? list : temp->next_;
         double d = G::distance(n, temp);
-        if (min > d){
+        if (min > d) {
             temp2 = temp;
             min = d;
         }
@@ -382,14 +368,13 @@ node *BCPCoverageAgent::reduceBCP(node *list) {
     nextAdjacent = n->next_ == NULL ? list : n->next_;
     G::circleCircleIntersect(temp, r_, n, r_, &c, &n0_b_);
 
-    check = true;
     while (check && G::distance(temp, nextAdjacent) <= 2 * r_) {
         // detect N0
         G::circleCircleIntersect(temp, r_, nextAdjacent, r_, &n0_a_, &n0_b_);
 
         for (node *i = n; i != nextAdjacent; i = i->next_ == NULL ? list : i->next_) {
-            if (n0_a_.x_ == n0_b_.x_ && n0_a_.y_ == n0_b_.y_){ //N0 is an arbitrary point
-                if (G::distance(n0_a_, n) > r_){
+            if (n0_a_.x_ == n0_b_.x_ && n0_a_.y_ == n0_b_.y_) { //N0 is an arbitrary point
+                if (G::distance(n0_a_, n) > r_) {
                     check = false;
                     break;
                 }
@@ -400,8 +385,8 @@ node *BCPCoverageAgent::reduceBCP(node *list) {
                         check = false;
                         break;
                     }
-                } else if (re == 1){
-                    if (G::onSegment(n0_a_, p1, n0_b_)){
+                } else if (re == 1) {
+                    if (G::onSegment(n0_a_, p1, n0_b_)) {
                         n0_a_ = n0_b_ = p1;
                     } else {
                         check = false;
@@ -414,7 +399,7 @@ node *BCPCoverageAgent::reduceBCP(node *list) {
             }
         }
 
-        if (check){
+        if (check) {
             c.x_ = n0_a_.x_;
             c.y_ = n0_a_.y_;
         }
@@ -426,40 +411,25 @@ node *BCPCoverageAgent::reduceBCP(node *list) {
         }
     }
 
-    printf("$mnode_(xxx) set X_ %f ;\t$mnode_(xxx) set Y_ %f ;\t$mnode_(xxx) set Z_ 0\n", c.x_, c.y_);
+    printf("NewPointX: %f\n a", c.x_);
+    printf("NewPointY: %f\n a", c.y_);
     dumpPatchingHole(c);
 
     return list;
 }
 
 /*-------------------------- DUMP --------------*/
-void BCPCoverageAgent::dumpSensorNeighbor() {
-
-}
-
-void BCPCoverageAgent::dumpBoundaryDetect() {
-    if (bcp_list == NULL) return;
-    FILE *fp;
-    fp = fopen("NodeBoundaryDetect.tr", "a");
-    fprintf(fp, "%d\t%f\t%f", my_id_, x_, y_);
-    for (node *n = bcp_list; n; n = n->next_) {
-        fprintf(fp, "\t%d(%f,%f)", n->id_, n->x_, n->y_);
-    }
-    fprintf(fp, "\n");
-    fclose(fp);
-}
-
-void BCPCoverageAgent::dumpCoverageBoundhole(polygonHole* hole) {
+void BCPCoverageAgent::dumpCoverageBoundhole(polygonHole *hole) {
     FILE *fp;
     fp = fopen("BCPCoverageHole.tr", "a");
-    for(node* temp = hole->node_list_; temp; temp= temp->next_){
+    for (node *temp = hole->node_list_; temp; temp = temp->next_) {
         fprintf(fp, "%f\t%f\n", temp->x_, temp->y_);
     }
     fprintf(fp, "\n");
     fclose(fp);
 }
 
-void BCPCoverageAgent::dumpPatchingHole(Point p){
+void BCPCoverageAgent::dumpPatchingHole(Point p) {
     FILE *fp;
     fp = fopen("PatchingHole.tr", "a");
     fprintf(fp, "%f\t%f\n", p.x_, p.y_);

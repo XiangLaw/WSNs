@@ -68,8 +68,6 @@ private:
     void bcpDetection();
     void holeBoundaryDetection();
 
-    void dumpSensorNeighbor();
-    void dumpBoundaryDetect();
     void dumpCoverageBoundhole(polygonHole*);
     void dumpPatchingHole(Point);
 protected:

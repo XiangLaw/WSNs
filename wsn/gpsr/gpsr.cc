@@ -199,7 +199,6 @@ GPSRAgent::startUp()
 
 	FILE *fp;
 	fp = fopen("Neighbors.tr",	"w");	fclose(fp);
-	fp = fopen("Hopcount.tr", "w"); fclose(fp);
 
 	if (node_->energy_model())
 	{
@@ -403,7 +402,6 @@ GPSRAgent::recvGPSR(Packet* p, hdr_gpsr* gdh)
 
 	if (cmh->direction() == hdr_cmn::UP && gdh->daddr_ == my_id_)
 	{
-		dumpHopcount(p);
 		port_dmux_->recv(p, 0);
 	}
 	else
@@ -467,18 +465,6 @@ GPSRAgent::recvGPSR(Packet* p, hdr_gpsr* gdh)
 }
 
 // -------------------------------------- //
-
-void GPSRAgent::dumpHopcount(Packet* p)
-{
-	hdr_cmn * cmh = HDR_CMN(p);
-
-	FILE *fp = fopen("Hopcount.tr", "a+");
-
-	fprintf(fp, "%d	%d	%d\n", my_id_, cmh->uid(), cmh->num_forwards_);
-
-	fclose(fp);
-}
-
 void GPSRAgent::dumpEnergy()
 {
 	dumpEnergy("Energy.tr");
