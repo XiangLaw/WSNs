@@ -3,7 +3,6 @@
 //
 
 #include "coverageboundhole.h"
-#include "../include/tcl.h"
 #include "coverageboundhole_packet_data.h"
 
 
@@ -250,15 +249,11 @@ bool CoverageBoundHoleAgent::isInRange(Point cell, double edge){
 
     for (node* tmp = boundhole_node_list_; tmp; tmp = tmp->next_){
         int flag = 0;
-        if(tmp->id_ == 634 || tmp->id_ == 620 || tmp->id_ == 621){
-            int k = 0;
-        }
         for(node*vertex = vertices; vertex; vertex = vertex->next_){
             if (G::distance(tmp, vertex) <= sensor_range_) flag++;
         }
         // check if cell inside 1 sensor range
         if (flag==4) {
-//            printf("inside 1 sensor\n");
             return true;
         }
         // check if cell inside 2 adjacent sensors range
@@ -275,7 +270,6 @@ bool CoverageBoundHoleAgent::isInRange(Point cell, double edge){
             Point intersect1, intersect2;
             G::circleCircleIntersect(tmp, sensor_range_, next, sensor_range_, &intersect1, &intersect2);
             if (flag && !G::isPointReallyInsidePolygon(&intersect1, vertices) && !G::isPointReallyInsidePolygon(&intersect2, vertices)){
-//                printf("inside 2 sensor\n");
                 return true;
             }
         }
@@ -536,16 +530,7 @@ void CoverageBoundHoleAgent::patchingHole(double base_x, double base_y, double r
                 Point cell;
                 cell.x_ = base_x + (i+0.5)*r_;
                 cell.y_ = base_y + (j+0.5)*r_;
-                if ((i==4 || i==5) && j ==4){
-                    int debug = 0;
-                }
                 if (isInRange(cell, r_)) {
-                    printf("%f\t%f\n", cell.x_ - r_/2, cell.y_ + r_/2);
-                    printf("%f\t%f\n", cell.x_ + r_/2, cell.y_ + r_/2);
-                    printf("%f\t%f\n", cell.x_ + r_/2, cell.y_ - r_/2);
-                    printf("%f\t%f\n", cell.x_ - r_/2, cell.y_ - r_/2);
-                    printf("%f\t%f\n", cell.x_ - r_/2, cell.y_ + r_/2);
-                    printf("\n");
                     grid[i][j] = C_BLACK;
                 }
             }
