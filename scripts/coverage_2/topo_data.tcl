@@ -635,3 +635,14 @@ $mnode_(631) set X_ 180 ;	$mnode_(631) set Y_ 255 ;	$mnode_(631) set Z_ 0
 $mnode_(632) set X_ 160 ;	$mnode_(632) set Y_ 216 ;	$mnode_(632) set Z_ 0
 $mnode_(633) set X_ 170 ;	$mnode_(633) set Y_ 240 ;	$mnode_(633) set Z_ 0
 $mnode_(634) set X_ 182 ;	$mnode_(634) set Y_ 212 ;	$mnode_(634) set Z_ 0
+$mnode_(635) set X_ 178.589778 ;	$mnode_(635) set Y_ 176.646614 ;	$mnode_(635) set Z_ 0
+$mnode_(636) set X_ 277.500000 ;	$mnode_(636) set Y_ 175.589716 ;	$mnode_(636) set Z_ 0
+$mnode_(637) set X_ 193.508254 ;	$mnode_(637) set Y_ 149.476674 ;	$mnode_(637) set Z_ 0
+$mnode_(638) set X_ 157.623899 ;	$mnode_(638) set Y_ 148.061888 ;	$mnode_(638) set Z_ 0
+$mnode_(639) set X_ 342.527940 ;	$mnode_(639) set Y_ 247.090503 ;	$mnode_(639) set Z_ 0
+$mnode_(640) set X_ 143.647628 ;	$mnode_(640) set Y_ 167.864628 ;	$mnode_(640) set Z_ 0
+$mnode_(641) set X_ 149.984883 ;	$mnode_(641) set Y_ 304.826559 ;	$mnode_(641) set Z_ 0
+$mnode_(642) set X_ 185.823434 ;	$mnode_(642) set Y_ 313.836622 ;	$mnode_(642) set Z_ 0
+$mnode_(643) set X_ 156.567771 ;	$mnode_(643) set Y_ 148.064588 ;	$mnode_(643) set Z_ 0
+$mnode_(644) set X_ 178.913489 ;	$mnode_(644) set Y_ 316.104097 ;	$mnode_(644) set Z_ 0
+$mnode_(645) set X_ 217.379846 ;	$mnode_(645) set Y_ 310.267604 ;	$mnode_(645) set Z_ 0
