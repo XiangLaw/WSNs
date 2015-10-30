@@ -404,22 +404,22 @@ node *BCPCoverageAgent::reduceBCP(node *list) {
                 }
 
             }
+        }
 
-            if (flag) {
-                if (G::angle(*bi, n0_inside, *bi, n0_outside) > M_PI) {
-                    patching_point.x_ = n0_outside.x_;
-                    patching_point.y_ = n0_outside.y_;
-                } else {
-                    patching_point.x_ = n0_inside.x_;
-                    patching_point.y_ = n0_inside.y_;
-                }
+        if (flag) {
+            if (G::angle(*bi, n0_inside, *bi, n0_outside) > M_PI) {
+                patching_point.x_ = n0_outside.x_;
+                patching_point.y_ = n0_outside.y_;
+            } else {
+                patching_point.x_ = n0_inside.x_;
+                patching_point.y_ = n0_inside.y_;
             }
+        }
 
-            if (bj == bi) break;
+        if (bj == bi) break;
 
-            if (flag) {
-                bj = bj->next_ == NULL ? list : bj->next_;
-            }
+        if (flag) {
+            bj = bj->next_ == NULL ? list : bj->next_;
         }
     }
 

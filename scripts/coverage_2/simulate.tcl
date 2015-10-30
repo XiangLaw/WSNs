@@ -3,7 +3,7 @@
 set opt(x)	500	;# X dimension of the topography
 set opt(y)	500	;# Y dimension of the topography
 set opt(stop)	500	;# simulation time
-set opt(nn)	646	;# number of nodes
+set opt(nn)	667	;# number of nodes
 set opt(tr)	Trace.tr	;# trace file
 set opt(nam)	nam.out.tr
 
