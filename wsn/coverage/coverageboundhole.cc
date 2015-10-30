@@ -116,7 +116,6 @@ void CoverageBoundHoleAgent::recvCoverage(Packet *p) {
             newHole->next_ = hole_list_;
             hole_list_ = newHole;
 
-            data->dump();
             gridConstruction(newHole);
             drop(p, "COVERAGE_BOUNDHOLE");
             dumpCoverageBoundHole(newHole);
