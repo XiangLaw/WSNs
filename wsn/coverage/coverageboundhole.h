@@ -60,7 +60,7 @@ private:
     RunTimeCounter runTimeCounter;
 
     node* boundhole_node_list_; // list of node on bound hole
-    bool isBoundary = false;
+    bool isBoundary;
 
     void startUp();
 

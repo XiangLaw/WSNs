@@ -44,10 +44,10 @@ CoverageBoundHoleAgent::CoverageBoundHoleAgent() : GPSRAgent(),
     hole_list_ = NULL;
     cover_neighbors_ = NULL;
     sensor_neighbor_list_ = NULL;
+    isBoundary = false;
 
     bind("range_", &communication_range_);
     bind("limit_boundhole_hop_", &limit_hop_);
-//    bind("sensor_range_", &sensor_range_);
     sensor_range_ = 0.5 * communication_range_;
 }
 
