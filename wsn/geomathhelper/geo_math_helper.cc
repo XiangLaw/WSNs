@@ -716,6 +716,8 @@ bool G::lineSegmentIntersection(Point *a, Point *b, Line l, Point &intersection)
 }
 
 // see http://mathworld.wolfram.com/Circle-CircleIntersection.html
+// p1: left side of vector (c1, c2)
+// p2: right side of vector (c1, c2)
 int G::circleCircleIntersect(Point c1, double r1, Point c2, double r2, Point *p1, Point *p2)
 {
     int nsoln = -1;

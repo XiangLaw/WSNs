@@ -346,74 +346,86 @@ void BCPCoverageAgent::addNeighbor(nsaddr_t nid, Point location) {
 }
 
 node *BCPCoverageAgent::reduceBCP(node *list) {
-    node *temp, *nextAdjacent, *n, *temp2;
-    double min = G::distance(list, list->next_);
     double r_ = sensor_range_ - 0.01;
-    temp2 = list;
-    bool check = true;
-    Point c, n0_a_, n0_b_, p1, p2;
-    // find the shortest edge
-    for (temp = list->next_; temp; temp = temp->next_) {
-        n = temp->next_ == NULL ? list : temp->next_;
-        double d = G::distance(n, temp);
-        if (min > d) {
-            temp2 = temp;
-            min = d;
+
+    node *bi = list;
+    double shortest_distance = G::distance(list, list->next_);
+    for (node *tmp = list->next_; tmp; tmp = tmp->next_) {
+        double d = G::distance(tmp, tmp->next_ == NULL ? list : tmp->next_);
+        if (shortest_distance > d) {
+            bi = tmp;
+            shortest_distance = d;
         }
     }
 
-    temp = temp2;
+    bool flag = true;
+    Point patching_point, n0_inside, n0_outside, p1, p2;
 
-    n = temp->next_ == NULL ? list : temp->next_;
-    nextAdjacent = n->next_ == NULL ? list : n->next_;
-    G::circleCircleIntersect(temp, r_, n, r_, &c, &n0_b_);
+    node *next_bi = bi->next_ == NULL ? list : bi->next_;
+    node *bj = next_bi->next_ == NULL ? list : next_bi->next_;
+    G::circleCircleIntersect(bi, r_, next_bi, r_, &patching_point, &n0_outside);
 
-    while (check && G::distance(temp, nextAdjacent) <= 2 * r_) {
+    while (flag && G::distance(bi, bj) <= 2 * r_) {
         // detect N0
-        G::circleCircleIntersect(temp, r_, nextAdjacent, r_, &n0_a_, &n0_b_);
+        G::circleCircleIntersect(bi, r_, bj, r_, &n0_inside, &n0_outside);
 
-        for (node *i = n; i != nextAdjacent; i = i->next_ == NULL ? list : i->next_) {
-            if (n0_a_.x_ == n0_b_.x_ && n0_a_.y_ == n0_b_.y_) { //N0 is an arbitrary point
-                if (G::distance(n0_a_, n) > r_) {
-                    check = false;
-                    break;
-                }
-            } else { // N0 belongs a range
-                int re = G::circleLineIntersect(*n, r_, n0_a_, n0_b_, &p1, &p2);
-                if (re == 2) {
-                    if (!G::segmentAggregation(&n0_a_, &n0_b_, &p1, &p2)) {
-                        check = false;
-                        break;
-                    }
-                } else if (re == 1) {
-                    if (G::onSegment(n0_a_, p1, n0_b_)) {
-                        n0_a_ = n0_b_ = p1;
-                    } else {
-                        check = false;
-                        break;
-                    }
-                } else {
-                    check = false;
+        if (n0_inside == n0_outside) {
+            for (node *i = next_bi; i != bj; i = i->next_ == NULL ? list : i->next_) {
+                if (G::distance(n0_inside, i) > r_) {
+                    flag = false;
                     break;
                 }
             }
-        }
+        } else {
+            for (node *i = next_bi; i != bj; i = i->next_ == NULL ? list : i->next_) {
+                if (n0_inside == n0_outside) {
+                    if (G::distance(n0_inside, i) > r_) {
+                        flag = false;
+                        break;
+                    }
+                } else {
+                    int re = G::circleLineIntersect(*i, r_, n0_inside, n0_outside, &p1, &p2);
+                    if (re == 2) {
+                        if (!G::segmentAggregation(&n0_inside, &n0_outside, &p1, &p2)) {
+                            flag = false;
+                            break;
+                        }
+                    } else if (re == 1) {
+                        if (G::onSegment(n0_inside, p1, n0_outside)) {
+                            n0_inside = n0_outside = p1;
+                        } else {
+                            flag = false;
+                            break;
+                        }
+                    } else {
+                        flag = false;
+                        break;
+                    }
+                }
 
-        if (check) {
-            c.x_ = n0_a_.x_;
-            c.y_ = n0_a_.y_;
-        }
+            }
 
-        if (nextAdjacent == temp) break;
+            if (flag) {
+                if (G::angle(*bi, n0_inside, *bi, n0_outside) > M_PI) {
+                    patching_point.x_ = n0_outside.x_;
+                    patching_point.y_ = n0_outside.y_;
+                } else {
+                    patching_point.x_ = n0_inside.x_;
+                    patching_point.y_ = n0_inside.y_;
+                }
+            }
 
-        if (check) {
-            nextAdjacent = nextAdjacent->next_ == NULL ? list : nextAdjacent->next_;
+            if (bj == bi) break;
+
+            if (flag) {
+                bj = bj->next_ == NULL ? list : bj->next_;
+            }
         }
     }
 
-    printf("NewPointX:%f a\n", c.x_);
-    printf("NewPointY:%f a\n", c.y_);
-    dumpPatchingHole(c);
+    printf("NewPointX:%f a\n", patching_point.x_);
+    printf("NewPointY:%f a\n", patching_point.y_);
+    dumpPatchingHole(patching_point);
 
     return list;
 }
