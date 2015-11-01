@@ -5,9 +5,6 @@
 #include "bcpcoverage.h"
 #include "bcpcoverage_packet_data.h"
 
-#define EPSILON 0.0001
-
-
 int hdr_bcpcoverage::offset_;
 
 /*

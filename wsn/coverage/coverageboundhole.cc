@@ -403,6 +403,8 @@ void CoverageBoundHoleAgent::gridConstruction(polygonHole *newHole) {
     sNode->next_ = newHole->node_list_;
     newHole->node_list_ = sNode;
 
+    int sx = x;
+    int sy = y;
     /* construct grid boundary */
     while (x >= 0 && a[x][0] == 1) x--; // find the end cell of serial painted cell from left to right in the lowest row
     x++;
@@ -410,7 +412,7 @@ void CoverageBoundHoleAgent::gridConstruction(polygonHole *newHole) {
     n.x_ = minx + x * r_;
     n.y_ = miny;
 
-    while (n.x_ != sNode->x_ || n.y_ != sNode->y_) {
+    while (x != sx || y != sy) {
         u = *(newHole->node_list_);
 
         node *newNode = new node();

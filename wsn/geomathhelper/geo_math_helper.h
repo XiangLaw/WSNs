@@ -18,6 +18,8 @@
 #define max(x,y) (((x)>(y))?(x):(y))
 #define in_range(x,a,y) ((x) <= (a) && (a) <= (y)) || ((x) >= (a) && (a) >= (y))
 
+#define EPSILON 0.000001
+
 typedef double Angle;
 
 class G;
