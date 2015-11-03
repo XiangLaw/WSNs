@@ -116,6 +116,8 @@ void CoverageBoundHoleAgent::recvCoverage(Packet *p) {
             newHole->next_ = hole_list_;
             hole_list_ = newHole;
 
+            data->dump();
+
             gridConstruction(newHole);
             drop(p, "COVERAGE_BOUNDHOLE");
             dumpCoverageBoundHole(newHole);
@@ -309,7 +311,7 @@ void CoverageBoundHoleAgent::gridConstruction(polygonHole *newHole) {
     }
 
     Point prev_cell_ = *node_list_;
-    double r_ = sensor_range_ * sqrt(2) / 2;
+    double r_ = sensor_range_ / sqrt(10);
 
     if (fmod(prev_cell_.x_, r_) == 0)    // i lies in vertical line
     {
@@ -329,7 +331,9 @@ void CoverageBoundHoleAgent::gridConstruction(polygonHole *newHole) {
         Point i[4];
         Line l = G::line(tmp, cur);
 
-        while ((fabs(cur->x_ - prev_cell_.x_) > r_ / 2) || (fabs(cur->y_ - prev_cell_.y_) > r_ / 2)) {
+        while ((fabs(cur->x_ - prev_cell_.x_) - r_ / 2) > EPSILON || (fabs(cur->y_ - prev_cell_.y_) - r_ / 2) > EPSILON) {
+            double yy = fabs(cur->y_ - prev_cell_.y_) - r_ / 2;
+            double xx = fabs(cur->x_ - prev_cell_.x_) - r_ / 2;
             i[Up].x_ = prev_cell_.x_;
             i[Up].y_ = prev_cell_.y_ + r_;
             i[Left].x_ = prev_cell_.x_ - r_;
