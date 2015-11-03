@@ -97,6 +97,7 @@ public:
     int  command(int, const char*const*);
     void recv(Packet*, Handler*);
 
+    void dumpGridCell(double d, double d1, double d2, int8_t **pInt, int i, int i1);
 };
 
 #endif //NS_CONVERAGEHOLE_H

@@ -116,8 +116,6 @@ void CoverageBoundHoleAgent::recvCoverage(Packet *p) {
             newHole->next_ = hole_list_;
             hole_list_ = newHole;
 
-            data->dump();
-
             gridConstruction(newHole);
             drop(p, "COVERAGE_BOUNDHOLE");
             dumpCoverageBoundHole(newHole);
@@ -502,6 +500,9 @@ void CoverageBoundHoleAgent::gridConstruction(polygonHole *newHole) {
 
     patchingHole(minx, miny, r_, a, nx, ny);
 
+    // dump grid cell
+    dumpGridCell(minx, miny, r_, a, nx, ny);
+
     // free memory
     for (int i = 0; i < nx; i++)
         delete[] a[i];
@@ -770,5 +771,23 @@ void CoverageBoundHoleAgent::dumpPatchingHole(Point point) {
     FILE *fp;
     fp = fopen("PatchingHole.tr", "a");
     fprintf(fp, "%f\t%f\n", point.x_, point.y_);
+    fclose(fp);
+}
+
+void CoverageBoundHoleAgent::dumpGridCell(double basex, double basey, double size, int8_t **arr, int nx, int ny) {
+    FILE *fp;
+    Point cell;
+    fp = fopen("GridCell.tr", "a");
+    for(int i = 0; i < nx; i++){
+        for (int j = 0; j < nx; j++){
+            if (arr[i][j] != C_BLACK){
+                fprintf(fp, "%f\t%f\n", basex + i*size, basey + j*size);
+                fprintf(fp, "%f\t%f\n", basex + (i+1)*size, basey + j*size);
+                fprintf(fp, "%f\t%f\n", basex + (i+1)*size, basey + (j+1)*size);
+                fprintf(fp, "%f\t%f\n", basex + i*size, basey + (j+1)*size);
+                fprintf(fp, "%f\t%f\n\n", basex + i*size, basey + j*size);
+            }
+        }
+    }
     fclose(fp);
 }
