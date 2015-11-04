@@ -116,7 +116,7 @@ void CoverageBoundHoleAgent::recvCoverage(Packet *p) {
             newHole->next_ = hole_list_;
             hole_list_ = newHole;
 
-            data->dump();
+            // data->dump();
 
             gridConstruction(newHole);
             drop(p, "COVERAGE_BOUNDHOLE");
@@ -332,8 +332,6 @@ void CoverageBoundHoleAgent::gridConstruction(polygonHole *newHole) {
         Line l = G::line(tmp, cur);
 
         while ((fabs(cur->x_ - prev_cell_.x_) - r_ / 2) > EPSILON || (fabs(cur->y_ - prev_cell_.y_) - r_ / 2) > EPSILON) {
-            double yy = fabs(cur->y_ - prev_cell_.y_) - r_ / 2;
-            double xx = fabs(cur->x_ - prev_cell_.x_) - r_ / 2;
             i[Up].x_ = prev_cell_.x_;
             i[Up].y_ = prev_cell_.y_ + r_;
             i[Left].x_ = prev_cell_.x_ - r_;
