@@ -223,62 +223,6 @@ void CoverageBoundHoleAgent::holeBoundaryDetection() {
     }
 }
 
-/*
- * check if cell is in range of one of boundhole node list
- * @cell is center of cell
- */
-bool CoverageBoundHoleAgent::isInRange(Point cell, double edge) {
-    Point v[4];
-    v[0].x_ = cell.x_ - edge / 2;
-    v[0].y_ = cell.y_ + edge / 2;
-    v[1].x_ = cell.x_ + edge / 2;
-    v[1].y_ = cell.y_ + edge / 2;
-    v[2].x_ = cell.x_ + edge / 2;
-    v[2].y_ = cell.y_ - edge / 2;
-    v[3].x_ = cell.x_ - edge / 2;
-    v[3].y_ = cell.y_ - edge / 2;
-
-    node *vertices = NULL;
-    for (int i = 0; i < 4; i++) {
-        node *n = new node();
-        n->x_ = v[i].x_;
-        n->y_ = v[i].y_;
-        n->next_ = vertices;
-        vertices = n;
-    }
-
-    for (node *tmp = boundhole_node_list_; tmp; tmp = tmp->next_) {
-        int flag = 0;
-        for (node *vertex = vertices; vertex; vertex = vertex->next_) {
-            if (G::distance(tmp, vertex) <= sensor_range_) flag++;
-        }
-        // check if cell inside 1 sensor range
-        if (flag == 4) {
-            return true;
-        }
-        // check if cell inside 2 adjacent sensors range
-        if (flag != 0) {
-            flag = 1;
-            node *next = tmp->next_ == NULL ? boundhole_node_list_ : tmp->next_;
-            for (node *vertex = vertices; vertex; vertex = vertex->next_) {
-                if (G::distance(tmp, vertex) > sensor_range_ && G::distance(next, vertex) > sensor_range_) {
-                    flag = 0;
-                    break;
-                }
-            }
-
-            Point intersect1, intersect2;
-            G::circleCircleIntersect(tmp, sensor_range_, next, sensor_range_, &intersect1, &intersect2);
-            if (flag && !G::isPointReallyInsidePolygon(&intersect1, vertices) &&
-                !G::isPointReallyInsidePolygon(&intersect2, vertices)) {
-                return true;
-            }
-        }
-    }
-
-    return false;
-}
-
 void CoverageBoundHoleAgent::gridConstruction(polygonHole *newHole) {
     if (newHole == NULL || newHole->node_list_ == NULL) return;
 
@@ -542,7 +486,7 @@ void CoverageBoundHoleAgent::patchingHole(double base_x, double base_y, double r
     }
 
     // reduce grid
-    /*for (int i = 0; i < nx; ++i) {
+    for (int i = 0; i < nx; ++i) {
         for (int j = 0; j < ny; j++) {
             if (grid[i][j] == C_WHITE) {
                 Point cell;
@@ -553,7 +497,7 @@ void CoverageBoundHoleAgent::patchingHole(double base_x, double base_y, double r
                 }
             }
         }
-    }*/
+    }
 
     x = 0;
     y = 0;
@@ -629,6 +573,62 @@ int CoverageBoundHoleAgent::white_node_count(int a, int b, int c, int d) {
     if (c == C_WHITE) count++;
     if (d == C_WHITE) count++;
     return count;
+}
+
+/*
+ * check if cell is in range of one of boundhole node list
+ * @cell is center of cell
+ */
+bool CoverageBoundHoleAgent::isInRange(Point cell, double edge) {
+    Point v[4];
+    v[0].x_ = cell.x_ - edge / 2;
+    v[0].y_ = cell.y_ + edge / 2;
+    v[1].x_ = cell.x_ + edge / 2;
+    v[1].y_ = cell.y_ + edge / 2;
+    v[2].x_ = cell.x_ + edge / 2;
+    v[2].y_ = cell.y_ - edge / 2;
+    v[3].x_ = cell.x_ - edge / 2;
+    v[3].y_ = cell.y_ - edge / 2;
+
+    node *vertices = NULL;
+    for (int i = 0; i < 4; i++) {
+        node *n = new node();
+        n->x_ = v[i].x_;
+        n->y_ = v[i].y_;
+        n->next_ = vertices;
+        vertices = n;
+    }
+
+    for (node *tmp = boundhole_node_list_; tmp; tmp = tmp->next_) {
+        int flag = 0;
+        for (node *vertex = vertices; vertex; vertex = vertex->next_) {
+            if (G::distance(tmp, vertex) <= sensor_range_) flag++;
+        }
+        // check if cell inside 1 sensor range
+        if (flag == 4) {
+            return true;
+        }
+        // check if cell inside 2 adjacent sensors range
+        if (flag != 0) {
+            flag = 1;
+            node *next = tmp->next_ == NULL ? boundhole_node_list_ : tmp->next_;
+            for (node *vertex = vertices; vertex; vertex = vertex->next_) {
+                if (G::distance(tmp, vertex) > sensor_range_ && G::distance(next, vertex) > sensor_range_) {
+                    flag = 0;
+                    break;
+                }
+            }
+
+            Point intersect1, intersect2;
+            G::circleCircleIntersect(tmp, sensor_range_, next, sensor_range_, &intersect1, &intersect2);
+            if (flag && !G::isPointReallyInsidePolygon(&intersect1, vertices) &&
+                !G::isPointReallyInsidePolygon(&intersect2, vertices)) {
+                return true;
+            }
+        }
+    }
+
+    return false;
 }
 
 /*----------------Utils function----------------------*/

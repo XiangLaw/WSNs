@@ -1,9 +1,9 @@
-# Script for WisSim simulator. Last edit 9/18/2015 5:36:38 PM
+# Script for WisSim simulator. Last edit 11/5/2015 2:34:58 PM
 
-set opt(x)	500	;# X dimension of the topography
-set opt(y)	500	;# Y dimension of the topography
+set opt(x)	600	;# X dimension of the topography
+set opt(y)	600	;# Y dimension of the topography
 set opt(stop)	500	;# simulation time
-set opt(nn)	635	;# number of nodes
+set opt(nn)	626	;# number of nodes
 set opt(tr)	Trace.tr	;# trace file
 set opt(nam)	nam.out.tr
 
@@ -54,10 +54,10 @@ Antenna/OmniAntenna set Z_ 1.5
 Antenna/OmniAntenna set Gt_ 1
 Antenna/OmniAntenna set Gr_ 1
 
-Agent/COVERAGE set energy_checkpoint_ 995
-Agent/COVERAGE set hello_period_ 0
-Agent/COVERAGE set limit_boundhole_hop_ 80
-Agent/COVERAGE set range_ 40
+Agent/BCPCOVERAGE set energy_checkpoint_ 995
+Agent/BCPCOVERAGE set hello_period_ 0
+Agent/BCPCOVERAGE set limit_boundhole_hop_ 80
+Agent/BCPCOVERAGE set range_ 40
 
 Agent/UDP set fid_ 2
 
@@ -75,7 +75,7 @@ Agent/CBR set interval_ 1
 #
 
 # set start time
-set startTime [clock microseconds]
+set startTime [clock seconds]
 
 # set up ns simulator and nam trace
 set ns_		[new Simulator]
@@ -156,15 +156,13 @@ proc stop {} {
 
 	puts "end simulation"
 
-	set runTime [clock microseconds]
+	set runTime [clock second]
 	set runTime [expr $runTime - $startTime]
 
-	#set s [expr $runTime % 60];	set runTime [expr $runTime / 60];
-	#set m [expr $runTime % 60];	set runTime [expr $runTime / 60];
+	set s [expr $runTime % 60];	set runTime [expr $runTime / 60];
+	set m [expr $runTime % 60];	set runTime [expr $runTime / 60];
 
-	#puts "Runtime: $runTime hours, $m minutes, $s seconds"
-
-	puts "Runtime: $runTime"
+	puts "Runtime: $runTime hours, $m minutes, $s seconds"
 
 	$ns_ halt
 	exit 0
