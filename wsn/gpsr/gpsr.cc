@@ -73,11 +73,7 @@ GPSRAgent::GPSRAgent() : Agent(PT_GPSR), hello_timer_(this) {
     neighbor_list_ = NULL;
 
     dest = new Point();
-
-    energy_checkpoint_ = 0;
-
     bind("hello_period_", &hello_period_);
-    bind("energy_checkpoint_", &energy_checkpoint_);
 }
 
 int
@@ -130,8 +126,6 @@ GPSRAgent::command(int argc, const char *const *argv) {
 
 void
 GPSRAgent::recv(Packet *p, Handler *h) {
-    //checkEnergy();
-
     struct hdr_cmn *cmh = HDR_CMN(p);
     struct hdr_ip *iph = HDR_IP(p);
 
@@ -184,15 +178,6 @@ GPSRAgent::startUp() {
 
     if (node_->energy_model()) {
         fp = fopen("Energy.tr", "w");
-        fclose(fp);
-    }
-}
-
-void
-GPSRAgent::checkEnergy() {
-    if (node_->energy_model() && node_->energy_model()->energy() <= energy_checkpoint_) {
-        FILE *fp = fopen("EnergyCheck.tr", "a+");
-        fprintf(fp, "%d	%f", my_id_, Scheduler::instance().clock());
         fclose(fp);
     }
 }
@@ -328,7 +313,7 @@ GPSRAgent::recvHello(Packet *p) {
 
     addNeighbor(cmh->last_hop_, ghh->location_);
 
-    drop(p, " HELLO");
+    drop(p, "HELLO");
 }
 
 // ------------------------------------- //
