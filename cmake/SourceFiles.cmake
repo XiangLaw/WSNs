@@ -273,6 +273,9 @@ set(OBJ_CC
   wsn/elbar/elbar.cc wsn/elbar/elbar_packet_data.cc
   wsn/gear/gear.cc wsn/gear/gear_neighbor.cc
   wsn/behds/behds.cc
+  wsn/coverage/coverageboundhole.cc wsn/coverage/coverageboundhole_packet_data.cc
+  wsn/bcpcoverage/bcpcoverage.cc wsn/bcpcoverage/bcpcoverage_packet_data.cc
+  wsn/runtimecounter/runtimecounter.cc
   ${OBJ_STL}
 )
 set(OBJ_C

@@ -345,7 +345,6 @@ EHDSAgent::recvData(Packet* p)
 
 	if (cmh->direction() == hdr_cmn::UP	&& edh->daddr_ == my_id_)	// up to destination
 	{
-		dumpHopcount(p);
 		port_dmux_->recv(p, 0);
 		return;
 	}
@@ -414,18 +413,6 @@ EHDSAgent::dumpRoutingTable()
 
 		fclose(fp);
 	}
-}
-
-void
-EHDSAgent::dumpHopcount(Packet* p)
-{
-	hdr_cmn * cmh = HDR_CMN(p);
-
-	FILE *fp = fopen("Hopcount.tr", "a+");
-
-	fprintf(fp, "%d	%d	%d\n", my_id_, cmh->uid(), cmh->num_forwards_);
-
-	fclose(fp);
 }
 
 void

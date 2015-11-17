@@ -715,6 +715,148 @@ bool G::lineSegmentIntersection(Point *a, Point *b, Line l, Point &intersection)
     return false;
 }
 
+// see http://mathworld.wolfram.com/Circle-CircleIntersection.html
+// p1: left side of vector (c1, c2)
+// p2: right side of vector (c1, c2)
+int G::circleCircleIntersect(Point c1, double r1, Point c2, double r2, Point *p1, Point *p2)
+{
+    int nsoln = -1;
+
+    Point c;
+    c.x_ = c2.x_ - c1.x_;
+    c.y_ = c2.y_ - c1.y_;
+
+    nsoln = G::circleCircleIntersect0a( r1, c, r2, p1, p2 );
+    /* Translate back. */
+    p1->x_ += c1.x_;
+    p1->y_ += c1.y_;
+    p2->x_ += c1.x_;
+    p2->y_ += c1.y_;
+    return nsoln;
+}
+
+/*---------------------------------------------------------------------
+circleCircleIntersect0a assumes that the first circle is centered on the origin.
+Returns # of intersections: 0, 1, 2, 3 (inf); point in p.
+---------------------------------------------------------------------*/
+int G::circleCircleIntersect0a(double r1, Point c2, double r2, Point* p1, Point *p2 )
+{
+    double dc2;              /* dist to center 2 squared */
+    double rplus2, rminus2;  /* (r1 +/- r2)^2 */
+    double f;                /* fraction along c2 for nsoln=1 */
+
+    /* Handle special cases. */
+    dc2 = c2.x_*c2.x_ + c2.y_*c2.y_;
+    rplus2  = (r1 + r2) * (r1 + r2);
+    rminus2 = (r1 - r2) * (r1 - r2);
+
+    /* No solution if c2 out of reach + or -. */
+    if ( ( dc2 > rplus2 ) || ( dc2 < rminus2 ) )
+        return   0;
+
+    /* One solution if c2 just reached. */
+    /* Then solution is r1-of-the-way (f) to c2. */
+    if ( dc2 == rplus2 ) {
+        f = r1 / (double)(r1 + r2);
+        p1->x_ = p2->x_ = f*c2.x_;
+        p1->y_ = p2->y_ = f*c2.y_;
+        return 1;
+    }
+    if ( dc2 == rminus2 ) {
+        if ( rminus2 == 0 ) {   /* Circles coincide. */
+            p1->x_ = p2->x_ = r1;
+            p1->y_ = p2->y_ = 0;
+            return 3; // infinite
+        }
+        f = r1 / (double)(r1 - r2);
+        p1->x_ = p2->x_ = f * c2.x_;
+        p1->y_ = p2->y_ = f * c2.y_;
+        return 1;
+    }
+
+    /* Two intersections. */
+    return G::circleCircleIntersect0b( r1, c2, r2, p1, p2);
+}
+
+/*---------------------------------------------------------------------
+circleCircleIntersect0b also assumes that the 1st circle is origin-centered.
+---------------------------------------------------------------------*/
+int  G::circleCircleIntersect0b( double r1, Point c2, double r2, Point *p1, Point *p2)
+{
+    double a2;          /* center of 2nd circle when rotated to x-axis */
+    Point q1, q2;          /* solution when c2 on x-axis */
+    double cost, sint;  /* sine and cosine of angle of c2 */
+
+    /* Rotate c2 to a2 on x-axis. */
+    a2 = sqrt( c2.x_*c2.x_ + c2.y_*c2.y_ );
+    cost = c2.x_ / a2;
+    sint = c2.y_ / a2;
+
+    G::circleCircleIntersect00( r1, a2, r2, &q1, &q2);
+
+    /* Rotate back */
+    p1->x_ =  cost * q1.x_ + -sint * q1.y_;
+    p1->y_ =  sint * q1.x_ +  cost * q1.y_;
+    p2->x_ =  cost * q2.x_ + -sint * q2.y_;
+    p2->y_ =  sint * q2.x_ +  cost * q2.y_;
+
+    return 2;
+}
+
+/*---------------------------------------------------------------------
+circleCircleIntersect00 assumes circle centers are (0,0) and (a2,0).
+---------------------------------------------------------------------*/
+void  G::circleCircleIntersect00( double r1, double a2, double r2, Point* p1, Point *p2 )
+{
+    double r1sq, r2sq;
+    r1sq = r1*r1;
+    r2sq = r2*r2;
+
+    /* Return only positive-y soln in p. */
+    p1->x_ = p2->x_ = ( a2 + ( r1sq - r2sq ) / a2 ) / 2;
+    p1->y_ = sqrt( r1sq - p1->x_*p1->x_ );
+    p2->y_ = -p1->y_;
+}
+
+// see at http://mathworld.wolfram.com/Circle-LineIntersection.html
+int G::circleLineIntersect(Point c, double r, Point i1, Point i2, Point *p1, Point *p2){
+    i1.x_ = i1.x_ - c.x_;
+    i2.x_ = i2.x_ - c.x_;
+    i1.y_ = i1.y_ - c.y_;
+    i2.y_ = i2.y_ - c.y_;
+
+    int re = circleLineIntersect00(r, i1, i2, p1, p2);
+    p1->x_ += c.x_;
+    p2->x_ += c.x_;
+    p1->y_ += c.y_;
+    p2->y_ += c.y_;
+    return re;
+}
+
+// intersect of line l and circle ((0,0), r)
+int G::circleLineIntersect00(double r, Point i1, Point i2, Point *p1, Point *p2) {
+    double dx = i2.x_ - i1.x_;
+    double dy = i2.y_ - i1.y_;
+    double dr = sqrt(dx*dx + dy*dy);
+    double d =  i1.x_*i2.y_ - i1.y_*i2.x_;
+    double delta = r*r*dr*dr - d*d;
+
+    if (delta < 0){
+        return 0;
+    } else if (delta == 0){
+        p1->x_ = p2->x_ = d*dy/(dr*dr);
+        p1->y_ = p2->y_ = -d*dx/(dr*dr);
+        return 1;
+    } else {
+        int sgn = dy < 0 ? -1 : 1;
+        p1->x_ = (d * dy + sgn * dx * sqrt(delta)) / (dr * dr);
+        p2->x_ = (d * dy - sgn * dx * sqrt(delta)) / (dr * dr);
+        p1->y_ = (-d * dx + fabs(dy) * sqrt(delta)) / (dr * dr);
+        p2->y_ = (-d * dx - fabs(dy) * sqrt(delta)) / (dr * dr);
+        return 2;
+    }
+}
+
 
 // clockwise directed angle between vector (pa, px // Ox) in range [-180, 180]
 Angle G::angle_x_axis(Point *a, Point *p) {
@@ -853,3 +995,91 @@ bool G::isPointLiesInTriangle(Point *p, Point *p1, Point *p2, Point *p3) {
 	return gamma >= 0 && alpha >= 0 && beta >= 0;
 }
 
+bool G::isPointReallyInsidePolygon(Point *d, node *node_list) {
+    Point y;
+    node *tmp;
+    y.x_ = 0;
+    y.y_ = d->y_;
+
+    int greater_horizontal = 0;
+    int less_horizontal = 0;
+    Line dy = G::line(d, y);
+
+    Point intersect;
+    intersect.x_ = -1;
+    intersect.y_ = -1;
+
+    // count horizontal
+    for (tmp = node_list; tmp != NULL; tmp = tmp->next_) {
+        if (tmp->next_ != NULL) {
+            if( G::is_in_line(tmp, tmp->next_, d)) {
+                if(G::onSegment(tmp, d, tmp->next_)) {
+                    return true;
+                } else {
+                    if (tmp->x_ > d->x_) greater_horizontal++;
+                    else if (tmp->x_ < d->x_) less_horizontal++;
+                }
+            }
+            else if (G::lineSegmentIntersection(tmp, tmp->next_, dy, intersect)) {
+                if (intersect.x_ > d->x_) greater_horizontal++;
+                else if (intersect.x_ < d->x_) less_horizontal++;
+                else return true;
+            }
+
+        }
+        else { // end-point & start-point
+            if( G::is_in_line(tmp, node_list, d)) {
+                if(G::onSegment(tmp, d, node_list)) {
+                    return true;
+                } else {
+                    if (tmp->x_ > d->x_) greater_horizontal++;
+                    else if (tmp->x_ < d->x_) less_horizontal++;
+                }
+            }
+            else if (G::lineSegmentIntersection(tmp, node_list, dy, intersect)) {
+                if (intersect.x_ > d->x_) greater_horizontal++;
+                else if (intersect.x_ < d->x_) less_horizontal++;
+                else return true;
+            }
+
+        }
+    }
+
+    return !(greater_horizontal % 2 == 0 || less_horizontal % 2 == 0);
+}
+
+// get aggregation between segment [a1, a2] and [b1, b2]
+// return to a1, a2
+int G::segmentAggregation(Point *a1, Point *a2, Point *b1, Point *b2) {
+    Point tmp;
+    if (a1->x_ > a2->x_ || (a1->x_ == a2->y_ && a1->y_ > a2->y_)){
+        tmp = *a1;
+        *a1 = *a2;
+        *a2 = tmp;
+    }
+
+    if (b1->x_ > b2->x_ || (b1->x_ == b2->y_ && b1->y_ > b2->y_)){
+        tmp = *b1;
+        *b1 = *b2;
+        *b2 = tmp;
+    }
+
+    if (onSegment(a1, b1, a2)){
+        *a1 = *b1;
+        if (onSegment(a1, b2, a2)){
+            *a2 = * b2;
+        }
+        return 1;
+    } else {
+        if (onSegment(a1, b2, a2)){
+            *a2 = *b2;
+            return 1;
+        } else {
+            if (onSegment(b1, a1, b2)){
+                return 1;
+            }
+        }
+    }
+
+    return 0;
+}

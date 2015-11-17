@@ -216,8 +216,10 @@ static const packet_t PT_DYNAMICPOLYGON = 84;	// Dynamic polygon
 static const packet_t PT_ELBARGRID = 85; // elbar + gridoffline
 static const packet_t PT_GEAR = 86; // gear
 static const packet_t PT_BEHDS = 87; // basic ehds
+static const packet_t PT_COVERAGE = 88; // coverage boundhole
+static const packet_t PT_BCPCOVERAGE = 89; // coverage with boundary critical point
 
-static packet_t       PT_NTYPE = 88; 			// This MUST be the LAST one
+static packet_t       PT_NTYPE = 90; 			// This MUST be the LAST one
 
 enum packetClass
 {
@@ -452,6 +454,8 @@ public:
         name_[PT_ELBARGRID] = "ELBARGRIDOFFLINE";
 		name_[PT_GEAR] = "GEAR";
 		name_[PT_BEHDS] = "BEHDS";
+        name_[PT_COVERAGE]="COVERAGE";
+        name_[PT_BCPCOVERAGE]="BCPCOVERAGE";
 
 		name_[PT_NTYPE]= "undefined";
 	}

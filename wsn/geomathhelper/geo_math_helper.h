@@ -18,6 +18,8 @@
 #define max(x,y) (((x)>(y))?(x):(y))
 #define in_range(x,a,y) ((x) <= (a) && (a) <= (y)) || ((x) >= (a) && (a) >= (y))
 
+#define EPSILON 0.000001
+
 typedef double Angle;
 
 class G;
@@ -48,6 +50,13 @@ struct Line
 	double a_;
 	double b_;
 	double c_;
+};
+
+struct triangle {
+    Point A;
+    Point B;
+    Point C;
+    triangle next_*;
 };
 
 struct Circle : Point
@@ -101,223 +110,319 @@ public:
 };
 
 class G {
+private:
+    static int circleCircleIntersect0a(double r1, Point c2, double r2, Point *p1, Point *p2);
+
+    static int circleCircleIntersect0b(double r1, Point c2, double r2, Point *p1, Point *p2);
+
+    static void circleCircleIntersect00(double r1, double a2, double r2, Point *p1, Point *p2);
+
+    static int circleLineIntersect00(double r, Point i1, Point i2, Point *p1, Point *p2);
+
 public:
 
-	// check whether 3 points (x1, y1), (x2, y2), (x3, y3) are in same line
-	static bool		is_in_line(double x1, double y1, double x2, double y2, double x3, double y3);
-	// check whether p1, p2, p3 are in same line
-	static bool		is_in_line(Point p1, Point p2, Point p3) { return is_in_line(p1.x_, p1.y_, p2.x_, p2.y_, p3.x_, p3.y_); }
-	static bool		is_in_line(Point*p1, Point*p2, Point*p3) { return is_in_line(*p1, *p2, *p3); }
-	static bool		is_in_line(Point*p1, Point*p2, Point p3) { return is_in_line(*p1, *p2,  p3); }
+    // check whether 3 points (x1, y1), (x2, y2), (x3, y3) are in same line
+    static bool is_in_line(double x1, double y1, double x2, double y2, double x3, double y3);
 
-	// check whether x is lies between a, b
-	static bool 	is_between(double x, double a, double b);
-	// check whether (x, y) is contained by rectangular x1, y1, x2, y2 (except the boundary) or by segment (x1, y1)(x2, y2) (except the vertex)
-	static bool 	is_between(double x, double y, double x1, double y1, double x2, double y2);
-	// check whether p1 is contained by rectangular with p2 and p3 are non-adjacent vertex
-	static bool		is_between(Point p1, Point p2, Point p3) { return is_between(p1.x_, p1.y_, p2.x_, p2.y_, p3.x_, p3.y_); }
+    // check whether p1, p2, p3 are in same line
+    static bool is_in_line(Point p1, Point p2, Point p3) {
+        return is_in_line(p1.x_, p1.y_, p2.x_, p2.y_, p3.x_, p3.y_);
+    }
 
-	// Check whther (x1, y1)(x2, y2) and (x3, y3)(x4, y4) is intersect
-	static bool 	is_intersect(double x1, double y1, double x2, double y2, double x3, double y3, double x4, double y4);
+    static bool is_in_line(Point *p1, Point *p2, Point *p3) { return is_in_line(*p1, *p2, *p3); }
 
-	// side of p to l. 0 : l contain p, <0 side, >0 other side
-	static int		position(Point* p, Line* l);
-	static int		position(Point  p, Line* l) { return position(&p,  l); }
-	static int		position(Point* p, Line  l) { return position( p, &l); }
-	static int		position(Point  p, Line  l) { return position(&p, &l); }
+    static bool is_in_line(Point *p1, Point *p2, Point p3) { return is_in_line(*p1, *p2, p3); }
 
-	// distance p1 to p2
-	static double	distance(Point  p1, Point  p2) { return distance(&p1, &p2); }
-	static double	distance(Point* p1, Point  p2) { return distance( p1, &p2); }
-	static double	distance(Point  p1, Point* p2) { return distance(&p1,  p2); }
-	static double	distance(Point* p1, Point* p2);
-	// distance of (x1, y1) and (x2, y2)
-	static double	distance(double x1, double y1, double x2, double y2);
+    // check whether x is lies between a, b
+    static bool is_between(double x, double a, double b);
 
-	// distance of p and line l
-	static double	distance(Point*p, Line*l);
-	static double	distance(Point p, Line*l) { return distance(&p,  l); }
-	static double	distance(Point*p, Line l) { return distance( p, &l); }
-	static double	distance(Point p, Line l) { return distance(&p, &l); }
-	// distance of (x, y) and line ax + by + c = 0
-	static double 	distance(double x, double y, double a, double b, double c);
-	// distance of (x0, y0) and line that contains (x1, y1) and (x2, y2)
-	static double	distance(double x0, double y0, double x1, double y1, double x2, double y2);
+    // check whether (x, y) is contained by rectangular x1, y1, x2, y2 (except the boundary) or by segment (x1, y1)(x2, y2) (except the vertex)
+    static bool is_between(double x, double y, double x1, double y1, double x2, double y2);
 
-	// angle of line l with ox
-	static Angle	angle(Line* l);
-	static Angle	angle(Line  l) { return angle(&l); }
+    // check whether p1 is contained by rectangular with p2 and p3 are non-adjacent vertex
+    static bool is_between(Point p1, Point p2, Point p3) {
+        return is_between(p1.x_, p1.y_, p2.x_, p2.y_, p3.x_, p3.y_);
+    }
 
-	/**
-	 * angle of vector (p1, p2) with Ox - "theta" in polar coordinate
-	 * return angle between (-Pi, Pi]
-	 */
-	static Angle	angle(Point  p1, Point  p2);
-	static Angle	angle(Point* p1, Point  p2) { return angle(*p1,  p2); }
-	static Angle	angle(Point  p1, Point* p2) { return angle( p1, *p2); }
-	static Angle 	angle(Point* p1, Point* p2) { return angle(*p1, *p2); }
+    // Check whther (x1, y1)(x2, y2) and (x3, y3)(x4, y4) is intersect
+    static bool is_intersect(double x1, double y1, double x2, double y2, double x3, double y3, double x4, double y4);
 
-	/**
-	 * absolute value of angle (p1, p0, p2)
-	 */
-	static Angle	angle(Point* p0, Point* p1, Point* p2);
-	static Angle	angle(Point  p0, Point* p1, Point* p2) { return angle(&p0, p1, p2); }
+    // side of p to l. 0 : l contain p, <0 side, >0 other side
+    static int position(Point *p, Line *l);
 
-	/**
-	 * angle of vector (p2, p3) to vector (p0, p1)
-	 */
-	static Angle	angle(Point  p0, Point  p1, Point  p2, Point  p3);
-	static Angle	angle(Point* p0, Point* p1, Point* p2, Point* p3) { return angle(*p0, *p1, *p2, *p3); }
+    static int position(Point p, Line *l) { return position(&p, l); }
 
-	// angle of vector (v2) to vector (v1)
-	static Angle	angle(Vector v1, Vector v2);
+    static int position(Point *p, Line l) { return position(p, &l); }
 
-	// angle from segment ((x2, y2), (x0, y0)) to segment ((x1, y1), (x0, y0))
-	static Angle 	angle(double x0, double y0, double x1, double y1, double x2, double y2);
+    static int position(Point p, Line l) { return position(&p, &l); }
 
-	// Check if segment [p1, p2] is intersect segment [p3, p4]
-	static bool		is_intersect(Point* p1, Point* p2, Point* p3, Point* p4);
-	static bool		is_intersect(Point* p1, Point* p2, Point* p3, Point  p4) { return is_intersect( p1,  p2,  p3, &p4); }
-	static bool		is_intersect(Point* p1, Point* p2, Point  p3, Point  p4) { return is_intersect( p1,  p2, &p3, &p4); }
-	static bool		is_intersect(Point  p1, Point  p2, Point  p3, Point  p4) { return is_intersect(&p1, &p2, &p3, &p4); }
+    // distance p1 to p2
+    static double distance(Point p1, Point p2) { return distance(&p1, &p2); }
 
-	static bool		is_intersect2(Point* p1, Point* p2, Point* p3, Point* p4);
-	static bool		is_intersect2(Point* p1, Point* p2, Point  p3, Point  p4) { return is_intersect2(p1, p2, &p3, &p4); }
+    static double distance(Point *p1, Point p2) { return distance(p1, &p2); }
 
-	static bool		intersection(Point* p1, Point* p2, Point* p3, Point* p4, Point& p);
+    static double distance(Point p1, Point *p2) { return distance(&p1, p2); }
 
-	// Point that is intersection point of l1 and l2
-	static bool		intersection(Line l1, Line l2, Point* p) { return intersection(l1, l2, *p); }
-	static bool		intersection(Line l1, Line l2, Point& p);
+    static double distance(Point *p1, Point *p2);
 
-	// intersection point of the line that contains (x1, y1), (x2, y2) and the line that contains (x3, y3), (x4, y4)
-	static bool		intersection(double x1, double y1, double x2, double y2, double x3, double y3, double x4, double y4, double &x, double &y);
-	// intersection point of the line a1x + b1y + c1 = 0 and the line a2x + b2y + c2 = 0
-	static bool 	intersection(double a1, double b1, double c1, double a2, double b2, double c2, double &x, double &y);
+    // distance of (x1, y1) and (x2, y2)
+    static double distance(double x1, double y1, double x2, double y2);
 
-	// Check if ellipse e and line l is intersect
-	static int		intersection(Ellipse *e, Line *l, Point &p1, Point &p2);
-	static int		intersection(Ellipse  e, Line *l, Point &p1, Point &p2) { return intersection(&e,  l, p1, p2); }
-	static int		intersection(Ellipse *e, Line  l, Point &p1, Point &p2) { return intersection( e, &l, p1, p2); }
-	static int		intersection(Ellipse  e, Line  l, Point &p1, Point &p2) { return intersection(&e, &l, p1, p2); }
+    // distance of p and line l
+    static double distance(Point *p, Line *l);
 
-	// midpoint of p1 and p2
-	static Point	midpoint(Point *p1, Point *p2) { return midpoint(*p1, *p2); }
-	static Point	midpoint(Point  p1, Point *p2) { return midpoint( p1, *p2); }
-	static Point	midpoint(Point *p1, Point  p2) { return midpoint(*p1,  p2); }
-	static Point	midpoint(Point  p1, Point  p2);
+    static double distance(Point p, Line *l) { return distance(&p, l); }
 
-	// vector P1P2
-	static Vector	vector(Point *p1, Point *p2) { return vector(*p1, *p2); }
-	static Vector	vector(Point *p1, Point  p2) { return vector(*p1,  p2); }
-	static Vector	vector(Point  p1, Point *p2) { return vector( p1, *p2); }
-	static Vector	vector(Point  p1, Point  p2);
+    static double distance(Point *p, Line l) { return distance(p, &l); }
 
-	// vector with slope k
-	static Vector	vector(Angle k);
+    static double distance(Point p, Line l) { return distance(&p, &l); }
 
-	// line throw p and have slope k
-	static Line		line(Point *p, Angle k) { return line(*p, k); }
-	static Line		line(Point  p, Angle k);
+    // distance of (x, y) and line ax + by + c = 0
+    static double distance(double x, double y, double a, double b, double c);
 
-	// line throw p1 and p2
-	static Line 	line(Point *p1, Point* p2) { return line( *p1, *p2); }
-	static Line 	line(Point *p1, Point  p2) { return line( *p1,  p2); }
-	static Line 	line(Point  p1, Point* p2) { return line(  p1, *p2); }
-	static Line 	line(Point  p1, Point  p2);
+    // distance of (x0, y0) and line that contains (x1, y1) and (x2, y2)
+    static double distance(double x0, double y0, double x1, double y1, double x2, double y2);
 
-	// find ax + by + c = 0 that contains (x1, y1) and (x2, y2)
-	static void 	line(double x1, double y1, double x2, double y2, double &a, double &b, double &c);
+    // angle of line l with ox
+    static Angle angle(Line *l);
 
-	// line contains p and perpendicular with l
-	static Line 	perpendicular_line(Point*p, Line*l);
-	static Line 	perpendicular_line(Point p, Line*l) { return perpendicular_line(&p,  l); }
-	static Line 	perpendicular_line(Point*p, Line l) { return perpendicular_line( p, &l); }
-	static Line 	perpendicular_line(Point p, Line l) { return perpendicular_line(&p, &l); }
-	// line contains (x0, y0) and perpendicular with the line that contains (x1, y1) and (x2, y2)
-	static void		perpendicular_line(double x0, double y0, double x1, double y1, double x2, double y2, double &a, double &b, double &c);
-	// line contains (x0, y0) and perpendicular with line a0x + b0y + c0 = 0
-	static void 	perpendicular_line(double x0, double y0, double a0, double b0, double c0, double &a, double &b, double &c);
+    static Angle angle(Line l) { return angle(&l); }
 
-	// line parallel with l and have distance to l of d
-	static void		parallel_line(Line l, double d, Line& l1, Line& l2);
-	// line contains p and parallel with l
-	static Line		parallel_line(Point* p, Line* l);
-	static Line		parallel_line(Point  p, Line* l) { return parallel_line(&p,  l); }
-	static Line		parallel_line(Point* p, Line  l) { return parallel_line( p, &l); }
-	static Line		parallel_line(Point  p, Line  l) { return parallel_line(&p, &l); }
-	// line contains (x0, y0) and parallel with the line that contains (x1, y1) and (x2, y2)
-	static void		parallel_line(double x0, double y0, double x1, double y1, double x2, double y2, double &a, double &b, double &c);
-	// line that contains (x0, y0) and parallel with line a0x + b0y + c0 = 0
-	static void		parallel_line(double x0, double y0, double a0, double b0, double c0, double &a, double &b, double &c);
+    /**
+     * angle of vector (p1, p2) with Ox - "theta" in polar coordinate
+     * return angle between (-Pi, Pi]
+     */
+    static Angle angle(Point p1, Point p2);
 
-	// the angle bisector line of (p1 p2 p3)
-	static Line		angle_bisector(Point p1, Point p2, Point p3);
-	static Line		angle_bisector(Point*p1, Point*p2, Point p3) { return angle_bisector(*p1,*p2, p3); }
-	static Line		angle_bisector(Point*p1, Point*p2, Point*p3) { return angle_bisector(*p1,*p2,*p3); }
-	// draw the angle bisector ax + by + c = 0 of angle (x1, y1)(x0, y0)(x2, y2)
-	static void 	angle_bisector(double x0, double y0, double x1, double y1, double x2, double y2, double &a, double &b, double &c);
+    static Angle angle(Point *p1, Point p2) { return angle(*p1, p2); }
 
-	// tangent lines of ellipse e that have tangent point p
-	static Line		tangent(Ellipse *e, Point *p);
-	static Line		tangent(Ellipse  e, Point *p) { return tangent(&e,  p); }
-	static Line		tangent(Ellipse *e, Point  p) { return tangent( e, &p); }
-	static Line		tangent(Ellipse  e, Point  p) { return tangent(&e, &p); }
+    static Angle angle(Point p1, Point *p2) { return angle(p1, *p2); }
 
-	// tangent lines of circle c that contains p, return tangents line available or not
-	static bool		tangent(Circle* c, Point* p, Line& t1, Line& t2);
+    static Angle angle(Point *p1, Point *p2) { return angle(*p1, *p2); }
 
-	// get tangent points of tangent lines of circle that has center O(a, b) and radius r pass through M(x, y)
-	static bool		tangent_point(Circle* c, Point* p, Point& t1, Point& t2);
-	// get tangent points of tangent lines of circle that has center O(a, b) and radius r pass through M(x, y)
-	static bool 	tangent_point(double a, double b, double r, double x, double y, double &t1x, double &t1y, double &t2x, double &t2y);
+    /**
+     * absolute value of angle (p1, p0, p2)
+     */
+    static Angle angle(Point *p0, Point *p1, Point *p2);
 
-	// find circumcenter contains p1, p2 and p3
-	static Circle	circumcenter(Point p1, Point p2, Point p3) { return circumcenter(&p1, &p2, &p3); }
-	static Circle	circumcenter(Point*p1, Point*p2, Point*p3);
-	// find circumcenter (xo, yo)
-	static void		circumcenter(double x1, double y1, double x2, double y2, double x3, double y3, double &xo, double &yo);
+    static Angle angle(Point p0, Point *p1, Point *p2) { return angle(&p0, p1, p2); }
 
-	// quadratic equation. return number of experiment
-	static int		quadratic_equation(double a, double b, double c, double &x1, double &x2);
+    /**
+     * angle of vector (p2, p3) to vector (p0, p1)
+     */
+    static Angle angle(Point p0, Point p1, Point p2, Point p3);
 
-	// area of triangle (ax,ay), (bx,by), (cx,cy)
-	static double	area(double ax, double ay, double bx, double by, double cx, double cy);
-	// area of triangle p1, p2, p3
-	static double	area(Point  p1, Point  p2, Point  p3) { return area(p1.x_, p1.y_, p2.x_, p2.y_, p3.x_, p3.y_); }
-	static double	area(Point* p1, Point* p2, Point* p3) { return area(*p1, *p2, *p3); }
+    static Angle angle(Point *p0, Point *p1, Point *p2, Point *p3) { return angle(*p0, *p1, *p2, *p3); }
 
-	// area of polygon denoted by list of node, head n
-	static double	area(node* n);
+    // angle of vector (v2) to vector (v1)
+    static Angle angle(Vector v1, Vector v2);
 
-	// check whether polygon denoted by list of node, head n, is CWW
-	static bool		is_clockwise(node*n);
+    // angle from segment ((x2, y2), (x0, y0)) to segment ((x1, y1), (x0, y0))
+    static Angle angle(double x0, double y0, double x1, double y1, double x2, double y2);
 
-	// find perpendicular bisector of segment ((x1, y1), (x2, y2))
-	static void perpendicular_bisector(double x1, double y1, double x2, double y2, double &a, double &b, double &c);
+    // Check if segment [p1, p2] is intersect segment [p3, p4]
+    static bool is_intersect(Point *p1, Point *p2, Point *p3, Point *p4);
+
+    static bool is_intersect(Point *p1, Point *p2, Point *p3, Point p4) { return is_intersect(p1, p2, p3, &p4); }
+
+    static bool is_intersect(Point *p1, Point *p2, Point p3, Point p4) { return is_intersect(p1, p2, &p3, &p4); }
+
+    static bool is_intersect(Point p1, Point p2, Point p3, Point p4) { return is_intersect(&p1, &p2, &p3, &p4); }
+
+    static bool is_intersect2(Point *p1, Point *p2, Point *p3, Point *p4);
+
+    static bool is_intersect2(Point *p1, Point *p2, Point p3, Point p4) { return is_intersect2(p1, p2, &p3, &p4); }
+
+    static bool intersection(Point *p1, Point *p2, Point *p3, Point *p4, Point &p);
+
+    // Point that is intersection point of l1 and l2
+    static bool intersection(Line l1, Line l2, Point *p) { return intersection(l1, l2, *p); }
+
+    static bool intersection(Line l1, Line l2, Point &p);
+
+    // intersection point of the line that contains (x1, y1), (x2, y2) and the line that contains (x3, y3), (x4, y4)
+    static bool intersection(double x1, double y1, double x2, double y2, double x3, double y3, double x4, double y4,
+                             double &x, double &y);
+
+    // intersection point of the line a1x + b1y + c1 = 0 and the line a2x + b2y + c2 = 0
+    static bool intersection(double a1, double b1, double c1, double a2, double b2, double c2, double &x, double &y);
+
+    // Check if ellipse e and line l is intersect
+    static int intersection(Ellipse *e, Line *l, Point &p1, Point &p2);
+
+    static int intersection(Ellipse e, Line *l, Point &p1, Point &p2) { return intersection(&e, l, p1, p2); }
+
+    static int intersection(Ellipse *e, Line l, Point &p1, Point &p2) { return intersection(e, &l, p1, p2); }
+
+    static int intersection(Ellipse e, Line l, Point &p1, Point &p2) { return intersection(&e, &l, p1, p2); }
+
+    // midpoint of p1 and p2
+    static Point midpoint(Point *p1, Point *p2) { return midpoint(*p1, *p2); }
+
+    static Point midpoint(Point p1, Point *p2) { return midpoint(p1, *p2); }
+
+    static Point midpoint(Point *p1, Point p2) { return midpoint(*p1, p2); }
+
+    static Point midpoint(Point p1, Point p2);
+
+    // vector P1P2
+    static Vector vector(Point *p1, Point *p2) { return vector(*p1, *p2); }
+
+    static Vector vector(Point *p1, Point p2) { return vector(*p1, p2); }
+
+    static Vector vector(Point p1, Point *p2) { return vector(p1, *p2); }
+
+    static Vector vector(Point p1, Point p2);
+
+    // vector with slope k
+    static Vector vector(Angle k);
+
+    // line throw p and have slope k
+    static Line line(Point *p, Angle k) { return line(*p, k); }
+
+    static Line line(Point p, Angle k);
+
+    // line throw p1 and p2
+    static Line line(Point *p1, Point *p2) { return line(*p1, *p2); }
+
+    static Line line(Point *p1, Point p2) { return line(*p1, p2); }
+
+    static Line line(Point p1, Point *p2) { return line(p1, *p2); }
+
+    static Line line(Point p1, Point p2);
+
+    // find ax + by + c = 0 that contains (x1, y1) and (x2, y2)
+    static void line(double x1, double y1, double x2, double y2, double &a, double &b, double &c);
+
+    // line contains p and perpendicular with l
+    static Line perpendicular_line(Point *p, Line *l);
+
+    static Line perpendicular_line(Point p, Line *l) { return perpendicular_line(&p, l); }
+
+    static Line perpendicular_line(Point *p, Line l) { return perpendicular_line(p, &l); }
+
+    static Line perpendicular_line(Point p, Line l) { return perpendicular_line(&p, &l); }
+
+    // line contains (x0, y0) and perpendicular with the line that contains (x1, y1) and (x2, y2)
+    static void perpendicular_line(double x0, double y0, double x1, double y1, double x2, double y2, double &a,
+                                   double &b, double &c);
+
+    // line contains (x0, y0) and perpendicular with line a0x + b0y + c0 = 0
+    static void perpendicular_line(double x0, double y0, double a0, double b0, double c0, double &a, double &b,
+                                   double &c);
+
+    // line parallel with l and have distance to l of d
+    static void parallel_line(Line l, double d, Line &l1, Line &l2);
+
+    // line contains p and parallel with l
+    static Line parallel_line(Point *p, Line *l);
+
+    static Line parallel_line(Point p, Line *l) { return parallel_line(&p, l); }
+
+    static Line parallel_line(Point *p, Line l) { return parallel_line(p, &l); }
+
+    static Line parallel_line(Point p, Line l) { return parallel_line(&p, &l); }
+
+    // line contains (x0, y0) and parallel with the line that contains (x1, y1) and (x2, y2)
+    static void parallel_line(double x0, double y0, double x1, double y1, double x2, double y2, double &a, double &b,
+                              double &c);
+
+    // line that contains (x0, y0) and parallel with line a0x + b0y + c0 = 0
+    static void parallel_line(double x0, double y0, double a0, double b0, double c0, double &a, double &b, double &c);
+
+    // the angle bisector line of (p1 p2 p3)
+    static Line angle_bisector(Point p1, Point p2, Point p3);
+
+    static Line angle_bisector(Point *p1, Point *p2, Point p3) { return angle_bisector(*p1, *p2, p3); }
+
+    static Line angle_bisector(Point *p1, Point *p2, Point *p3) { return angle_bisector(*p1, *p2, *p3); }
+
+    // draw the angle bisector ax + by + c = 0 of angle (x1, y1)(x0, y0)(x2, y2)
+    static void angle_bisector(double x0, double y0, double x1, double y1, double x2, double y2, double &a, double &b,
+                               double &c);
+
+    // tangent lines of ellipse e that have tangent point p
+    static Line tangent(Ellipse *e, Point *p);
+
+    static Line tangent(Ellipse e, Point *p) { return tangent(&e, p); }
+
+    static Line tangent(Ellipse *e, Point p) { return tangent(e, &p); }
+
+    static Line tangent(Ellipse e, Point p) { return tangent(&e, &p); }
+
+    // tangent lines of circle c that contains p, return tangents line available or not
+    static bool tangent(Circle *c, Point *p, Line &t1, Line &t2);
+
+    // get tangent points of tangent lines of circle that has center O(a, b) and radius r pass through M(x, y)
+    static bool tangent_point(Circle *c, Point *p, Point &t1, Point &t2);
+
+    // get tangent points of tangent lines of circle that has center O(a, b) and radius r pass through M(x, y)
+    static bool tangent_point(double a, double b, double r, double x, double y, double &t1x, double &t1y, double &t2x,
+                              double &t2y);
+
+    // find circumcenter contains p1, p2 and p3
+    static Circle circumcenter(Point p1, Point p2, Point p3) { return circumcenter(&p1, &p2, &p3); }
+
+    static Circle circumcenter(Point *p1, Point *p2, Point *p3);
+
+    // find circumcenter (xo, yo)
+    static void circumcenter(double x1, double y1, double x2, double y2, double x3, double y3, double &xo, double &yo);
+
+    // quadratic equation. return number of experiment
+    static int quadratic_equation(double a, double b, double c, double &x1, double &x2);
+
+    // area of triangle (ax,ay), (bx,by), (cx,cy)
+    static double area(double ax, double ay, double bx, double by, double cx, double cy);
+
+    // area of triangle p1, p2, p3
+    static double area(Point p1, Point p2, Point p3) { return area(p1.x_, p1.y_, p2.x_, p2.y_, p3.x_, p3.y_); }
+
+    static double area(Point *p1, Point *p2, Point *p3) { return area(*p1, *p2, *p3); }
+
+    // area of polygon denoted by list of node, head n
+    static double area(node *n);
+
+    // check whether polygon denoted by list of node, head n, is CWW
+    static bool is_clockwise(node *n);
+
+    // find perpendicular bisector of segment ((x1, y1), (x2, y2))
+    static void perpendicular_bisector(double x1, double y1, double x2, double y2, double &a, double &b, double &c);
 
 
     // extenstion
-    static Angle directedAngle(Point *a, Point* p, Point* b);
+    static Angle directedAngle(Point *a, Point *p, Point *b);
 
-    static bool	lineSegmentIntersection(Point *a, Point *b, Line l, Point& p);
+    static bool lineSegmentIntersection(Point *a, Point *b, Line l, Point &p);
 
-	static Angle angle_x_axis(Point *a, Point *p);
+    static Angle angle_x_axis(Point *a, Point *p);
 
-	static bool onSegment(Point *p, Point *q, Point *r) {return onSegment(*p, *q, *r);}
-	static bool onSegment(Point p, Point q, Point r);
+    static bool onSegment(Point *p, Point *q, Point *r) { return onSegment(*p, *q, *r); }
 
-	static int orientation(Point p, Point q, Point r);
+    static bool onSegment(Point p, Point q, Point r);
 
-	static bool doIntersect(Point p1, Point q1, Point p2, Point q2);
+    static int orientation(Point p, Point q, Point r);
 
-	static bool isPointInsidePolygon(Point *d, node* node_list);
+    static bool doIntersect(Point p1, Point q1, Point p2, Point q2);
 
-	static bool isPointLiesInTriangle(Point *p, Point *p1, Point *p2, Point *p3);
+    static bool isPointInsidePolygon(Point *d, node *node_list);
+
+    static bool isPointLiesInTriangle(Point *p, Point *p1, Point *p2, Point *p3);
 
     static int position(Point *p1, Point *p2, Line *l);
 
+    static int circleCircleIntersect(Circle c1, Circle c2, Point *intersect1, Point *intersect2){
+        return G::circleCircleIntersect(c1, c1.radius_, c2, c2.radius_, intersect1, intersect2);
+    }
 
+    static int circleCircleIntersect(Point* c1, double r1, Point* c2, double r2, Point *p1, Point *p2){
+        return circleCircleIntersect(*c1, r1, *c2, r2, p1, p2);
+    }
+
+    static int circleCircleIntersect(Point c1, double r1, Point c2, double r2, Point *p1, Point *p2);
+    static int circleLineIntersect(Point c, double r, Point i1, Point i2, Point *p1, Point *p2);
+
+    static int segmentAggregation(Point *a1, Point *a2, Point *b1, Point *b2);
+
+    static bool isPointReallyInsidePolygon(Point *d, node *node_list);
 };
-
 #endif /* GEO_MATH_HELPER_H_ */

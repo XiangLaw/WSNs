@@ -73,7 +73,7 @@ protected:
 
 	void startUp();						// Initialize the Agent
 
-	void addNeighbor(nsaddr_t, Point);
+	virtual void addNeighbor(nsaddr_t, Point);
 
 	void sendHello();
 	void recvHello(Packet*);
@@ -85,7 +85,6 @@ protected:
 	void dumpNeighbor();
 	void dumpEnergy(char * filename);
 	void dumpEnergy();
-	void dumpHopcount(Packet* p);
 
 	double hello_period_;
 	double energy_checkpoint_;

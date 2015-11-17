@@ -449,7 +449,6 @@ GridOfflineAgent::createPolygonHole(Packet *p) {
     // current node is located in the cell (x0, y0) = (-minx, -miny)
 
     // create polygon hole
-
     y = 0;
     x = nx - 1;
     while (a[x][y] == 0) x--;    // find the leftist cell that painted in the lowest row

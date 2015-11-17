@@ -148,18 +148,18 @@ void DynamicPolygonAgent::broadcastHBI(polygonHole *h) {
     iph->saddr() = my_id_;
     iph->sport() = RT_PORT;
     iph->dport() = RT_PORT;
-    iph->ttl_ = 100;
+    iph->ttl_ = 4 * IP_DEF_TTL;
 
     dh->n_ = vertex(hole_list_->node_list_);
     dh->g0_ = 0;
-    dh->g1_ = calc_g(dh->n_, 1, longestEdge(hole_list_->node_list_));
+    dh->g1_ = calc_g(dh->n_, 1, longestEdge(hole_list_->node_list_)); // formula ()
 
     send(p, 0);
 }
 
 void DynamicPolygonAgent::recvHBI(Packet *pPacket) {
     if (f_) {
-        drop(pPacket, "DROP_HBI");
+        drop(pPacket, "KNOWN_HBI");
     } else {
         hdr_dynamicpolygon* dh = HDR_DYNAMICPOLYGON(pPacket);
         DynamicPolygonPacketData* data = (DynamicPolygonPacketData *) pPacket->userdata();
@@ -167,7 +167,7 @@ void DynamicPolygonAgent::recvHBI(Packet *pPacket) {
         polygonHole* hole = createHoleFromPacketData(data);
         double l = distanceToPolygon(hole->node_list_);
         int u = vertex(hole->node_list_);
-        int v = hole_list_ == NULL ? 0 :vertex(hole_list_->node_list_);
+        int v = hole_list_ == NULL ? INT32_MAX :vertex(hole_list_->node_list_);
 
         if (l <= dh->g1_ && l >= dh->g0_){
             f_ = 1;
@@ -204,7 +204,7 @@ void DynamicPolygonAgent::recvHBI(Packet *pPacket) {
             hole_list_ = hole;
 
 //            printf("%d dropped HBI (1)\n", my_id_);
-            drop(pPacket, "DROP_HBI");
+            drop(pPacket, "REPLACE_AND_DROP_HBI_AND");
         } else {
 //            printf("%d dropped HBI (2)\n", my_id_);
             drop(pPacket, "DROP_HBI");
@@ -268,7 +268,7 @@ void DynamicPolygonAgent::dumpRingG() {
 
 // ------------------------ Helper function ------------------------ //
 
-double DynamicPolygonAgent::    distanceToPolygon(node *polygon) {
+double DynamicPolygonAgent::distanceToPolygon(node *polygon) {
     node* tmp0;
     node* tmp1;
     node* tmp2;
