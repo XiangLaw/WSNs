@@ -1,8 +1,8 @@
-# Script for WisSim simulator. Last edit 9/7/2015 9:56:29 AM
+# Script for WisSim simulator. Last edit 9/15/2015 12:04:58 AM
 
 set opt(x)	1000	;# X dimension of the topography
 set opt(y)	1000	;# Y dimension of the topography
-set opt(stop)	500	;# simulation time
+set opt(stop)	1500	;# simulation time
 set opt(nn)	1500	;# number of nodes
 set opt(tr)	Trace.tr	;# trace file
 set opt(nam)	nam.out.tr
@@ -15,13 +15,13 @@ set opt(mac)	Mac/802_11
 set opt(ifq)	Queue/DropTail/PriQueue
 set opt(ll)	LL
 set opt(ant)	Antenna/OmniAntenna
-set opt(rp)	BEHDS
+set opt(rp)	GEAR
 set opt(trans)	UDP
 set opt(apps)	CBR
 
 set opt(energymodel)	 EnergyModel
 set opt(radiomodel)      RadioModel
-set opt(initialenergy)   1000
+set opt(initialenergy)   10
 set opt(idlePower) 	     0.0096
 set opt(rxPower) 	     0.045
 set opt(txPower) 	     0.0885

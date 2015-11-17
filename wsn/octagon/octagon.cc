@@ -716,10 +716,10 @@ void OctagonAgent::dynamicRouting(Packet* p)
 void OctagonAgent::bypassingHole(octagonHole* h, Point* D, Point* routingTable, int& routingCount)
 {
 	// create routing table for packet p
-	node* S1;	// min angle view of this node to hole
-	node* S2;	// max angle view of this node to hole
-	node* D1;	// min angle view of Dt node to hole
-	node* D2;	// max angle view of Dt node to hole
+	node* S1 = NULL;	// min angle view of this node to hole
+	node* S2 = NULL;	// max angle view of this node to hole
+	node* D1 = NULL;	// min angle view of Dt node to hole
+	node* D2 = NULL;	// max angle view of Dt node to hole
 
 	// ------------------- S1 S2 - view angle of this node to hole
 	double Smax = 0;
@@ -862,10 +862,6 @@ void OctagonAgent::sendData(Packet* p)
 	hdr_ip*				iph = HDR_IP(p);
 	hdr_octagon_data* 	edh = HDR_OCTAGON_DATA(p);
 
-	if(cmh->uid() == 1087 || cmh->uid() == 1088) {
-		int a = 1;
-	}
-
 	cmh->size() += IP_HDR_LEN + edh->size();
 	cmh->direction() = hdr_cmn::DOWN;
 
@@ -921,7 +917,7 @@ void OctagonAgent::recvData(Packet* p)
 
 		if (nexthop == NULL)	// no neighbor close
 		{
-			drop(p, "Stuck");
+			drop(p, DROP_RTR_NO_ROUTE);
 			return;
 		}
 		else
@@ -970,18 +966,6 @@ void OctagonAgent::dumpRoutingTable()
 void OctagonAgent::dumpDynamicRouting(Packet* p, octagonHole* hole)
 {
 	hdr_cmn* cmh = HDR_CMN(p);
-
-// // dump dynamic routing path (only for first packet of source)
-//	FILE *fp = fopen("DynamicRouting.tr", "a+");
-//	hdr_octagon_data* odh = HDR_OCTAGON_DATA(p);
-//
-//	for (int i = odh->vertex_num_; i >= 0; i--)
-//	{
-//		fprintf(fp, "%d	%f	%f\n", cmh->uid_, odh->vertex[i].x_, odh->vertex[i].y_);
-//	}
-//
-//	fprintf(fp, "\n");
-//	fclose(fp);
 
 	FILE * fp = fopen("DynamicScaleHole.tr", "a+");
 

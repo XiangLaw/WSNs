@@ -1681,6 +1681,8 @@ Agent/ELBARGRIDOFFLINE set limit_ 0
 Agent/ELBARGRIDOFFLINE set range_ 40
 Agent/ELBARGRIDOFFLINE set r_ 50
 Agent/ELBARGRIDOFFLINE set limit_boundhole_hop_ 150
+Agent/ELBARGRIDOFFLINE set alpha_min_ 1.047
+Agent/ELBARGRIDOFFLINE set alpha_max_ 2.094
 
 Agent/OCTAGON set limit_boundhole_hop_ 100
 Agent/OCTAGON set energy_checkpoint_ 995
