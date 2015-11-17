@@ -56,7 +56,7 @@ struct triangle {
     Point A;
     Point B;
     Point C;
-    triangle next_*;
+    triangle* next_;
 };
 
 struct Circle : Point

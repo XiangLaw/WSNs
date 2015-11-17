@@ -228,7 +228,7 @@ void CoverageBoundHoleAgent::gridConstruction(polygonHole *newHole) {
 
     // find minx, maxx, miny, maxy
     double minx, maxx, miny, maxy;
-    node *current_circle_1, current_circle_2;
+    node *current_circle_1, *current_circle_2;
     node *start_node = NULL;
     triangle *current_unit = new triangle();
 
