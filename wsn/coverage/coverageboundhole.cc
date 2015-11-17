@@ -228,14 +228,36 @@ void CoverageBoundHoleAgent::gridConstruction(polygonHole *newHole) {
 
     // find minx, maxx, miny, maxy
     double minx, maxx, miny, maxy;
+    node *current_circle_1, current_circle_2;
+    node *start_node = NULL;
+    triangle *current_unit = new triangle();
+
     minx = maxx = newHole->node_list_->x_;
     miny = maxy = newHole->node_list_->y_;
     for (node *tmp = newHole->node_list_->next_; tmp; tmp = tmp->next_) {
         if (minx > tmp->x_) minx = tmp->x_;
         else if (maxx < tmp->x_) maxx = tmp->x_;
-        if (miny > tmp->y_) miny = tmp->y_;
+        if (miny > tmp->y_) {
+            miny = tmp->y_;
+            start_node = tmp;
+        }
         else if (maxy < tmp->y_) maxy = tmp->y_;
     }
+
+
+    int x_index = 0;
+    int y_index = 0;
+
+    x_index = (int) ((start_node->x_ - minx) / sensor_range_);
+    current_unit->A.x_ = minx + x_index * sensor_range_;
+    current_unit->A.y_ = miny;
+    current_unit->B.x_ = current_unit->A.x_ + sensor_range_;
+    current_unit->B.y_ = miny;
+    current_unit->C.x_ = current_unit->A.x_ + sensor_range_ / 2;
+    current_unit->C.y_ = miny + sensor_range_ * sqrt(3) / 2;
+
+
+
 
     node *node_list_ = NULL, *tail_node_ = NULL;
     for (node *tmp = newHole->node_list_; tmp; tmp = tmp->next_) {
@@ -274,7 +296,8 @@ void CoverageBoundHoleAgent::gridConstruction(polygonHole *newHole) {
         Point i[4];
         Line l = G::line(tmp, cur);
 
-        while ((fabs(cur->x_ - prev_cell_.x_) - r_x / 2) > EPSILON || (fabs(cur->y_ - prev_cell_.y_) - r_y / 2) > EPSILON) {
+        while ((fabs(cur->x_ - prev_cell_.x_) - r_x / 2) > EPSILON ||
+               (fabs(cur->y_ - prev_cell_.y_) - r_y / 2) > EPSILON) {
             i[Up].x_ = prev_cell_.x_;
             i[Up].y_ = prev_cell_.y_ + r_y;
             i[Left].x_ = prev_cell_.x_ - r_x;
@@ -443,8 +466,8 @@ void CoverageBoundHoleAgent::gridConstruction(polygonHole *newHole) {
 
     patchingHole(minx, miny, r_y, a, nx, ny);
 
-    for(int j = 0; j < ny; j++) {
-        for(int i = 0; i < nx; i++) {
+    for (int j = 0; j < ny; j++) {
+        for (int i = 0; i < nx; i++) {
             printf("%d", a[i][j]);
         }
         printf("\n");
@@ -457,6 +480,10 @@ void CoverageBoundHoleAgent::gridConstruction(polygonHole *newHole) {
     for (int i = 0; i < nx; i++)
         delete[] a[i];
     delete[] a;
+
+    delete current_unit;
+    delete current_circle_1;
+    delete current_circle_2;
 }
 
 void CoverageBoundHoleAgent::patchingHole(double base_x, double base_y, double r_,
@@ -781,15 +808,16 @@ void CoverageBoundHoleAgent::dumpPatchingHole(Point point) {
     fclose(fp);
 }
 
-void CoverageBoundHoleAgent::dumpGridCell(double basex, double basey, double rx, double ry, int8_t **arr, int nx, int ny) {
+void CoverageBoundHoleAgent::dumpGridCell(double basex, double basey, double rx, double ry, int8_t **arr, int nx,
+                                          int ny) {
     FILE *fp;
     fp = fopen("GridCell.tr", "a");
-    for(int i = 0; i < nx; i++){
-        for (int j = 0; j < ny; j++){
-            if (arr[i][j] != C_BLACK){
+    for (int i = 0; i < nx; i++) {
+        for (int j = 0; j < ny; j++) {
+            if (arr[i][j] != C_BLACK) {
                 fprintf(fp, "%f\t%f\n", basex + i * rx, basey + j * ry);
-                fprintf(fp, "%f\t%f\n", basex + (i+1) * rx, basey + j * ry);
-                fprintf(fp, "%f\t%f\n", basex + (i+1) * rx, basey + (j + 1) * ry);
+                fprintf(fp, "%f\t%f\n", basex + (i + 1) * rx, basey + j * ry);
+                fprintf(fp, "%f\t%f\n", basex + (i + 1) * rx, basey + (j + 1) * ry);
                 fprintf(fp, "%f\t%f\n", basex + i * rx, basey + (j + 1) * ry);
                 fprintf(fp, "%f\t%f\n\n", basex + i * rx, basey + j * ry);
             }

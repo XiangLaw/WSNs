@@ -52,6 +52,13 @@ struct Line
 	double c_;
 };
 
+struct triangle {
+    Point A;
+    Point B;
+    Point C;
+    triangle next_*;
+};
+
 struct Circle : Point
 {
 	double radius_;
