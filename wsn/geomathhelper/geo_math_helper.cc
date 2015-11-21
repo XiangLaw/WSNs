@@ -1083,3 +1083,12 @@ int G::segmentAggregation(Point *a1, Point *a2, Point *b1, Point *b2) {
 
     return 0;
 }
+
+int G::orientation(node *p, Point q, node *r) {
+	Point p1, r1;
+	p1.x_ = p->x_;
+	p1.y_ = p->y_;
+	r1.x_ = r->x_;
+	r1.y_ = r->y_;
+	return orientation(p1, q, r1);
+}

@@ -82,6 +82,9 @@ void CoverageBoundHoleAgent::recvCoverage(Packet *p) {
 
     CoverageBoundHolePacketData *data = (CoverageBoundHolePacketData *) p->userdata();
 
+    double min_y;
+    node *first_circle = NULL;
+
     // if the boundhole packet has came back to the initial node
     if (iph->saddr() == my_id_) {
         if (data->size() < 3) {
@@ -94,7 +97,10 @@ void CoverageBoundHoleAgent::recvCoverage(Packet *p) {
         if (firstNode.id_ == cmh->last_hop_ && secondNode.id_ == my_id_) {
             node *head = NULL;
             boundhole_node_list_ = NULL;
-            for (int i = 0; i < data->size(); i++) {
+
+            min_y = data->get_intersect_data(0).y_;
+            bool flag = false;
+            for (int i = 1; i < data->size(); i++) {
                 node n_intersect = data->get_intersect_data(i);
                 node *intersect = new node();
                 intersect->x_ = n_intersect.x_;
@@ -103,6 +109,11 @@ void CoverageBoundHoleAgent::recvCoverage(Packet *p) {
                 intersect->next_ = head;
                 head = intersect;
 
+                if (min_y > intersect->y_) {
+                    min_y = intersect->y_;
+                    flag = true;
+                }
+
                 node n_node = data->get_node_data(i);
                 node *node_ = new node();
                 node_->x_ = n_node.x_;
@@ -110,15 +121,25 @@ void CoverageBoundHoleAgent::recvCoverage(Packet *p) {
                 node_->id_ = n_node.id_;
                 node_->next_ = boundhole_node_list_;
                 boundhole_node_list_ = node_;
+                if (flag) {
+                    first_circle = node_;
+                }
+                flag = false;
             }
+
+            printf("start: %d\t%f\t%f\n", first_circle->id_, first_circle->x_, first_circle->y_);
             polygonHole *newHole = new polygonHole();
             newHole->node_list_ = head;
             newHole->next_ = hole_list_;
             hole_list_ = newHole;
 
-            gridConstruction(newHole);
+            // circle boundhole list
+            node *temp = boundhole_node_list_;
+            while (temp->next_ && temp->next_ != boundhole_node_list_) temp = temp->next_;
+            temp->next_ = boundhole_node_list_;
+
+            gridConstruction(newHole, first_circle);
             drop(p, "COVERAGE_BOUNDHOLE");
-            dumpCoverageBoundHole(newHole);
             runTimeCounter.finish();
             return;
         }
@@ -223,439 +244,64 @@ void CoverageBoundHoleAgent::holeBoundaryDetection() {
     }
 }
 
-void CoverageBoundHoleAgent::gridConstruction(polygonHole *newHole) {
+void CoverageBoundHoleAgent::gridConstruction(polygonHole *newHole, node *start_circle) {
     if (newHole == NULL || newHole->node_list_ == NULL) return;
 
-    // find minx, maxx, miny, maxy
-    double minx, maxx, miny, maxy;
-    node *current_circle_1, *current_circle_2;
+    node *current_circle_a = NULL, *current_circle_b = NULL;
     node *start_node = NULL;
-    triangle *current_unit = new triangle();
+    triangle current_unit;
+    struct limits limit;
+    list *direction = NULL;
+    DIRECTION prev_direction = DOWN; // trick: because we start from top so can not go up anymore
 
-    minx = maxx = newHole->node_list_->x_;
-    miny = maxy = newHole->node_list_->y_;
+    limit.min_x = limit.max_x = newHole->node_list_->x_;
+    limit.min_y = limit.max_y = newHole->node_list_->y_;
     for (node *tmp = newHole->node_list_->next_; tmp; tmp = tmp->next_) {
-        if (minx > tmp->x_) minx = tmp->x_;
-        else if (maxx < tmp->x_) maxx = tmp->x_;
-        if (miny > tmp->y_) {
-            miny = tmp->y_;
+        if (limit.min_x > tmp->x_) limit.min_x = tmp->x_;
+        else if (limit.max_x < tmp->x_) limit.max_x = tmp->x_;
+        if (limit.min_y > tmp->y_) {
+            limit.min_y = tmp->y_;
             start_node = tmp;
         }
-        else if (maxy < tmp->y_) maxy = tmp->y_;
+        else if (limit.max_y < tmp->y_) limit.max_y = tmp->y_;
     }
 
+    // determine first (A, B) circle pair
+    for (node *tmp = start_circle->next_; tmp != start_circle; tmp = tmp->next_) {
+        current_circle_a = tmp;
+    }
+    current_circle_b = start_circle;
 
     int x_index = 0;
     int y_index = 0;
 
-    x_index = (int) ((start_node->x_ - minx) / sensor_range_);
-    current_unit->A.x_ = minx + x_index * sensor_range_;
-    current_unit->A.y_ = miny;
-    current_unit->B.x_ = current_unit->A.x_ + sensor_range_;
-    current_unit->B.y_ = miny;
-    current_unit->C.x_ = current_unit->A.x_ + sensor_range_ / 2;
-    current_unit->C.y_ = miny + sensor_range_ * sqrt(3) / 2;
+    x_index = (int) ((start_node->x_ - limit.min_x) / sensor_range_);
+    current_unit.vertices[0].x_ = limit.min_x + x_index * sensor_range_;
+    current_unit.vertices[0].y_ = limit.min_y;
+    current_unit.vertices[1].x_ = current_unit.vertices[0].x_ + sensor_range_;
+    current_unit.vertices[1].y_ = limit.min_y;
+    current_unit.vertices[2].x_ = current_unit.vertices[0].x_ + sensor_range_ / 2;
+    current_unit.vertices[2].y_ = limit.min_y + sensor_range_ * sqrt(3) / 2;
 
+    printf("%f\t%f\n", current_unit.vertices[0].x_, current_unit.vertices[0].y_);
+    printf("%f\t%f\n", current_unit.vertices[1].x_, current_unit.vertices[1].y_);
+    printf("%f\t%f\n", current_unit.vertices[2].x_, current_unit.vertices[2].y_);
+    printf("%f\t%f\n\n", current_unit.vertices[0].x_, current_unit.vertices[0].y_);
 
+    // setup grid boundary limits
+    limit.min_x -= (sensor_range_ - EPSILON);
+    limit.min_y -= (sensor_range_ - EPSILON);
+    limit.max_x += (sensor_range_ - EPSILON);
+    limit.max_y += (sensor_range_ - EPSILON);
 
+    for (int i = 0; i < 60; i++) {
+        prev_direction = nextTriangle(&current_unit, &current_circle_a, &current_circle_b, limit, prev_direction);
 
-    node *node_list_ = NULL, *tail_node_ = NULL;
-    for (node *tmp = newHole->node_list_; tmp; tmp = tmp->next_) {
-        node *item = new node();
-        item->id_ = tmp->id_;
-        item->x_ = tmp->x_ - minx;
-        item->y_ = tmp->y_ - miny;
-        item->next_ = NULL;
-        if (node_list_ == NULL) {
-            node_list_ = item;
-        } else {
-            tail_node_->next_ = item;
-        }
-        tail_node_ = item;
+        printf("%f\t%f\n", current_unit.vertices[0].x_, current_unit.vertices[0].y_);
+        printf("%f\t%f\n", current_unit.vertices[1].x_, current_unit.vertices[1].y_);
+        printf("%f\t%f\n", current_unit.vertices[2].x_, current_unit.vertices[2].y_);
+        printf("%f\t%f\n\n", current_unit.vertices[0].x_, current_unit.vertices[0].y_);
     }
-
-    Point prev_cell_ = *node_list_;
-    double r_x = sensor_range_ * sqrt(3) / 2;
-    double r_y = sensor_range_;
-
-    if (fmod(prev_cell_.x_, r_x) == 0)    // i lies in vertical line
-    {
-        prev_cell_.x_ -= r_x / 2;
-    }
-    if (fmod(prev_cell_.y_, r_y) == 0)    // i lies in h line
-    {
-        prev_cell_.y_ += r_y / 2;
-    }
-
-    prev_cell_.x_ = ((int) (prev_cell_.x_ / r_x) + 0.5) * r_x;
-    prev_cell_.y_ = ((int) (prev_cell_.y_ / r_y) + 0.5) * r_y;
-
-    struct list *head = NULL, *tail = NULL;
-    for (node *tmp = node_list_; tmp; tmp = tmp->next_) {
-        node *cur = tmp->next_ == NULL ? node_list_ : tmp->next_;
-        Point i[4];
-        Line l = G::line(tmp, cur);
-
-        while ((fabs(cur->x_ - prev_cell_.x_) - r_x / 2) > EPSILON ||
-               (fabs(cur->y_ - prev_cell_.y_) - r_y / 2) > EPSILON) {
-            i[Up].x_ = prev_cell_.x_;
-            i[Up].y_ = prev_cell_.y_ + r_y;
-            i[Left].x_ = prev_cell_.x_ - r_x;
-            i[Left].y_ = prev_cell_.y_;
-            i[Down].x_ = prev_cell_.x_;
-            i[Down].y_ = prev_cell_.y_ - r_y;
-            i[Right].x_ = prev_cell_.x_ + r_x;
-            i[Right].y_ = prev_cell_.y_;
-
-            int m = cur->x_ > tmp->x_ ? Right : Left;
-            int n = cur->y_ > tmp->y_ ? Up : Down;
-
-            if (G::distance(i[m], l) > G::distance(i[n], l)) m = n;
-            prev_cell_ = i[m];
-            struct list *item = new list();
-            item->e_ = m;
-            item->next_ = NULL;
-            if (head == NULL) {
-                head = item;
-            } else {
-                tail->next_ = item;
-            }
-            tail = item;
-        }
-    }
-
-    /* construct array of color of grid */
-    int nx = (int) floor((maxx - minx) / r_x) + 1;
-    int ny = (int) floor((maxy - miny) / r_y) + 1;
-
-    int8_t **a = new int8_t *[nx + 1];
-    for (int i = 0; i < nx + 1; i++)
-        a[i] = new int8_t[ny + 1];
-
-    for (int i = 0; i < nx + 1; i++) {
-        for (int j = 0; j < ny + 1; j++) {
-            a[i][j] = 0;
-        }
-    }
-
-    int x = (int) floor(node_list_->x_ / r_x);
-    int y = (int) floor(node_list_->y_ / r_y);
-    a[x][y] = 1;
-    for (struct list *tmp = head; tmp; tmp = tmp->next_) {
-        switch (tmp->e_) {
-            case Up:
-                y++;
-                break;
-            case Left:
-                x--;
-                break;
-            case Down:
-                y--;
-                break;
-            case Right:
-                x++;
-                break;
-            default:
-                break;
-        }
-        a[x][y] = 1;
-    } // done. a array is now grid boundary
-
-    newHole->node_list_ = NULL;
-    x = nx - 1;
-    y = 0;
-    while (x >= 0 && a[x][0] == 0) x--;
-    node *sNode = new node();
-    sNode->x_ = minx + (x + 1) * r_x;
-    sNode->y_ = miny;
-    sNode->next_ = newHole->node_list_;
-    newHole->node_list_ = sNode;
-
-    int sx = x;
-    int sy = y;
-    /* construct grid boundary */
-    while (x >= 0 && a[x][0] == 1) x--; // find the end cell of serial painted cell from left to right in the lowest row
-    x++;
-    Point n, u;
-    n.x_ = minx + x * r_x;
-    n.y_ = miny;
-
-    while (x != sx || y != sy) {
-        u = *(newHole->node_list_);
-
-        node *newNode = new node();
-        newNode->x_ = n.x_;
-        newNode->y_ = n.y_;
-        newNode->next_ = newHole->node_list_;
-        newHole->node_list_ = newNode;
-
-        if (u.y_ == n.y_) {
-            if (u.x_ < n.x_)        // >
-            {
-                if (y + 1 < ny && x + 1 < nx && a[x + 1][y + 1]) {
-                    x += 1;
-                    y += 1;
-                    n.y_ += r_y;
-                }
-                else if (x + 1 < nx && a[x + 1][y]) {
-                    x += 1;
-                    n.x_ += r_x;
-                    newHole->node_list_ = newNode->next_;
-                    delete newNode;
-                }
-                else {
-                    n.y_ -= r_y;
-                }
-            }
-            else // u->x_ > v->x_			// <
-            {
-                if (y - 1 >= 0 && x - 1 >= 0 && a[x - 1][y - 1]) {
-                    x -= 1;
-                    y -= 1;
-                    n.y_ -= r_y;
-                }
-                else if (x - 1 >= 0 && a[x - 1][y]) {
-                    x -= 1;
-                    n.x_ -= r_x;
-                    newHole->node_list_ = newNode->next_;
-                    delete newNode;
-                }
-                else {
-                    n.y_ += r_y;
-                }
-            }
-        }
-        else    // u->x_ == v->x_
-        {
-            if (u.y_ < n.y_)        // ^
-            {
-                if (y + 1 < ny && x - 1 >= 0 && a[x - 1][y + 1]) {
-                    x -= 1;
-                    y += 1;
-                    n.x_ -= r_x;
-                }
-                else if (y + 1 < ny && a[x][y + 1]) {
-                    y += 1;
-                    n.y_ += r_y;
-                    newHole->node_list_ = newNode->next_;
-                    delete newNode;
-                }
-                else {
-                    n.x_ += r_x;
-                }
-            }
-            else // u.x > n.x		// v
-            {
-                if (y - 1 >= 0 && x + 1 < nx && a[x + 1][y - 1]) {
-                    x += 1;
-                    y -= 1;
-                    n.x_ += r_x;
-                }
-                else if (y - 1 >= 0 && a[x][y - 1]) {
-                    y -= 1;
-                    n.y_ -= r_y;
-                    newHole->node_list_ = newNode->next_;
-                    delete newNode;
-                }
-                else {
-                    n.x_ -= r_x;
-                }
-            }
-        }
-    }
-
-    patchingHole(minx, miny, r_y, a, nx, ny);
-
-    for (int j = 0; j < ny; j++) {
-        for (int i = 0; i < nx; i++) {
-            printf("%d", a[i][j]);
-        }
-        printf("\n");
-    }
-
-    // dump grid cell
-    dumpGridCell(minx, miny, r_x, r_y, a, nx, ny);
-
-    // free memory
-    for (int i = 0; i < nx; i++)
-        delete[] a[i];
-    delete[] a;
-
-    delete current_unit;
-    delete current_circle_1;
-    delete current_circle_2;
-}
-
-void CoverageBoundHoleAgent::patchingHole(double base_x, double base_y, double r_,
-                                          int8_t **grid, int nx, int ny) {
-
-    int x = 0;
-    int y = 0;
-    // fill the grid with color
-    for (y = 1; y < ny - 1; y++) {
-        for (x = 1; x < nx - 1; x++) {
-            if (grid[x][y] == C_WHITE || grid[x - 1][y] != C_WHITE || grid[x][y - 1] != C_WHITE) continue;
-            int flag = 0;
-            for (int i = x + 1; i < nx; i++) {
-                if (grid[i][y] == C_WHITE) {
-                    flag++;
-                    break;
-                }
-            }
-            for (int i = y + 1; i < ny; i++) {
-                if (grid[x][i] == C_WHITE) {
-                    flag++;
-                    break;
-                }
-            }
-            if (flag >= 2) grid[x][y] = C_WHITE;
-        }
-    }
-
-    // reduce grid
-    for (int i = 0; i < nx; ++i) {
-        for (int j = 0; j < ny; j++) {
-            if (grid[i][j] == C_WHITE) {
-                Point cell;
-                cell.x_ = base_x + (i + 0.5) * r_;
-                cell.y_ = base_y + (j + 0.5) * r_;
-                if (isInRange(cell, r_)) {
-                    grid[i][j] = C_BLACK;
-                }
-            }
-        }
-    }
-
-    x = 0;
-    y = 0;
-    Point patching_point;
-    while (x < nx) {
-        if (white_node_count(grid[x][y], grid[x + 1][y], grid[x][y + 1], grid[x + 1][y + 1]) >= 3) {
-            grid[x][y] = grid[x + 1][y] = grid[x][y + 1] = grid[x + 1][y + 1] = C_RED;
-            patching_point.x_ = base_x + (x + 1) * r_;
-            patching_point.y_ = base_y + (y + 1) * r_;
-            dumpPatchingHole(patching_point);
-            y += 2;
-        }
-        else {
-            if ((x - 1 > 0) &&
-                (white_node_count(grid[x][y], grid[x][y + 1], grid[x - 1][y], grid[x - 1][y + 1]) >= 3)) {
-                grid[x][y] = grid[x - 1][y] = grid[x][y + 1] = grid[x - 1][y + 1] = C_RED;
-                patching_point.x_ = base_x + x * r_;
-                patching_point.y_ = base_y + (y + 1) * r_;
-                dumpPatchingHole(patching_point);
-                y += 2;
-            }
-            else {
-                y += 1;
-            }
-        }
-        if (y > ny) {
-            x += 2;
-            y = 0;
-        }
-    }
-
-    for (x = 0; x < nx; x++) {
-        for (y = 0; y < ny; y++) {
-            if (grid[x][y] != C_WHITE) continue;
-            if (grid[x + 1][y] == C_WHITE) { // (m, 1)
-                int size = 0;
-                for (; grid[x + size][y] == C_WHITE; size++) {
-                    grid[x + size][y] = C_RED;
-                }
-                size = (int) floor(size / sqrt(7)) + 1;
-                for (int i = 0; i < size; i++) {
-                    patching_point.x_ = base_x + (x) * r_ + r_ * sqrt(7) / 2 + i * r_ * sqrt(7);
-                    patching_point.y_ = base_y + (y) * r_ + r_ / 2;
-                    dumpPatchingHole(patching_point);
-                }
-            }
-            else if (grid[x][y + 1] == C_WHITE) { // (1, m)
-                int size = 0;
-                for (; grid[x][y + size] == C_WHITE; size++) {
-                    grid[x][y + size] = C_RED;
-                }
-                size = (int) floor(size / sqrt(7)) + 1;
-                for (int i = 0; i < size; i++) {
-                    patching_point.x_ = base_x + (x) * r_ + r_ / 2;
-                    patching_point.y_ = base_y + (y) * r_ + r_ * sqrt(7) / 2 + i * r_ * sqrt(7);
-                    dumpPatchingHole(patching_point);
-                }
-            }
-            else {
-                patching_point.x_ = base_x + x * r_;
-                patching_point.y_ = base_y + y * r_;
-                dumpPatchingHole(patching_point);
-                grid[x][y] = C_RED;
-            }
-        }
-    }
-}
-
-int CoverageBoundHoleAgent::white_node_count(int a, int b, int c, int d) {
-    int count = 0;
-    if (a == C_WHITE) count++;
-    if (b == C_WHITE) count++;
-    if (c == C_WHITE) count++;
-    if (d == C_WHITE) count++;
-    return count;
-}
-
-/*
- * check if cell is in range of one of boundhole node list
- * @cell is center of cell
- */
-bool CoverageBoundHoleAgent::isInRange(Point cell, double edge) {
-    Point v[4];
-    v[0].x_ = cell.x_ - edge / 2;
-    v[0].y_ = cell.y_ + edge / 2;
-    v[1].x_ = cell.x_ + edge / 2;
-    v[1].y_ = cell.y_ + edge / 2;
-    v[2].x_ = cell.x_ + edge / 2;
-    v[2].y_ = cell.y_ - edge / 2;
-    v[3].x_ = cell.x_ - edge / 2;
-    v[3].y_ = cell.y_ - edge / 2;
-
-    node *vertices = NULL;
-    for (int i = 0; i < 4; i++) {
-        node *n = new node();
-        n->x_ = v[i].x_;
-        n->y_ = v[i].y_;
-        n->next_ = vertices;
-        vertices = n;
-    }
-
-    for (node *tmp = boundhole_node_list_; tmp; tmp = tmp->next_) {
-        int flag = 0;
-        for (node *vertex = vertices; vertex; vertex = vertex->next_) {
-            if (G::distance(tmp, vertex) <= sensor_range_) flag++;
-        }
-        // check if cell inside 1 sensor range
-        if (flag == 4) {
-            return true;
-        }
-        // check if cell inside 2 adjacent sensors range
-        if (flag != 0) {
-            flag = 1;
-            node *next = tmp->next_ == NULL ? boundhole_node_list_ : tmp->next_;
-            for (node *vertex = vertices; vertex; vertex = vertex->next_) {
-                if (G::distance(tmp, vertex) > sensor_range_ && G::distance(next, vertex) > sensor_range_) {
-                    flag = 0;
-                    break;
-                }
-            }
-
-            Point intersect1, intersect2;
-            G::circleCircleIntersect(tmp, sensor_range_, next, sensor_range_, &intersect1, &intersect2);
-            if (flag && !G::isPointReallyInsidePolygon(&intersect1, vertices) &&
-                !G::isPointReallyInsidePolygon(&intersect2, vertices)) {
-                return true;
-            }
-        }
-    }
-
-    return false;
 }
 
 /*----------------Utils function----------------------*/
@@ -789,39 +435,167 @@ node *CoverageBoundHoleAgent::getNextSensorNeighbor(nsaddr_t prev_node) {
     return NULL;
 }
 
-/*----------------- DUMP --------------------------*/
-void CoverageBoundHoleAgent::dumpCoverageBoundHole(polygonHole *pHole) {
-    FILE *fp;
-    fp = fopen("CoverageGrid.tr", "a");
-    for (node *temp = pHole->node_list_; temp; temp = temp->next_) {
-        fprintf(fp, "%f\t%f\n", temp->x_, temp->y_);
-    }
-    fprintf(fp, "%f\t%f\n", pHole->node_list_->x_, pHole->node_list_->y_);
-    fprintf(fp, "\n");
-    fclose(fp);
-}
+/************** new *************/
+DIRECTION CoverageBoundHoleAgent::nextTriangle(triangle *current_unit, node **circle_a, node **circle_b, limits limit,
+                                               DIRECTION prev_direction) {
+    bool is_candidate_found = false;
+    triangle tmp_candidate;
+    triangle candidate;
+    DIRECTION direction = NONE;
+    DIRECTION tmp_direction = NONE;
+    triangle prev_unit;
+    for (int i = 0; i < 3; i++) {
+        Point A, B, C;
+        A = current_unit->vertices[i % 3];
+        B = current_unit->vertices[(i + 1) % 3];
+        C = current_unit->vertices[(i + 2) % 3];
+        tmp_candidate.vertices[0] = A;
+        tmp_candidate.vertices[1] = B;
+        tmp_candidate.vertices[2].x_ = (A.x_ + B.x_) / 2 * 2 - C.x_;
+        tmp_candidate.vertices[2].y_ = (A.y_ + B.y_) / 2 * 2 - C.y_;
 
-void CoverageBoundHoleAgent::dumpPatchingHole(Point point) {
-    FILE *fp;
-    fp = fopen("PatchingHole.tr", "a");
-    fprintf(fp, "%f\t%f\n", point.x_, point.y_);
-    fclose(fp);
-}
+        if (tmp_candidate.vertices[2].x_ < A.x_ && tmp_candidate.vertices[2].x_ < B.x_ &&
+            tmp_candidate.vertices[2].x_ < C.x_)
+            tmp_direction = LEFT;
+        else if (tmp_candidate.vertices[2].x_ > A.x_ && tmp_candidate.vertices[2].x_ > B.x_ &&
+                 tmp_candidate.vertices[2].x_ > C.x_)
+            tmp_direction = RIGHT;
+        else if (tmp_candidate.vertices[2].y_ > A.y_)
+            tmp_direction = DOWN;
+        else if (tmp_candidate.vertices[2].y_ < A.y_)
+            tmp_direction = UP;
 
-void CoverageBoundHoleAgent::dumpGridCell(double basex, double basey, double rx, double ry, int8_t **arr, int nx,
-                                          int ny) {
-    FILE *fp;
-    fp = fopen("GridCell.tr", "a");
-    for (int i = 0; i < nx; i++) {
-        for (int j = 0; j < ny; j++) {
-            if (arr[i][j] != C_BLACK) {
-                fprintf(fp, "%f\t%f\n", basex + i * rx, basey + j * ry);
-                fprintf(fp, "%f\t%f\n", basex + (i + 1) * rx, basey + j * ry);
-                fprintf(fp, "%f\t%f\n", basex + (i + 1) * rx, basey + (j + 1) * ry);
-                fprintf(fp, "%f\t%f\n", basex + i * rx, basey + (j + 1) * ry);
-                fprintf(fp, "%f\t%f\n\n", basex + i * rx, basey + j * ry);
+        if (tmp_direction + prev_direction == 0) {
+            for (int j = 0; j < 3; j++) {
+                prev_unit.vertices[j] = tmp_candidate.vertices[j];
+            }
+        }
+
+        if ((tmp_direction + prev_direction) != 0 && isSelectableTriangle(*circle_a, *circle_b, tmp_candidate, limit)) {
+            if ((is_candidate_found && tmp_direction != prev_direction) || !is_candidate_found) {
+                is_candidate_found = true;
+                direction = tmp_direction;
+                for (int j = 0; j < 3; j++) {
+                    candidate.vertices[j] = tmp_candidate.vertices[j];
+                }
             }
         }
     }
-    fclose(fp);
+
+    if (!is_candidate_found) {
+        // go back
+        direction = prev_direction;
+        for (int j = 0; j < 3; j++) {
+            candidate.vertices[j] = prev_unit.vertices[j];
+        }
+
+        // move to next circle
+        *circle_a = *circle_b;
+        *circle_b = (*circle_b)->next_;
+    }
+
+    for (int j = 0; j < 3; j++) {
+        current_unit->vertices[j] = candidate.vertices[j];
+    }
+
+    if (isOutdatedCircle(*circle_a, *current_unit)) {
+        *circle_a = *circle_b;
+        *circle_b = (*circle_b)->next_;
+    }
+
+    return direction;
+}
+
+bool CoverageBoundHoleAgent::isOutdatedCircle(node *circle, triangle tri) {
+    return (G::distance(circle, tri.vertices[0]) > sensor_range_ &&
+            G::distance(circle, tri.vertices[1]) > sensor_range_ &&
+            G::distance(circle, tri.vertices[2]) > sensor_range_);
+}
+
+/**
+ * Condition for a triangle is valid:
+ * - all vertices is inside one or both circles, and this triangle contains the boundary intersect
+ * - or there is at least one vertex outside 2 circle and lies to left side of vector (circle_a, circle_b)
+ *   and at least 1 vertex inside 2 circle
+ */
+bool CoverageBoundHoleAgent::isSelectableTriangle(node *circle_a, node *circle_b, triangle tri, limits limit) {
+    /*for (int i = 0; i < 3; i++) {
+        if (G::distance(circle_a, tri.vertices[i]) > sensor_range_ &&
+            G::distance(circle_b, tri.vertices[i]) > sensor_range_) {
+            if (G::distance(circle_a, tri.vertices[(i + 1) % 3]) > sensor_range_ &&
+                G::distance(circle_a, tri.vertices[(i + 2) % 3]) > sensor_range_ &&
+                G::distance(circle_b, tri.vertices[(i + 1) % 3]) > sensor_range_ &&
+                G::distance(circle_b, tri.vertices[(i + 2) % 3]) > sensor_range_) {
+                return false;
+            }
+            else if (G::orientation(circle_a, tri.vertices[i], circle_b) == 2) {
+                return true;
+            }
+        }
+    }
+
+    // all vertices is inside one or both circles
+    Point intersect1, intersect2;
+    node *vertices = NULL;
+    for (int i = 0; i < 3; i++) {
+        node *node = new struct node();
+        node->x_ = tri.vertices[i].x_;
+        node->y_ = tri.vertices[i].y_;
+        node->next_ = vertices;
+        vertices = node;
+    }
+
+    G::circleCircleIntersect(circle_a, sensor_range_, circle_b, sensor_range_, &intersect1, &intersect2);
+    return G::isPointReallyInsidePolygon(&intersect2, vertices);*/
+
+    for (int i = 0; i < 3; i++) {
+        if (tri.vertices[i].x_ < limit.min_x || tri.vertices[i].x_ > limit.max_x) {
+            return false;
+        }
+        if (tri.vertices[i].y_ < limit.min_y || tri.vertices[i].y_ > limit.max_y) {
+            return false;
+        }
+    }
+
+    if (G::distance(circle_a, tri.vertices[0]) > sensor_range_ &&
+        G::distance(circle_a, tri.vertices[1]) > sensor_range_ &&
+        G::distance(circle_a, tri.vertices[2]) > sensor_range_ &&
+        G::distance(circle_b, tri.vertices[0]) > sensor_range_ &&
+        G::distance(circle_b, tri.vertices[1]) > sensor_range_ &&
+        G::distance(circle_b, tri.vertices[2]) > sensor_range_) {
+        return false;
+    }
+
+    if ((G::distance(circle_a, tri.vertices[0]) <= sensor_range_ &&
+         G::distance(circle_a, tri.vertices[1]) <= sensor_range_ &&
+         G::distance(circle_a, tri.vertices[2]) <= sensor_range_) ||
+        (G::distance(circle_b, tri.vertices[0]) <= sensor_range_ &&
+         G::distance(circle_b, tri.vertices[1]) <= sensor_range_ &&
+         G::distance(circle_b, tri.vertices[2]) <= sensor_range_)) {
+        return false;
+    }
+
+    if ((G::distance(circle_a, tri.vertices[0]) <= sensor_range_ ||
+         G::distance(circle_b, tri.vertices[0]) <= sensor_range_) &&
+        (G::distance(circle_a, tri.vertices[1]) <= sensor_range_ ||
+         G::distance(circle_b, tri.vertices[1]) <= sensor_range_) &&
+        (G::distance(circle_a, tri.vertices[2]) <= sensor_range_ ||
+         G::distance(circle_b, tri.vertices[2]) <= sensor_range_)) {
+        Point intersect1, intersect2;
+        node *vertices = NULL;
+        for (int i = 0; i < 3; i++) {
+            node *node = new struct node();
+            node->x_ = tri.vertices[i].x_;
+            node->y_ = tri.vertices[i].y_;
+            node->next_ = vertices;
+            vertices = node;
+        }
+
+        G::circleCircleIntersect(circle_a, sensor_range_, circle_b, sensor_range_, &intersect1, &intersect2);
+        if (!G::isPointReallyInsidePolygon(&intersect2, vertices)) {
+            return false;
+        }
+    }
+
+    return true;
 }

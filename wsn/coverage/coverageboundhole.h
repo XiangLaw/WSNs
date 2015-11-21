@@ -25,22 +25,37 @@
 #define C_WHITE   1
 #define C_BLACK   0
 
+enum DIRECTION {
+    UP = -2,
+    LEFT = -1,
+    NONE = 0,
+    RIGHT = 1,
+    DOWN = 2,
+};
+
+
 class CoverageBoundHoleAgent;
 
-struct sensor_neighbor : neighbor{
+struct sensor_neighbor : neighbor {
     Point i1_; // intersects
     Point i2_;
 };
 
 struct list {
-    int e_;
-    struct list* next_;
+    DIRECTION e_;
+    struct list *next_;
+};
+
+struct limits {
+    double min_x;
+    double min_y;
+    double max_x;
+    double max_y;
 };
 
 typedef void(CoverageBoundHoleAgent::*fire)(void);
 
-class CoverageBoundHoleTimer : public TimerHandler
-{
+class CoverageBoundHoleTimer : public TimerHandler {
 public:
     CoverageBoundHoleTimer(Agent *a, fire f) : TimerHandler() {
         a_ = a;
@@ -49,30 +64,28 @@ public:
 
 protected:
     virtual void expire(Event *e);
+
     Agent *a_;
     fire firing_;
 };
 
-class CoverageBoundHoleAgent : public GPSRAgent{
+class CoverageBoundHoleAgent : public GPSRAgent {
 private:
     friend class BoundHoleHelloTimer;
+
     CoverageBoundHoleTimer boundhole_timer_;
     RunTimeCounter runTimeCounter;
 
-    node* boundhole_node_list_; // list of node on bound hole
+    node *boundhole_node_list_; // list of node on bound hole
     bool isBoundary;
 
     void startUp();
 
     bool boundaryNodeDetection();
+
     void holeBoundaryDetection();
 
-    void recvCoverage(Packet*);
-
-    bool isInRange(Point, double);
-
-    void dumpCoverageBoundHole(polygonHole*);
-    void dumpPatchingHole(Point);
+    void recvCoverage(Packet *);
 
 protected:
     double communication_range_;
@@ -83,21 +96,26 @@ protected:
     stuckangle *cover_neighbors_; // pair of neighbors make with node to create a fragment of hole boundary
 
     void addSensorNeighbor(nsaddr_t, Point, int);
-    sensor_neighbor* getSensorNeighbor(nsaddr_t);
+
+    sensor_neighbor *getSensorNeighbor(nsaddr_t);
+
     void addNeighbor(nsaddr_t, Point); // override from GPSRAgent
-    node* getNextSensorNeighbor(nsaddr_t prev_node);
+    node *getNextSensorNeighbor(nsaddr_t prev_node);
 
-    void gridConstruction(polygonHole *);
-    void patchingHole(double, double, double, int8_t**, int, int);
+    void gridConstruction(polygonHole *, node *);
 
-    int white_node_count(int, int, int, int);
+    bool isOutdatedCircle(node *, triangle);
+
+    bool isSelectableTriangle(node *, node *, triangle, struct limits);
+
+    DIRECTION nextTriangle(triangle *, node **, node **, struct limits, DIRECTION);
+
 public:
     CoverageBoundHoleAgent();
 
-    int  command(int, const char*const*);
-    void recv(Packet*, Handler*);
+    int command(int, const char *const *);
 
-    void dumpGridCell(double d, double d1, double rx, double ry, int8_t **pInt, int i, int i1);
+    void recv(Packet *, Handler *);
 };
 
 #endif //NS_CONVERAGEHOLE_H

@@ -53,10 +53,7 @@ struct Line
 };
 
 struct triangle {
-    Point A;
-    Point B;
-    Point C;
-    triangle* next_;
+    Point vertices[3];
 };
 
 struct Circle : Point
@@ -424,5 +421,7 @@ public:
     static int segmentAggregation(Point *a1, Point *a2, Point *b1, Point *b2);
 
     static bool isPointReallyInsidePolygon(Point *d, node *node_list);
+
+    static int orientation(node* p, Point q, node* r);
 };
 #endif /* GEO_MATH_HELPER_H_ */
