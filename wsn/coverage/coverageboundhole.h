@@ -76,7 +76,6 @@ private:
     CoverageBoundHoleTimer boundhole_timer_;
     RunTimeCounter runTimeCounter;
 
-    node *boundhole_node_list_; // list of node on bound hole
     bool isBoundary;
 
     void startUp();
@@ -93,6 +92,7 @@ protected:
     int limit_hop_;
     sensor_neighbor *sensor_neighbor_list_; // list of the neighbors by sensor range, fixed: sensor range = 1/2*communication range
     polygonHole *hole_list_;
+    polygonHole *boundhole_node_list_; // list of node on bound hole
     stuckangle *cover_neighbors_; // pair of neighbors make with node to create a fragment of hole boundary
 
     void addSensorNeighbor(nsaddr_t, Point, int);
@@ -102,13 +102,13 @@ protected:
     void addNeighbor(nsaddr_t, Point); // override from GPSRAgent
     node *getNextSensorNeighbor(nsaddr_t prev_node);
 
-    void gridConstruction(polygonHole *, node *);
+    void gridConstruction(polygonHole *, node *, node *);
 
     bool isOutdatedCircle(node *, triangle);
 
-    bool isSelectableTriangle(node *, node *, triangle, struct limits);
+    bool isSelectableTriangle(node *, node *, triangle);
 
-    DIRECTION nextTriangle(triangle *, node **, node **, struct limits, DIRECTION);
+    DIRECTION nextTriangle(triangle *, node **, node **, DIRECTION);
 
 public:
     CoverageBoundHoleAgent();
@@ -116,6 +116,8 @@ public:
     int command(int, const char *const *);
 
     void recv(Packet *, Handler *);
+
+    void debug(triangle);
 };
 
 #endif //NS_CONVERAGEHOLE_H
