@@ -162,7 +162,6 @@ private:
 
 	void dumpBoundhole(gridHole*);
 	void dumpPivot();
-	void dumpElection();
 	void dumpCollect();
 	void dumpAlarm();
 	void dumpNodeOff(neighbor*);
@@ -174,6 +173,8 @@ public:
 	void 	recv(Packet*, Handler*);
 
 	static node* sink_list_;
+
+    void dumpAdjacentHole(node *p);
 };
 
 #endif /* GRID_H_ */
