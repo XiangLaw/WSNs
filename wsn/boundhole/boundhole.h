@@ -61,14 +61,14 @@ typedef void(BoundHoleAgent::*firefunction)(void);
 class BoundHoleTimer : public TimerHandler
 {
 	public:
-		BoundHoleTimer(BoundHoleAgent *a, firefunction f) : TimerHandler() {
+		BoundHoleTimer(Agent *a, firefunction f) : TimerHandler() {
 			a_ = a;
 			firing_ = f;
 		}
 
 	protected:
 		virtual void expire(Event *e);
-		BoundHoleAgent *a_;
+		Agent *a_;
 		firefunction firing_;
 };
 

@@ -456,7 +456,6 @@ void ConvexHullAgent::recvData(Packet* p)
 
 	if (cmh->direction() == hdr_cmn::UP	&& edh->daddr_ == my_id_)	// up to destination
 	{
-		dumpHopcount(p);
 		port_dmux_->recv(p, 0);
 		return;
 	}

@@ -91,7 +91,6 @@ private:
 
 	void dumpRoutingTable();
 	void dumpApproximateHole();
-	void dumpHopcount(Packet* p);
     void dumpBroadcastRegion();
 
 public:

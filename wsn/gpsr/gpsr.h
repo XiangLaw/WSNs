@@ -73,7 +73,7 @@ protected:
 
 	void startUp();						// Initialize the Agent
 
-	void addNeighbor(nsaddr_t, Point);
+	virtual void addNeighbor(nsaddr_t, Point);
 
 	void sendHello();
 	void recvHello(Packet*);
@@ -85,17 +85,14 @@ protected:
 	void dumpNeighbor();
 	void dumpEnergy(char * filename);
 	void dumpEnergy();
-	void dumpHopcount(Packet* p);
 
 	double hello_period_;
-	double energy_checkpoint_;
 
 	RNG 			randSend_;
 	MobileNode*		node_;				// the attached mobile node
 	PortClassifier*	port_dmux_;			// for the higher layer app de-multiplexing
 	Trace *			trace_target_;
 	neighbor*		neighbor_list_;		// neighbor list: routing table implementation
-	//double 			off_time_;			// time node go off
 	Point * 		dest;				// position of destination
 
 	nsaddr_t my_id_;					// node id (address), which is NOT necessary
@@ -105,7 +102,6 @@ protected:
 	neighbor* getNeighborByGreedy(Point d, Point s);
 	neighbor* getNeighborByGreedy(Point d) { return getNeighborByGreedy(d, *this); }
 
-	void checkEnergy();
 
 	void recvGPSR(Packet*, hdr_gpsr*);
 public:

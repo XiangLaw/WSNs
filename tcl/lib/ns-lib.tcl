@@ -687,7 +687,13 @@ Simulator instproc create-wireless-node args {
 				set ragent [$self create-greedy-agent $node]
 			}
 			ELBARGRIDOFFLINE {
-            				set ragent [$self create-elbar-gridoffline-agent $node]
+            	set ragent [$self create-elbar-gridoffline-agent $node]
+            }
+            COVERAGE {
+            	set ragent [$self create-coverage-agent $node]
+        	}
+        	BCPCOVERAGE {
+                set ragent [$self create-bcp-coverage-agent $node]
             }
 			MDART {
 				set ragent [$self create-mdart-agent $node]
@@ -1205,6 +1211,38 @@ Simulator instproc create-elbar-gridoffline-agent { node } {
 	$self at 0.0 	"$ragent start"    ;# start updates
 	$self at 30	"$ragent boundhole"
 	$self at 70 "$ragent broadcast"
+	return $ragent
+}
+
+# COVERAGE
+Simulator instproc create-coverage-agent { node } {
+	set ragent [new Agent/COVERAGE]
+	set addr [$node node-addr]
+	$ragent addr $addr
+	$ragent node $node
+	if [Simulator set mobile_ip_] {
+		$ragent port-dmux [$node demux]
+	}
+	$node addr $addr
+	$node set ragent_ $ragent
+	$self at 0.0 	"$ragent start"    ;# start updates
+    $self at 50	"$ragent coverage"
+	return $ragent
+}
+
+# BCPCOVERAGE
+Simulator instproc create-bcp-coverage-agent { node } {
+	set ragent [new Agent/BCPCOVERAGE]
+	set addr [$node node-addr]
+	$ragent addr $addr
+	$ragent node $node
+	if [Simulator set mobile_ip_] {
+		$ragent port-dmux [$node demux]
+	}
+	$node addr $addr
+	$node set ragent_ $ragent
+	$self at 0.0 	"$ragent start"    ;# start updates
+    $self at 50	"$ragent coverage"
 	return $ragent
 }
 
