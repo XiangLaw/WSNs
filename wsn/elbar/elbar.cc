@@ -691,6 +691,10 @@ double ElbarGridOfflineAgent::detectViewAngle(Point *d, node *node_list, node* a
 
     double min, max, angle;
     min = max = G::directedAngle(&intersect, d, node_list);
+    ai->x_ = node_list->x_;
+    ai->y_ = node_list->y_;
+    aj->x_ = node_list->x_;
+    aj->y_ = node_list->y_;
     for(tmp = node_list->next_; tmp != NULL; tmp = tmp->next_){
         angle = G::directedAngle(&intersect, d, tmp);
         if (angle > max){

@@ -1,9 +1,9 @@
-# Script for WisSim simulator. Last edit 7/10/2015 6:43:51 PM
+# Script for WisSim simulator. Last edit 11/23/2015 4:57:01 PM
 
 set opt(x)	1000	;# X dimension of the topography
 set opt(y)	1000	;# Y dimension of the topography
-set opt(stop)	1000	;# simulation time
-set opt(nn)	1500	;# number of nodes
+set opt(stop)	500	;# simulation time
+set opt(nn)	1477	;# number of nodes
 set opt(tr)	Trace.tr	;# trace file
 set opt(nam)	nam.out.tr
 
@@ -66,7 +66,7 @@ Agent/CBR set type_ CBR
 Agent/CBR set dport_ 0
 Agent/CBR set rate_ 0.1Mb
 Agent/CBR set sport_ 0
-Agent/CBR set interval_ 27
+Agent/CBR set interval_ 1
 
 # ======================================================================
 
@@ -108,7 +108,7 @@ $ns_ node-config -adhocRouting $opt(rp) \
 		 -topoInstance $topo \
 		 -agentTrace ON \
 		 -routerTrace ON \
-		 -macTrace OFF \
+		 -macTrace ON \
 		 -movementTrace OFF \
 		 -energyModel $opt(energymodel) \
 		 -idlePower $opt(idlePower) \
