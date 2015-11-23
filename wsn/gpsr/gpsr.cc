@@ -427,12 +427,12 @@ GPSRAgent::dumpEnergy(char *filename) {
 void
 GPSRAgent::dumpNeighbor() {
     FILE *fp = fopen("Neighbors.tr", "a+");
-    fprintf(fp, "%f\t%f\n", x_, y_);
-//    fprintf(fp, "%d	%f	%f	%f	", this->my_id_, this->x_, this->y_, node_->energy_model()->off_time());
-//    for (node *temp = neighbor_list_; temp; temp = temp->next_) {
-//        fprintf(fp, "%d,", temp->id_);
-//    }
-//    fprintf(fp, "\n");
+//    fprintf(fp, "%f\t%f\n", x_, y_);
+    fprintf(fp, "%d	%f	%f	%f	", this->my_id_, this->x_, this->y_, node_->energy_model()->off_time());
+    for (node *temp = neighbor_list_; temp; temp = temp->next_) {
+        fprintf(fp, "%d,", temp->id_);
+    }
+    fprintf(fp, "\n");
 
     fclose(fp);
 }

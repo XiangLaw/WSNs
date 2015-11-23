@@ -277,7 +277,7 @@ void CoverageBoundHoleAgent::gridConstruction(polygonHole *hole,
     }
 
     current_circle_a = start_circle;
-    current_intersect_a = start_intersect->next_;
+    current_intersect_a = start_intersect;
 
     int x_index = 0;
     int y_index = 0;
@@ -306,12 +306,12 @@ void CoverageBoundHoleAgent::gridConstruction(polygonHole *hole,
     nx = nx * 2 + 1;
     int ny = (int) ((limit.max_y - limit.min_y) / (sensor_range_ * sqrt(3) / 2)) + 1;
 
-    int8_t **grid = new int8_t *[nx];
-    for (int i = 0; i < nx; i++)
-        grid[i] = new int8_t[ny];
+    int8_t **grid = new int8_t *[nx + 1];
+    for (int i = 0; i < nx + 1; i++)
+        grid[i] = new int8_t[ny + 1];
 
-    for (int i = 0; i < nx; i++) {
-        for (int j = 0; j < ny; j++) {
+    for (int i = 0; i < nx + 1; i++) {
+        for (int j = 0; j < ny + 1; j++) {
             grid[i][j] = C_WHITE;
         }
     }
@@ -321,16 +321,16 @@ void CoverageBoundHoleAgent::gridConstruction(polygonHole *hole,
     for (struct list *tmp = directions; tmp; tmp = tmp->next_) {
         switch (tmp->e_) {
             case RIGHT:
-                x_index++;
-                break;
-            case LEFT:
                 x_index--;
                 break;
+            case LEFT:
+                x_index++;
+                break;
             case UP:
-                y_index--;
+                y_index++;
                 break;
             case DOWN:
-                y_index++;
+                y_index--;
                 break;
             default:
                 break;
@@ -341,7 +341,7 @@ void CoverageBoundHoleAgent::gridConstruction(polygonHole *hole,
     patchingHole(limit.min_x, limit.min_y, grid, nx, ny);
 
     // free memory
-    for (int i = 0; i < nx; i++)
+    for (int i = 0; i < nx + 1; i++)
         delete[] grid[i];
     delete[] grid;
 }
@@ -638,8 +638,15 @@ void CoverageBoundHoleAgent::patchingHole(double base_x, double base_y,
         }
     }
 
-    x = 0;
-    y = 0;
+    for (int i = 0; i < ny + 1; i++) {
+        for (int j = 0; j < nx + 1; j++) {
+            printf("%d ", grid[j][i]);
+        }
+        printf("\n");
+    }
+
+    x = 2;
+    y = 1;
     Point patching_point;
     while (x < nx) {
         if (black_node_count(grid, x, y) >= 4) {
@@ -653,8 +660,15 @@ void CoverageBoundHoleAgent::patchingHole(double base_x, double base_y,
         y += 2;
         if (y > ny) {
             x += 3;
-            y = x % 2;
+            y = (x + 1) % 2;
         }
+    }
+
+    for (int i = 0; i < ny + 1; i++) {
+        for (int j = 0; j < nx + 1; j++) {
+            printf("%d ", grid[j][i]);
+        }
+        printf("\n");
     }
 
 }
@@ -666,6 +680,13 @@ int CoverageBoundHoleAgent::black_node_count(int8_t **grid, int x, int y) {
 
 void CoverageBoundHoleAgent::dumpPatchingHole(Point point) {
     FILE *fp = fopen("PatchingHole.tr", "a+");
-    fprintf(fp, "%f\t%f\n", point.x_, point.y_);
+    fprintf(fp, "%f\t%f\n", point.x_ - sensor_range_ / 2, point.y_ - sensor_range_ * sqrt(3) / 2);
+    fprintf(fp, "%f\t%f\n", point.x_ + sensor_range_ / 2, point.y_ - sensor_range_ * sqrt(3) / 2);
+    fprintf(fp, "%f\t%f\n", point.x_ + sensor_range_, point.y_);
+    fprintf(fp, "%f\t%f\n", point.x_ + sensor_range_ / 2, point.y_ + sensor_range_ * sqrt(3) / 2);
+    fprintf(fp, "%f\t%f\n", point.x_ - sensor_range_ / 2, point.y_ + sensor_range_ * sqrt(3) / 2);
+    fprintf(fp, "%f\t%f\n", point.x_ - sensor_range_, point.y_);
+    fprintf(fp, "%f\t%f\n\n", point.x_ - sensor_range_ / 2, point.y_ - sensor_range_ * sqrt(3) / 2);
+//    fprintf(fp, "%f\t%f\n", point.x_, point.y_);
     fclose(fp);
 }
