@@ -101,7 +101,7 @@ void CoverageBoundHoleAgent::recvCoverage(Packet *p) {
 
             min_y = data->get_intersect_data(0).y_;
             bool flag = false;
-            for (int i = 1; i < data->size(); i++) {
+            for (int i = 0; i < data->size(); i++) {
                 node n_intersect = data->get_intersect_data(i);
                 node *intersect = new node();
                 intersect->x_ = n_intersect.x_;
@@ -110,7 +110,7 @@ void CoverageBoundHoleAgent::recvCoverage(Packet *p) {
                 intersect->next_ = intersect_head;
                 intersect_head = intersect;
 
-                if (min_y > intersect->y_) {
+                if (min_y >= intersect->y_) {
                     first_intersect = intersect;
                     min_y = intersect->y_;
                     flag = true;
@@ -277,7 +277,7 @@ void CoverageBoundHoleAgent::gridConstruction(polygonHole *hole,
     }
 
     current_circle_a = start_circle;
-    current_intersect_a = start_intersect;
+    current_intersect_a = start_intersect->next_;
 
     int x_index = 0;
     int y_index = 0;
@@ -290,20 +290,20 @@ void CoverageBoundHoleAgent::gridConstruction(polygonHole *hole,
     current_unit.vertices[2].x_ = current_unit.vertices[0].x_ + sensor_range_ / 2;
     current_unit.vertices[2].y_ = limit.min_y + sensor_range_ * sqrt(3) / 2;
 
-    debug(current_unit);
+    dumpCoverageGrid(current_unit);
 
     while (current_circle_a->next_ != start_circle) {
         prev_direction = nextTriangle(&current_unit, &current_circle_a, &current_intersect_a, prev_direction);
-        debug(current_unit);
-
         list *dir = new list();
         dir->e_ = prev_direction;
         dir->next_ = directions;
         directions = dir;
+        dumpCoverageGrid(current_unit);
     }
 
     /* construct matrix */
     int nx = (int) ((limit.max_x - limit.min_x) / sensor_range_) + 1;
+    nx = nx * 2 + 1;
     int ny = (int) ((limit.max_y - limit.min_y) / (sensor_range_ * sqrt(3) / 2)) + 1;
 
     int8_t **grid = new int8_t *[nx];
@@ -312,10 +312,11 @@ void CoverageBoundHoleAgent::gridConstruction(polygonHole *hole,
 
     for (int i = 0; i < nx; i++) {
         for (int j = 0; j < ny; j++) {
-            grid[i][j] = 0;
+            grid[i][j] = C_WHITE;
         }
     }
 
+    x_index = x_index * 2 + 1;
     grid[x_index][y_index] = 1;
     for (struct list *tmp = directions; tmp; tmp = tmp->next_) {
         switch (tmp->e_) {
@@ -334,8 +335,10 @@ void CoverageBoundHoleAgent::gridConstruction(polygonHole *hole,
             default:
                 break;
         }
-        grid[x_index][y_index] = 1;
+        grid[x_index][y_index] = C_BLACK;
     }
+
+    patchingHole(limit.min_x, limit.min_y, grid, nx, ny);
 
     // free memory
     for (int i = 0; i < nx; i++)
@@ -599,12 +602,70 @@ bool CoverageBoundHoleAgent::isSelectableTriangle(node *circle,
     return false;
 }
 
-void CoverageBoundHoleAgent::debug(triangle current_unit) {
-    printf("%f\t%f\n", current_unit.vertices[0].x_, current_unit.vertices[0].y_);
-    printf("%f\t%f\n", current_unit.vertices[1].x_, current_unit.vertices[1].y_);
-    printf("%f\t%f\n", current_unit.vertices[2].x_, current_unit.vertices[2].y_);
-    printf("%f\t%f\n", current_unit.vertices[0].x_, current_unit.vertices[0].y_);
-    printf("%f\t%f\n\n", (current_unit.vertices[1].x_ + current_unit.vertices[2].x_) / 2,
-           (current_unit.vertices[1].y_ + current_unit.vertices[2].y_) / 2);
+void CoverageBoundHoleAgent::dumpCoverageGrid(triangle current_unit) {
+    FILE *fp = fopen("CoverageGrid.tr", "a+");
+    fprintf(fp, "%f\t%f\n", current_unit.vertices[0].x_, current_unit.vertices[0].y_);
+    fprintf(fp, "%f\t%f\n", current_unit.vertices[1].x_, current_unit.vertices[1].y_);
+    fprintf(fp, "%f\t%f\n", current_unit.vertices[2].x_, current_unit.vertices[2].y_);
+    fprintf(fp, "%f\t%f\n", current_unit.vertices[0].x_, current_unit.vertices[0].y_);
+    fprintf(fp, "%f\t%f\n\n", (current_unit.vertices[1].x_ + current_unit.vertices[2].x_) / 2,
+            (current_unit.vertices[1].y_ + current_unit.vertices[2].y_) / 2);
+    fclose(fp);
+}
 
+void CoverageBoundHoleAgent::patchingHole(double base_x, double base_y,
+                                          int8_t **grid, int nx, int ny) {
+    int x = 0;
+    int y = 0;
+    // fill the grid with color
+    for (y = 1; y < ny - 1; y++) {
+        for (x = 1; x < nx - 1; x++) {
+            if (grid[x][y] == C_BLACK || grid[x - 1][y] != C_BLACK || grid[x][y - 1] != C_BLACK) continue;
+            int flag = 0;
+            for (int i = x + 1; i < nx; i++) {
+                if (grid[i][y] == C_BLACK) {
+                    flag++;
+                    break;
+                }
+            }
+            for (int i = y + 1; i < ny; i++) {
+                if (grid[x][i] == C_BLACK) {
+                    flag++;
+                    break;
+                }
+            }
+            if (flag >= 2) grid[x][y] = C_BLACK;
+        }
+    }
+
+    x = 0;
+    y = 0;
+    Point patching_point;
+    while (x < nx) {
+        if (black_node_count(grid, x, y) >= 4) {
+            grid[x][y] = grid[x + 1][y] = grid[x + 2][y] =
+            grid[x][y + 1] = grid[x + 1][y + 1] = grid[x + 2][y + 1] = C_RED;
+
+            patching_point.x_ = base_x + ((x + 1) / 2) * sensor_range_ + ((x + 1) % 2) * sensor_range_ / 2;
+            patching_point.y_ = base_y + (y + 1) * sensor_range_ * sqrt(3) / 2;
+            dumpPatchingHole(patching_point);
+        }
+        y += 2;
+        if (y > ny) {
+            x += 3;
+            y = x % 2;
+        }
+    }
+
+}
+
+int CoverageBoundHoleAgent::black_node_count(int8_t **grid, int x, int y) {
+    return (grid[x][y] + grid[x + 1][y] + grid[x + 2][y] +
+            grid[x][y + 1] + grid[x + 1][y + 1] + grid[x + 2][y + 1]);
+}
+
+void CoverageBoundHoleAgent::dumpPatchingHole(Point point) {
+    FILE *fp = fopen("PatchingHole.tr", "a+");
+    fprintf(fp, "%f\t%f\n", point.x_, point.y_);
+    fclose(fp);
 }

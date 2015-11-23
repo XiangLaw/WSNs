@@ -22,8 +22,8 @@
 #include "wsn/geomathhelper/geo_math_helper.h"
 
 #define C_RED     2
-#define C_WHITE   1
-#define C_BLACK   0
+#define C_BLACK   1
+#define C_WHITE   0
 
 enum DIRECTION {
     UP = -2,
@@ -117,7 +117,13 @@ public:
 
     void recv(Packet *, Handler *);
 
-    void debug(triangle);
+    void dumpCoverageGrid(triangle);
+
+    void patchingHole(double, double, int8_t **, int, int);
+
+    int black_node_count(int8_t **, int, int);
+
+    void dumpPatchingHole(Point);
 };
 
 #endif //NS_CONVERAGEHOLE_H
