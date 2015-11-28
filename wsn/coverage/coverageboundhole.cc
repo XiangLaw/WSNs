@@ -682,6 +682,22 @@ void CoverageBoundHoleAgent::dumpPatchingHole(Point point) {
 }
 
 void CoverageBoundHoleAgent::fillGrid(int8_t **grid, int nx, int ny) {
+    int8_t **clone = new int8_t *[nx + 2];
+    for (int i = 0; i < nx + 2; ++i) {
+        clone[i] = new int8_t[ny + 2];
+    }
+    for (int i = 0; i < nx + 2; i++) {
+        for (int j = 0; j < ny + 2; j++) {
+            clone[i][j] = C_BLUE;
+        }
+    }
+
+    for (int i = 1; i < nx + 2; i++) {
+        for (int j = 1; j < ny + 2; ++j) {
+            clone[i][j] = grid[i - 1][j - 1];
+        }
+    }
+
     int x = 0;
     int y = 0;
     std::vector<Point> queue;
@@ -689,40 +705,59 @@ void CoverageBoundHoleAgent::fillGrid(int8_t **grid, int nx, int ny) {
     Point visiting;
 
     // (x, 0)
-    while (grid[x][y] != C_BLUE) x++;
-    grid[x][y] = C_WHITE;
+    while (clone[x][y] != C_BLUE) x++;
+    clone[x][y] = C_WHITE;
     point.x_ = x;
     point.y_ = y;
     queue.push_back(point);
     while (!queue.empty()) {
         visiting = queue.back();
         queue.pop_back();
-        x = (int)visiting.x_;
-        y = (int)visiting.y_;
+        x = (int) visiting.x_;
+        y = (int) visiting.y_;
 
-        if (x > 0 && grid[x - 1][y] == C_BLUE) {
+        if (x > 0 && clone[x - 1][y] == C_BLUE) {
             point.x_ = x - 1;
             point.y_ = y;
-            grid[x - 1][y] = C_WHITE;
+            clone[x - 1][y] = C_WHITE;
             queue.push_back(point);
         }
-        if (y > 0 && grid[x][y - 1] == C_BLUE) {
+        if (y > 0 && clone[x][y - 1] == C_BLUE) {
             point.x_ = x;
             point.y_ = y - 1;
-            grid[x][y - 1] = C_WHITE;
+            clone[x][y - 1] = C_WHITE;
             queue.push_back(point);
         }
-        if(grid[x+1][y] == C_BLUE) {
-            point.x_ = x+1;
+        if ((x < nx + 1) && clone[x + 1][y] == C_BLUE) {
+            point.x_ = x + 1;
             point.y_ = y;
-            grid[x+1][y] = C_WHITE;
+            clone[x + 1][y] = C_WHITE;
             queue.push_back(point);
         }
-        if(grid[x][y+1] == C_BLUE) {
+        if ((y < ny + 1) && clone[x][y + 1] == C_BLUE) {
             point.x_ = x;
-            point.y_ = y +1;
-            grid[x][y+1] = C_WHITE;
+            point.y_ = y + 1;
+            clone[x][y + 1] = C_WHITE;
             queue.push_back(point);
+        }
+    }
+
+    for (int i = 1; i < nx + 2; i++) {
+        for (int j = 1; j < ny + 2; ++j) {
+            grid[i - 1][j - 1] = clone[i][j];
+        }
+    }
+
+    // free memory
+    for (int i = 0; i < nx + 2; i++)
+        delete[] clone[i];
+    delete[] clone;
+
+    for (int i = 0; i < nx; i++) {
+        for (int j = 0; j < ny; j++) {
+            if (grid[i][j] == C_BLUE) {
+                grid[i][j] = C_BLACK;
+            }
         }
     }
 }

@@ -126,7 +126,7 @@ public:
 
     void dumpPatchingHole(Point);
 
-    void fillGrid(int8_t **grid, int nx, int ny);
+    void fillGrid(int8_t **clone, int nx, int ny);
 };
 
 #endif //NS_CONVERAGEHOLE_H
