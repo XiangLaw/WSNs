@@ -14,8 +14,8 @@
 #include "cstdlib"
 #include "float.h"
 
-#define min(x,y) (((x)<(y))?(x):(y))
-#define max(x,y) (((x)>(y))?(x):(y))
+#define g_min(x,y) (((x)<(y))?(x):(y))
+#define g_max(x,y) (((x)>(y))?(x):(y))
 #define in_range(x,a,y) ((x) <= (a) && (a) <= (y)) || ((x) >= (a) && (a) >= (y))
 
 #define EPSILON 0.000001

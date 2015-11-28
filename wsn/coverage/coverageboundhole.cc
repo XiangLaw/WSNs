@@ -4,7 +4,7 @@
 
 #include "coverageboundhole.h"
 #include "coverageboundhole_packet_data.h"
-
+#include <vector>
 
 int hdr_coverage::offset_;
 
@@ -312,7 +312,7 @@ void CoverageBoundHoleAgent::gridConstruction(polygonHole *hole,
 
     for (int i = 0; i < nx + 1; i++) {
         for (int j = 0; j < ny + 1; j++) {
-            grid[i][j] = C_WHITE;
+            grid[i][j] = C_BLUE;
         }
     }
 
@@ -617,26 +617,17 @@ void CoverageBoundHoleAgent::patchingHole(double base_x, double base_y,
                                           int8_t **grid, int nx, int ny) {
     int x = 0;
     int y = 0;
-    // fill the grid with color
-    for (y = 1; y < ny - 1; y++) {
-        for (x = 1; x < nx - 1; x++) {
-            if (grid[x][y] == C_BLACK || grid[x - 1][y] != C_BLACK || grid[x][y - 1] != C_BLACK) continue;
-            int flag = 0;
-            for (int i = x + 1; i < nx; i++) {
-                if (grid[i][y] == C_BLACK) {
-                    flag++;
-                    break;
-                }
-            }
-            for (int i = y + 1; i < ny; i++) {
-                if (grid[x][i] == C_BLACK) {
-                    flag++;
-                    break;
-                }
-            }
-            if (flag >= 2) grid[x][y] = C_BLACK;
+
+    for (int i = 0; i < ny + 1; i++) {
+        for (int j = 0; j < nx + 1; j++) {
+            printf("%d ", grid[j][i]);
         }
+        printf("\n");
     }
+    printf("\n");
+
+    // fill the grid with color
+    fillGrid(grid, nx, ny);
 
     for (int i = 0; i < ny + 1; i++) {
         for (int j = 0; j < nx + 1; j++) {
@@ -646,7 +637,7 @@ void CoverageBoundHoleAgent::patchingHole(double base_x, double base_y,
     }
 
     x = 2;
-    y = 1;
+    y = 0;
     Point patching_point;
     while (x < nx) {
         if (black_node_count(grid, x, y) >= 4) {
@@ -658,9 +649,9 @@ void CoverageBoundHoleAgent::patchingHole(double base_x, double base_y,
             dumpPatchingHole(patching_point);
         }
         y += 2;
-        if (y > ny) {
+        if (y >= ny) {
             x += 3;
-            y = (x + 1) % 2;
+            y = (x) % 2;
         }
     }
 
@@ -670,7 +661,6 @@ void CoverageBoundHoleAgent::patchingHole(double base_x, double base_y,
         }
         printf("\n");
     }
-
 }
 
 int CoverageBoundHoleAgent::black_node_count(int8_t **grid, int x, int y) {
@@ -689,4 +679,50 @@ void CoverageBoundHoleAgent::dumpPatchingHole(Point point) {
     fprintf(fp, "%f\t%f\n\n", point.x_ - sensor_range_ / 2, point.y_ - sensor_range_ * sqrt(3) / 2);
 //    fprintf(fp, "%f\t%f\n", point.x_, point.y_);
     fclose(fp);
+}
+
+void CoverageBoundHoleAgent::fillGrid(int8_t **grid, int nx, int ny) {
+    int x = 0;
+    int y = 0;
+    std::vector<Point> queue;
+    Point point;
+    Point visiting;
+
+    // (x, 0)
+    while (grid[x][y] != C_BLUE) x++;
+    grid[x][y] = C_WHITE;
+    point.x_ = x;
+    point.y_ = y;
+    queue.push_back(point);
+    while (!queue.empty()) {
+        visiting = queue.back();
+        queue.pop_back();
+        x = (int)visiting.x_;
+        y = (int)visiting.y_;
+
+        if (x > 0 && grid[x - 1][y] == C_BLUE) {
+            point.x_ = x - 1;
+            point.y_ = y;
+            grid[x - 1][y] = C_WHITE;
+            queue.push_back(point);
+        }
+        if (y > 0 && grid[x][y - 1] == C_BLUE) {
+            point.x_ = x;
+            point.y_ = y - 1;
+            grid[x][y - 1] = C_WHITE;
+            queue.push_back(point);
+        }
+        if(grid[x+1][y] == C_BLUE) {
+            point.x_ = x+1;
+            point.y_ = y;
+            grid[x+1][y] = C_WHITE;
+            queue.push_back(point);
+        }
+        if(grid[x][y+1] == C_BLUE) {
+            point.x_ = x;
+            point.y_ = y +1;
+            grid[x][y+1] = C_WHITE;
+            queue.push_back(point);
+        }
+    }
 }

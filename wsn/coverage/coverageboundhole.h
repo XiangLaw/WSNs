@@ -21,6 +21,7 @@
 
 #include "wsn/geomathhelper/geo_math_helper.h"
 
+#define C_BLUE    3
 #define C_RED     2
 #define C_BLACK   1
 #define C_WHITE   0
@@ -124,6 +125,8 @@ public:
     int black_node_count(int8_t **, int, int);
 
     void dumpPatchingHole(Point);
+
+    void fillGrid(int8_t **grid, int nx, int ny);
 };
 
 #endif //NS_CONVERAGEHOLE_H

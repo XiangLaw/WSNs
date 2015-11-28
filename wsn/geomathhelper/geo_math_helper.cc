@@ -872,8 +872,8 @@ Angle G::angle_x_axis(Point *a, Point *p) {
 // point q lies on line segment 'pr'
 bool G::onSegment(Point p, Point q, Point r)
 {
-	return q.x_ <= max(p.x_, r.x_) && q.x_ >= min(p.x_, r.x_) &&
-    q.y_ <= max(p.y_, r.y_) && q.y_ >= min(p.y_, r.y_);
+	return q.x_ <= g_max(p.x_, r.x_) && q.x_ >= g_min(p.x_, r.x_) &&
+    q.y_ <= g_max(p.y_, r.y_) && q.y_ >= g_min(p.y_, r.y_);
 
 }
 
