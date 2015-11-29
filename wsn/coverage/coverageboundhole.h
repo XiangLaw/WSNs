@@ -21,10 +21,11 @@
 
 #include "wsn/geomathhelper/geo_math_helper.h"
 
-#define C_BLUE    3
-#define C_RED     2
-#define C_BLACK   1
-#define C_WHITE   0
+#define C_GRAY    4 // inside hole cell
+#define C_BLUE    3 // init color
+#define C_RED     2 // painted cell
+#define C_BLACK   1 // boundary cell
+#define C_WHITE   0 // outside hole cell
 
 enum DIRECTION {
     UP = -2,
@@ -107,9 +108,9 @@ protected:
 
     bool isOutdatedCircle(node *, triangle);
 
-    bool isSelectableTriangle(node *, node *, triangle);
+    bool isSelectableTriangle(node *, node *, triangle, node **);
 
-    DIRECTION nextTriangle(triangle *, node **, node **, DIRECTION);
+    DIRECTION nextTriangle(triangle *, node **, node **, DIRECTION, node **);
 
 public:
     CoverageBoundHoleAgent();
@@ -120,7 +121,7 @@ public:
 
     void dumpCoverageGrid(triangle);
 
-    void patchingHole(double, double, int8_t **, int, int);
+    void patchingHole(node *, double, double, int8_t **, int, int);
 
     int black_node_count(int8_t **, int, int);
 
