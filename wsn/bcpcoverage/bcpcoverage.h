@@ -28,11 +28,6 @@ struct sensor_neighbor : neighbor{
     Point i2_;
 };
 
-struct list {
-    int e_;
-    struct list* next_;
-};
-
 typedef void(BCPCoverageAgent::*fire)(void);
 
 class BCPCoverageTimer : public TimerHandler

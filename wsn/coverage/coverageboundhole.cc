@@ -260,12 +260,12 @@ void CoverageBoundHoleAgent::gridConstruction(polygonHole *hole,
                                               node *start_circle, node *start_intersect) {
     if (hole == NULL || hole->node_list_ == NULL) return;
 
-    node *removableCell = NULL;
+    removable_cell_list *removables = NULL;
     node *current_circle_a = NULL;
     node *current_intersect_a = NULL;
     triangle current_unit;
     struct limits limit;
-    list *directions = NULL;
+    direction_list *directions = NULL;
     DIRECTION prev_direction = DOWN; // trick: because we start from top so can not go up anymore
 
     limit.min_x = limit.max_x = hole->node_list_->x_;
@@ -295,8 +295,8 @@ void CoverageBoundHoleAgent::gridConstruction(polygonHole *hole,
 
     while (current_circle_a->next_ != start_circle) {
         prev_direction = nextTriangle(&current_unit, &current_circle_a, &current_intersect_a, prev_direction,
-                                      &removableCell);
-        list *dir = new list();
+                                      &removables);
+        direction_list *dir = new direction_list();
         dir->e_ = prev_direction;
         dir->next_ = directions;
         directions = dir;
@@ -319,8 +319,8 @@ void CoverageBoundHoleAgent::gridConstruction(polygonHole *hole,
     }
 
     x_index = x_index * 2 + 1;
-    grid[x_index][y_index] = 1;
-    for (struct list *tmp = directions; tmp; tmp = tmp->next_) {
+    grid[x_index][y_index] = C_BLACK;
+    for (struct direction_list *tmp = directions; tmp; tmp = tmp->next_) {
         switch (tmp->e_) {
             case RIGHT:
                 x_index--;
@@ -340,7 +340,7 @@ void CoverageBoundHoleAgent::gridConstruction(polygonHole *hole,
         grid[x_index][y_index] = C_BLACK;
     }
 
-    patchingHole(removableCell, limit.min_x, limit.min_y, grid, nx, ny);
+    patchingHole(removables, limit.min_x, limit.min_y, grid, nx, ny);
 
     // free memory
     for (int i = 0; i < nx + 1; i++)
@@ -482,7 +482,7 @@ node *CoverageBoundHoleAgent::getNextSensorNeighbor(nsaddr_t prev_node) {
 /************** new *************/
 DIRECTION CoverageBoundHoleAgent::nextTriangle(triangle *current_unit, node **circle_a,
                                                node **intersect_a,
-                                               DIRECTION prev_direction, node **removableCell) {
+                                               DIRECTION prev_direction, removable_cell_list **removables) {
     triangle candidate;
     DIRECTION direction = NONE;
     DIRECTION tmp_direction = NONE;
@@ -516,7 +516,7 @@ DIRECTION CoverageBoundHoleAgent::nextTriangle(triangle *current_unit, node **ci
         }
 
         if ((tmp_direction + prev_direction) != 0 &&
-            isSelectableTriangle(*circle_a, *intersect_a, candidate, removableCell)) {
+            isSelectableTriangle(*circle_a, *intersect_a, candidate, removables)) {
             direction = tmp_direction;
             for (int j = 0; j < 3; j++) {
                 current_unit->vertices[j] = candidate.vertices[j];
@@ -547,7 +547,7 @@ bool CoverageBoundHoleAgent::isOutdatedCircle(node *intersect, triangle tri) {
 
 bool CoverageBoundHoleAgent::isSelectableTriangle(node *circle,
                                                   node *intersect_a,
-                                                  triangle tri, node **removableCell) {
+                                                  triangle tri, struct removable_cell_list **removables) {
     bool isInsideCircle = true;
 
     node *intersect_b = intersect_a->next_;
@@ -579,11 +579,21 @@ bool CoverageBoundHoleAgent::isSelectableTriangle(node *circle,
     }
     if (G::isPointReallyInsidePolygon(&intersect2, vertices)) {
         if (isInsideCircle) {
-            node *newNode = new node();
-            newNode->x_ = intersect2.x_;
-            newNode->y_ = intersect2.y_;
-            newNode->next_ = *removableCell;
-            *removableCell = newNode;
+            Point midpoint;
+            for (int i = 0; i < 3; i++) {
+                if (fabs(tri.vertices[i].y_ - tri.vertices[(i + 1) % 3].y_) < EPSILON) {
+                    midpoint.x_ = (tri.vertices[i].x_ + tri.vertices[(i + 1) % 3].x_) / 2;
+                    midpoint.y_ = tri.vertices[i].y_;
+                    break;
+                }
+            }
+            removable_cell_list *newNode = new removable_cell_list();
+            newNode->intersection.x_ = intersect2.x_;
+            newNode->intersection.y_ = intersect2.y_;
+            newNode->triangle.x_ = midpoint.x_;
+            newNode->triangle.y_ = midpoint.y_;
+            newNode->next = *removables;
+            *removables = newNode;
         }
         return true;
     }
@@ -629,7 +639,7 @@ void CoverageBoundHoleAgent::dumpCoverageGrid(triangle current_unit) {
     fclose(fp);
 }
 
-void CoverageBoundHoleAgent::patchingHole(node *hole, double base_x, double base_y,
+void CoverageBoundHoleAgent::patchingHole(removable_cell_list *removables, double base_x, double base_y,
                                           int8_t **grid, int nx, int ny) {
     int x = 0;
     int y = 0;
@@ -637,10 +647,14 @@ void CoverageBoundHoleAgent::patchingHole(node *hole, double base_x, double base
     // fill the grid with color
     fillGrid(grid, nx, ny);
 
+    for (removable_cell_list *tmp = removables; tmp; tmp = tmp->next) {
+        printf("%f\t%f\n", tmp->intersection.x_, tmp->intersection.y_);
+    }
+
     Point patching_point;
 
-    x = 0;
-    y = 1;
+    x = 2;
+    y = 0;
     while (x < nx) {
         if (black_node_count(grid, x, y) >= 2) {
             bool flag = false;
@@ -655,15 +669,15 @@ void CoverageBoundHoleAgent::patchingHole(node *hole, double base_x, double base
             patching_point.y_ = base_y + (y + 1) * sensor_range_ * sqrt(3) / 2;
 
             // fill cell containing an intersect point
-            /*if (flag) {
-                for (node *tmp = hole; tmp; tmp = tmp->next_) {
-                    if (G::distance(patching_point, tmp) <= sensor_range_) {
-                        int x_index = (int) ((tmp->x_ - base_x) / (sensor_range_ / 2));
-                        int y_index = (int) ((tmp->y_ - base_y) / (sensor_range_ * sqrt(3) / 2));
+            if (flag) {
+                for (removable_cell_list *tmp = removables; tmp; tmp = tmp->next) {
+                    if (G::distance(patching_point, tmp->intersection) <= sensor_range_) {
+                        int x_index = (int) ((tmp->triangle.x_ - base_x) * 2 / sensor_range_);
+                        int y_index = (int) ((tmp->intersection.y_ - base_y) / (sensor_range_ * sqrt(3) / 2));
                         grid[x_index][y_index] = 2;
                     }
                 }
-            }*/
+            }
 
             dumpPatchingHole(patching_point);
         }
@@ -675,8 +689,8 @@ void CoverageBoundHoleAgent::patchingHole(node *hole, double base_x, double base
     }
 
     // repainting
-    x = 0;
-    y = 1;
+    x = 2;
+    y = 0;
     while (x < nx) {
         if (black_node_count(grid, x, y) >= 1) {
             grid[x][y] = grid[x + 1][y] = grid[x + 2][y] =

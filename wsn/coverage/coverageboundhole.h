@@ -43,9 +43,15 @@ struct sensor_neighbor : neighbor {
     Point i2_;
 };
 
-struct list {
+struct direction_list {
     DIRECTION e_;
-    struct list *next_;
+    struct direction_list *next_;
+};
+
+struct removable_cell_list {
+    Point intersection;
+    Point triangle;
+    struct removable_cell_list *next;
 };
 
 struct limits {
@@ -108,9 +114,9 @@ protected:
 
     bool isOutdatedCircle(node *, triangle);
 
-    bool isSelectableTriangle(node *, node *, triangle, node **);
+    bool isSelectableTriangle(node *, node *, triangle, removable_cell_list **);
 
-    DIRECTION nextTriangle(triangle *, node **, node **, DIRECTION, node **);
+    DIRECTION nextTriangle(triangle *, node **, node **, DIRECTION, removable_cell_list **);
 
 public:
     CoverageBoundHoleAgent();
@@ -121,13 +127,13 @@ public:
 
     void dumpCoverageGrid(triangle);
 
-    void patchingHole(node *, double, double, int8_t **, int, int);
+    void patchingHole(removable_cell_list *, double, double, int8_t **, int, int);
 
     int black_node_count(int8_t **, int, int);
 
     void dumpPatchingHole(Point);
 
-    void fillGrid(int8_t **clone, int nx, int ny);
+    void fillGrid(int8_t **grid, int nx, int ny);
 };
 
 #endif //NS_CONVERAGEHOLE_H
