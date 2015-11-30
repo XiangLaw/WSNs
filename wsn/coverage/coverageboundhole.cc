@@ -129,7 +129,6 @@ void CoverageBoundHoleAgent::recvCoverage(Packet *p) {
                 flag = false;
             }
 
-            printf("start: %d\t%f\t%f\n", first_circle->id_, first_circle->x_, first_circle->y_);
             polygonHole *newHole = new polygonHole();
             newHole->node_list_ = intersect_head;
             newHole->next_ = hole_list_;
@@ -641,19 +640,15 @@ void CoverageBoundHoleAgent::dumpCoverageGrid(triangle current_unit) {
 
 void CoverageBoundHoleAgent::patchingHole(removable_cell_list *removables, double base_x, double base_y,
                                           int8_t **grid, int nx, int ny) {
-    int x = 0;
-    int y = 0;
+    int x, y;
+    Point patching_point;
 
     // fill the grid with color
     fillGrid(grid, nx, ny);
 
-    for (removable_cell_list *tmp = removables; tmp; tmp = tmp->next) {
-        printf("%f\t%f\n", tmp->intersection.x_, tmp->intersection.y_);
-    }
+    // we can start from (-1, -1), (0, 0), (-2, 0)
 
-    Point patching_point;
-
-    x = 2;
+    x = -2;
     y = 0;
     while (x < nx) {
         if (black_node_count(grid, x, y) >= 2) {
@@ -662,8 +657,13 @@ void CoverageBoundHoleAgent::patchingHole(removable_cell_list *removables, doubl
                 grid[x][y + 1] == C_BLACK || grid[x + 1][y + 1] == C_BLACK || grid[x + 2][y + 1] == C_BLACK) {
                 flag = true;
             }
-            grid[x][y] = grid[x + 1][y] = grid[x + 2][y] =
-            grid[x][y + 1] = grid[x + 1][y + 1] = grid[x + 2][y + 1] = C_RED;
+
+            if ((x >= 0 && y >= 0)) grid[x][y] = C_RED;
+            if ((x + 1 >= 0 && y >= 0)) grid[x + 1][y] = C_RED;
+            if ((x + 2 >= 0 && y >= 0)) grid[x + 2][y] = C_RED;
+            if ((x >= 0 && y + 1 >= 0)) grid[x][y + 1] = C_RED;
+            if ((x + 1 >= 0 && y + 1 >= 0)) grid[x + 1][y + 1] = C_RED;
+            if ((x + 2 >= 0 && y + 1 >= 0)) grid[x + 2][y + 1] = C_RED;
 
             patching_point.x_ = base_x + ((x + 1) / 2) * sensor_range_ + ((x + 1) % 2) * sensor_range_ / 2;
             patching_point.y_ = base_y + (y + 1) * sensor_range_ * sqrt(3) / 2;
@@ -684,17 +684,21 @@ void CoverageBoundHoleAgent::patchingHole(removable_cell_list *removables, doubl
         y += 2;
         if (y >= ny) {
             x += 3;
-            y = (x) % 2;
+            y = x % 2 == 0 ? 0 : -1;
         }
     }
 
     // repainting
-    x = 2;
+    x = -2;
     y = 0;
     while (x < nx) {
         if (black_node_count(grid, x, y) >= 1) {
-            grid[x][y] = grid[x + 1][y] = grid[x + 2][y] =
-            grid[x][y + 1] = grid[x + 1][y + 1] = grid[x + 2][y + 1] = C_RED;
+            if ((x >= 0 && y >= 0)) grid[x][y] = C_RED;
+            if ((x + 1 >= 0 && y >= 0)) grid[x + 1][y] = C_RED;
+            if ((x + 2 >= 0 && y >= 0)) grid[x + 2][y] = C_RED;
+            if ((x >= 0 && y + 1 >= 0)) grid[x][y + 1] = C_RED;
+            if ((x + 1 >= 0 && y + 1 >= 0)) grid[x + 1][y + 1] = C_RED;
+            if ((x + 2 >= 0 && y + 1 >= 0)) grid[x + 2][y + 1] = C_RED;
 
             patching_point.x_ = base_x + ((x + 1) / 2) * sensor_range_ + ((x + 1) % 2) * sensor_range_ / 2;
             patching_point.y_ = base_y + (y + 1) * sensor_range_ * sqrt(3) / 2;
@@ -703,26 +707,19 @@ void CoverageBoundHoleAgent::patchingHole(removable_cell_list *removables, doubl
         y += 2;
         if (y >= ny) {
             x += 3;
-            y = (x) % 2;
+            y = x % 2 == 0 ? 0 : -1;
         }
-    }
-
-    for (int i = 0; i < ny + 1; i++) {
-        for (int j = 0; j < nx + 1; j++) {
-            printf("%d ", grid[j][i]);
-        }
-        printf("\n");
     }
 }
 
 int CoverageBoundHoleAgent::black_node_count(int8_t **grid, int x, int y) {
     int count = 0;
-    if (grid[x][y] == C_BLACK || grid[x][y] == C_GRAY) count++;
-    if (grid[x + 1][y] == C_BLACK || grid[x + 1][y] == C_GRAY) count++;
-    if (grid[x + 2][y] == C_BLACK || grid[x + 2][y] == C_GRAY) count++;
-    if (grid[x][y + 1] == C_BLACK || grid[x][y + 1] == C_GRAY) count++;
-    if (grid[x + 1][y + 1] == C_BLACK || grid[x + 1][y + 1] == C_GRAY) count++;
-    if (grid[x + 2][y + 1] == C_BLACK || grid[x + 2][y + 1] == C_GRAY) count++;
+    if ((x >= 0 && y >= 0) && (grid[x][y] == C_BLACK || grid[x][y] == C_GRAY)) count++;
+    if ((x + 1 >= 0 && y >= 0) && (grid[x + 1][y] == C_BLACK || grid[x + 1][y] == C_GRAY)) count++;
+    if ((x + 2 >= 0 && y >= 0) && (grid[x + 2][y] == C_BLACK || grid[x + 2][y] == C_GRAY)) count++;
+    if ((x >= 0 && y + 1 >= 0) && (grid[x][y + 1] == C_BLACK || grid[x][y + 1] == C_GRAY)) count++;
+    if ((x + 1 >= 0 && y + 1 >= 0) && (grid[x + 1][y + 1] == C_BLACK || grid[x + 1][y + 1] == C_GRAY)) count++;
+    if ((x + 2 >= 0 && y + 1 >= 0) && (grid[x + 2][y + 1] == C_BLACK || grid[x + 2][y + 1] == C_GRAY)) count++;
     return count;
 }
 
