@@ -78,8 +78,8 @@ GridDynamicAgent::command(int argc, const char *const *argv) {
             sink_list_ = temp;
         }
         if (strcasecmp(argv[1], "nodeoff") == 0) {
-            if (node_->energy_model()->off_time() <= 0)
-                dumpNodeOffReal();
+//            if (node_->energy_model()->off_time() <= 0)
+//                dumpNodeOffReal();
             findStuck_timer_.force_cancel();
             updateSta_timer_.force_cancel();
         }
@@ -144,11 +144,11 @@ GridDynamicAgent::startUp() {
     fclose(fp);
     fp = fopen("PolygonHole.tr", "w");
     fclose(fp);
-    fp = fopen("Neighbors_2.tr", "w");
-    fclose(fp);
     fp = fopen("NodeOff.tr", "w");
     fclose(fp);
     fp = fopen("NodeOffReal.tr", "w");
+    fclose(fp);
+    fp = fopen("AdjacentHole.tr", "w");
     fclose(fp);
 }
 
@@ -666,17 +666,20 @@ void GridDynamicAgent::recvUpdate(Packet *p) {
                 break;
             }
             if (!check) {
+                node *n;
                 if (prev == NULL) {
-                    node *n = new node();
+                    n = new node();
                     n->id_ = temp->id_;
                     n->next_ = max_node_list_;
                     max_node_list_ = n;
                 } else {
-                    node *n = new node();
+                    n = new node();
                     n->id_ = temp->id_;
                     n->next_ = prev->next_;
                     prev->next_ = n;
                 }
+
+                dumpAdjacentHole(n);
             }
         }
 
@@ -743,7 +746,7 @@ bool GridDynamicAgent::removeNodeoff() {
         if (NOW - temp->time_ > nodeoff_threshold_) {
             isChange = true;
             neighbor_list_ = next;
-            dumpNodeOff(temp);
+//            dumpNodeOff(temp);
             free(temp);
         } else break;
     }
@@ -754,7 +757,7 @@ bool GridDynamicAgent::removeNodeoff() {
         if (NOW - temp->time_ > nodeoff_threshold_) {
             isChange = true;
             prev->next_ = next;
-            dumpNodeOff(temp);
+//            dumpNodeOff(temp);
             free(temp);
         } else {
             prev = temp;
@@ -1149,24 +1152,21 @@ GridDynamicAgent::dumpBoundhole(gridHole *p) {
     fclose(fp);
 }
 
-void GridDynamicAgent::dumpElection() {
-    FILE *fp = fopen("Election.tr", "a+");
-    fprintf(fp, "%f\t%d\t%f\t%f\n", NOW, my_id_, x_, y_);
-    fclose(fp);
-}
-
 void GridDynamicAgent::dumpAlarm() {
     FILE *fp = fopen("Alarm.tr", "a+");
-    fprintf(fp, "%f\t%d\t%f\t%f\n", NOW, my_id_, x_, y_);
+    fprintf(fp, "%d\t%f\n", my_id_, NOW);
+    double x = nx_ * r_;
+    double y = ny_ * r_;
+    fprintf(fp, "%f\t%f\n%f\t%f\n%f\t%f\n%f\t%f\n\n", x, y, x + r_, y, x + r_, y + r_, x, y + r_);
     fclose(fp);
 }
 
 void GridDynamicAgent::dumpPivot() {
     FILE *fp = fopen("Pivot.tr", "a+");
-    fprintf(fp, "%d - pivot (%f) %f %f\n", my_id_, NOW, x_, y_);
+    fprintf(fp, "%d\t%f\n", my_id_, NOW);
     double x = nx_ * r_;
     double y = ny_ * r_;
-    fprintf(fp, "%f\t%f\n%f\t%f\n%f\t%f\n%f\t%f\n%f\t%f\n", x, y, x + r_, y, x + r_, y + r_, x, y + r_, x, y);
+    fprintf(fp, "%f\t%f\n%f\t%f\n%f\t%f\n%f\t%f\n\n", x, y, x + r_, y, x + r_, y + r_, x, y + r_);
     fclose(fp);
 }
 
@@ -1238,4 +1238,10 @@ void GridDynamicAgent::addTracking(nsaddr_t nid, Point location)
         temp->x_ = location.x_;
         temp->y_ = location.y_;
     }
+}
+
+void GridDynamicAgent::dumpAdjacentHole(node* n) {
+    FILE *fp = fopen("AdjacentHole.tr", "a");
+    fprintf(fp, "%d\t%f\n", n->id_, NOW);
+    fclose(fp);
 }
