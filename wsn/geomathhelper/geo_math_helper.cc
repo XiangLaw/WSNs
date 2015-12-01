@@ -1014,7 +1014,7 @@ bool G::isPointReallyInsidePolygon(Point *d, node *node_list) {
         if (tmp->next_ != NULL) {
             if( G::is_in_line(tmp, tmp->next_, d)) {
                 if(G::onSegment(tmp, d, tmp->next_)) {
-                    return true;
+                    return false;
                 } else {
                     if (tmp->x_ > d->x_) greater_horizontal++;
                     else if (tmp->x_ < d->x_) less_horizontal++;
@@ -1030,7 +1030,7 @@ bool G::isPointReallyInsidePolygon(Point *d, node *node_list) {
         else { // end-point & start-point
             if( G::is_in_line(tmp, node_list, d)) {
                 if(G::onSegment(tmp, d, node_list)) {
-                    return true;
+                    return false;
                 } else {
                     if (tmp->x_ > d->x_) greater_horizontal++;
                     else if (tmp->x_ < d->x_) less_horizontal++;

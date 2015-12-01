@@ -658,8 +658,12 @@ void CoverageBoundHoleAgent::patchingHole(removable_cell_list *removables, doubl
     
     // we can start from (-1, -1), (0, 0), (-2, 0)
 
-    x = 0;
-    y = 0;
+    x = -1;
+    y = -1;
+//    x = -2;
+//    y = 0;
+//    x = 0;
+//    y = 0;
     while (x < nx) {
         if (black_node_count(grid, x, y) >= 2) {
             bool flag = false;
@@ -703,8 +707,12 @@ void CoverageBoundHoleAgent::patchingHole(removable_cell_list *removables, doubl
     }
 
     // repainting
-    x = 0;
-    y = 0;
+    x = -1;
+    y = -1;
+//    x = -2;
+//    y = 0;
+//    x = 0;
+//    y = 0;
     while (x < nx) {
         if (black_node_count(grid, x, y) >= 1) {
             if ((x >= 0 && y >= 0)) grid[x][y] = C_RED;
