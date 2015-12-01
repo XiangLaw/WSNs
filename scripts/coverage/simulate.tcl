@@ -1,9 +1,9 @@
-# Script for WisSim simulator. Last edit 9/17/2015 4:02:24 PM
+# Script for WisSim simulator. Last edit 12/1/2015 8:02:39 AM
 
-set opt(x)	400	;# X dimension of the topography
-set opt(y)	400	;# Y dimension of the topography
+set opt(x)	600	;# X dimension of the topography
+set opt(y)	600	;# Y dimension of the topography
 set opt(stop)	500	;# simulation time
-set opt(nn)	915	;# number of nodes
+set opt(nn)	701	;# number of nodes
 set opt(tr)	Trace.tr	;# trace file
 set opt(nam)	nam.out.tr
 
@@ -54,10 +54,9 @@ Antenna/OmniAntenna set Z_ 1.5
 Antenna/OmniAntenna set Gt_ 1
 Antenna/OmniAntenna set Gr_ 1
 
-Agent/COVERAGE set energy_checkpoint_ 995
-Agent/COVERAGE set hello_period_ 0
-Agent/COVERAGE set limit_boundhole_hop_ 80
-Agent/COVERAGE set range_ 40
+Agent/GPSR set energy_checkpoint_ 995
+Agent/GPSR set hello_period_ 100
+Agent/GPSR set range_ 40
 
 Agent/UDP set fid_ 2
 
@@ -108,7 +107,7 @@ $ns_ node-config -adhocRouting $opt(rp) \
 		 -topoInstance $topo \
 		 -agentTrace ON \
 		 -routerTrace ON \
-		 -macTrace OFF \
+		 -macTrace ON \
 		 -movementTrace OFF \
 		 -energyModel $opt(energymodel) \
 		 -idlePower $opt(idlePower) \
