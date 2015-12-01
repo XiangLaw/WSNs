@@ -170,7 +170,7 @@ GPSRAgent::startUp() {
     dest->x_ = node_->destX();
     dest->y_ = node_->destY();
 
-    hello_timer_.resched(randSend_.uniform(0.0, 30));
+    hello_timer_.resched(randSend_.uniform(0.0, 40.0));
 
     FILE *fp;
     fp = fopen("Neighbors.tr", "w");
