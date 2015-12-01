@@ -302,6 +302,16 @@ void CoverageBoundHoleAgent::gridConstruction(polygonHole *hole,
         dumpCoverageGrid(current_unit);
     }
 
+    while (current_circle_a != start_circle) {
+        prev_direction = nextTriangle(&current_unit, &current_circle_a, &current_intersect_a, prev_direction,
+                                      &removables);
+        direction_list *dir = new direction_list();
+        dir->e_ = prev_direction;
+        dir->next_ = directions;
+        directions = dir;
+        dumpCoverageGrid(current_unit);
+    }
+
     /* construct matrix */
     int nx = (int) ((limit.max_x - limit.min_x) / sensor_range_) + 1;
     nx = nx * 2 + 1;
