@@ -15,7 +15,7 @@ set opt(mac)	Mac/802_11
 set opt(ifq)	Queue/DropTail/PriQueue
 set opt(ll)	LL
 set opt(ant)	Antenna/OmniAntenna
-set opt(rp)	GPSR
+set opt(rp)	COVERAGE
 set opt(trans)	UDP
 set opt(apps)	CBR
 
@@ -54,7 +54,7 @@ Antenna/OmniAntenna set Z_ 1.5
 Antenna/OmniAntenna set Gt_ 1
 Antenna/OmniAntenna set Gr_ 1
 
-Agent/GPSR set energy_checkpoint_ 995
+Agent/COVERAGE set limit_boundhole_hop_ 150
 Agent/GPSR set hello_period_ 100
 Agent/GPSR set range_ 40
 

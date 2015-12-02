@@ -54,9 +54,7 @@ Antenna/OmniAntenna set Z_ 1.5
 Antenna/OmniAntenna set Gt_ 1
 Antenna/OmniAntenna set Gr_ 1
 
-Agent/GPSR set energy_checkpoint_ 995
-Agent/GPSR set hello_period_ 100
-Agent/GPSR set range_ 40
+Agent/COVERAGE set limit_boundhole_hop_ 150
 
 Agent/UDP set fid_ 2
 

@@ -3,7 +3,7 @@
 set opt(x)	600	;# X dimension of the topography
 set opt(y)	600	;# Y dimension of the topography
 set opt(stop)	500	;# simulation time
-set opt(nn)	730	;# number of nodes
+set opt(nn)	750	;# number of nodes
 set opt(tr)	Trace.tr	;# trace file
 set opt(nam)	nam.out.tr
 
@@ -15,7 +15,7 @@ set opt(mac)	Mac/802_11
 set opt(ifq)	Queue/DropTail/PriQueue
 set opt(ll)	LL
 set opt(ant)	Antenna/OmniAntenna
-set opt(rp)	COVERAGE
+set opt(rp)	BCPCOVERAGE
 set opt(trans)	UDP
 set opt(apps)	CBR
 
