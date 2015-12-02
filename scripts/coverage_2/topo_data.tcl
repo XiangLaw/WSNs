@@ -729,24 +729,3 @@ $mnode_(726) set X_ 542 ;	$mnode_(726) set Y_ 81 ;	$mnode_(726) set Z_ 0
 $mnode_(727) set X_ 553 ;	$mnode_(727) set Y_ 61 ;	$mnode_(727) set Z_ 0
 $mnode_(728) set X_ 562 ;	$mnode_(728) set Y_ 38 ;	$mnode_(728) set Z_ 0
 $mnode_(729) set X_ 124.729484 ;	$mnode_(729) set Y_ 501.721669 ;	$mnode_(729) set Z_ 0
-
-$mnode_(730) set X_ 276.591921 ;	$mnode_(730) set Y_ 161.213376 ;	$mnode_(730) set Z_ 0
-$mnode_(731) set X_ 211.353949 ;	$mnode_(731) set Y_ 248.638221 ;	$mnode_(731) set Z_ 0
-$mnode_(732) set X_ 250.778749 ;	$mnode_(732) set Y_ 204.439724 ;	$mnode_(732) set Z_ 0
-$mnode_(733) set X_ 231.466515 ;	$mnode_(733) set Y_ 320.065524 ;	$mnode_(733) set Z_ 0
-$mnode_(734) set X_ 230.835686 ;	$mnode_(734) set Y_ 320.629913 ;	$mnode_(734) set Z_ 0
-$mnode_(735) set X_ 264.556883 ;	$mnode_(735) set Y_ 332.868879 ;	$mnode_(735) set Z_ 0
-$mnode_(736) set X_ 247.011495 ;	$mnode_(736) set Y_ 239.727206 ;	$mnode_(736) set Z_ 0
-$mnode_(737) set X_ 416.159593 ;	$mnode_(737) set Y_ 228.529478 ;	$mnode_(737) set Z_ 0
-$mnode_(738) set X_ 428.547040 ;	$mnode_(738) set Y_ 196.724686 ;	$mnode_(738) set Z_ 0
-$mnode_(739) set X_ 341.311506 ;	$mnode_(739) set Y_ 297.668642 ;	$mnode_(739) set Z_ 0
-$mnode_(740) set X_ 392.654032 ;	$mnode_(740) set Y_ 208.273958 ;	$mnode_(740) set Z_ 0
-$mnode_(741) set X_ 349.505102 ;	$mnode_(741) set Y_ 280.479024 ;	$mnode_(741) set Z_ 0
-$mnode_(742) set X_ 320.897741 ;	$mnode_(742) set Y_ 274.684318 ;	$mnode_(742) set Z_ 0
-$mnode_(743) set X_ 372.605541 ;	$mnode_(743) set Y_ 182.682413 ;	$mnode_(743) set Z_ 0
-$mnode_(744) set X_ 355.804731 ;	$mnode_(744) set Y_ 204.704947 ;	$mnode_(744) set Z_ 0
-$mnode_(745) set X_ 284.143047 ;	$mnode_(745) set Y_ 192.309641 ;	$mnode_(745) set Z_ 0
-$mnode_(746) set X_ 317.471872 ;	$mnode_(746) set Y_ 206.261365 ;	$mnode_(746) set Z_ 0
-$mnode_(747) set X_ 256.152844 ;	$mnode_(747) set Y_ 298.451961 ;	$mnode_(747) set Z_ 0
-$mnode_(748) set X_ 256.025026 ;	$mnode_(748) set Y_ 271.402698 ;	$mnode_(748) set Z_ 0
-$mnode_(749) set X_ 382.762588 ;	$mnode_(749) set Y_ 239.341488 ;	$mnode_(749) set Z_ 0
