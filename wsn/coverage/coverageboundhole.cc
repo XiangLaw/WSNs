@@ -279,6 +279,8 @@ void CoverageBoundHoleAgent::gridConstruction(polygonHole *hole,
     current_circle_a = start_circle;
     current_intersect_a = start_intersect;
 
+    limit.min_y -= 1; // trick
+
     int x_index = 0;
     int y_index = 0;
 
@@ -660,10 +662,10 @@ void CoverageBoundHoleAgent::patchingHole(removable_cell_list *removables, doubl
 
 //    x = -1;
 //    y = -1;
-//    x = -2;
-//    y = 0;
-    x = 0;
+    x = -2;
     y = 0;
+//    x = 0;
+//    y = 0;
     while (x < nx) {
         if (black_node_count(grid, x, y) >= 2) {
             bool flag = false;
@@ -709,10 +711,10 @@ void CoverageBoundHoleAgent::patchingHole(removable_cell_list *removables, doubl
     // repainting
 //    x = -1;
 //    y = -1;
-//    x = -2;
-//    y = 0;
-    x = 0;
+    x = -2;
     y = 0;
+//    x = 0;
+//    y = 0;
     while (x < nx) {
         if (black_node_count(grid, x, y) >= 1) {
             if ((x >= 0 && y >= 0)) grid[x][y] = C_RED;
