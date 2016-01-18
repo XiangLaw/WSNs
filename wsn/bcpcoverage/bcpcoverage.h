@@ -62,6 +62,7 @@ private:
 
     void bcpDetection();
     void holeBoundaryDetection();
+    bool isDuplicatePolygon(node *);
 
     void dumpCoverageBoundhole(polygonHole*);
     void dumpPatchingHole(Point);

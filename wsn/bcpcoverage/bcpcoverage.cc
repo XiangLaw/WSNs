@@ -101,6 +101,8 @@ void BCPCoverageAgent::recvCoverage(Packet *p) {
             item->next_ = head;
             head = item;
         }
+        if (isDuplicatePolygon(head)) return;
+
         head = reduceBCP(head);
         polygonHole *newHole = new polygonHole();
         newHole->node_list_ = head;
@@ -442,4 +444,40 @@ void BCPCoverageAgent::dumpPatchingHole(Point p) {
     fp = fopen("PatchingHole.tr", "a");
     fprintf(fp, "%f\t%f\n", p.x_, p.y_);
     fclose(fp);
+}
+
+bool BCPCoverageAgent::isDuplicatePolygon(node *pNode) {
+    node *temp, *temp2, *pTemp;
+    polygonHole* hole;
+    bool check;
+    int count = 0;
+
+    for(temp = pNode; temp; temp = temp->next_) count++;
+
+    for(hole = hole_list_; hole; hole = hole->next_){
+        // check size
+        int countHole=0;
+        for(temp = hole->node_list_; temp; temp = temp->next_) countHole++;
+        if (count != countHole) continue;
+        // check element
+        for(temp = hole->node_list_; temp; temp = temp->next_){
+            if (pNode->id_ == temp->id_){
+                check = true;
+                pTemp = pNode->next_;
+                temp2 = temp->next_ == NULL ? hole->node_list_ : temp->next_;
+                for(; temp2 != temp; temp2 = temp2->next_ == NULL ? hole->node_list_ : temp2->next_, pTemp = pTemp->next_){
+                    if (temp2->id_ != pTemp->id_){
+                        check = false;
+                        break;
+                    }
+                }
+
+                if (check){
+                    return true;
+                }
+            }
+        }
+    }
+
+    return false;
 }
