@@ -1583,6 +1583,11 @@ Agent/GPSR set hello_period_ 0
 Agent/GPSR set energy_checkpoint_ 995
 Agent/GPSR set range_ 40
 
+Agent/BOUNDHOLEROUTING set hello_period_ 0
+Agent/BOUNDHOLEROUTING set range_ 40
+Agent/BOUNDHOLEROUTING set storage_opt_ 0
+Agent/BOUNDHOLEROUTING set limit_boundhole_hop_ 80
+
 Agent/GEAR set hello_period_ 0
 Agent/GEAR set alpha_ 1
 Agent/GEAR set range_ 40

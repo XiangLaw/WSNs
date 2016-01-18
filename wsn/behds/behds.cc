@@ -261,7 +261,7 @@ BEHDSAgent::sendData(Packet* p)
     edh->vertex[1].y_   = this->y_;
     edh->vertex[0]      = *dest;
 
-    iph->ttl_ 	 = 3 * IP_DEF_TTL;
+    iph->ttl_ 	 = 4 * IP_DEF_TTL;
 }
 
 void

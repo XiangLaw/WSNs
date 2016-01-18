@@ -431,6 +431,7 @@ polygonHole* BoundHoleAgent::createPolygonHole(Packet *p)
 		item = new node();
 		item->x_	= n.x_;
 		item->y_	= n.y_;
+		item->id_ 	= n.id_;
 		item->next_ = hole_item->node_list_;
 		hole_item->node_list_ = item;
 	}
