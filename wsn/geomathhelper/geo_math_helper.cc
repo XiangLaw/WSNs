@@ -819,6 +819,7 @@ void  G::circleCircleIntersect00( double r1, double a2, double r2, Point* p1, Po
 }
 
 // see at http://mathworld.wolfram.com/Circle-LineIntersection.html
+// return intersection of (c,r) with line (i1, i2)
 int G::circleLineIntersect(Point c, double r, Point i1, Point i2, Point *p1, Point *p2){
     i1.x_ = i1.x_ - c.x_;
     i2.x_ = i2.x_ - c.x_;

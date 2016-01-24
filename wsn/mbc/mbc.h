@@ -73,6 +73,10 @@ protected:
     void addNeighbor(nsaddr_t, Point); // override from GPSRAgent
     node *getNextSensorNeighbor(nsaddr_t prev_node);
 
+    void addNodeToList(double, double, node**);
+    void removeNodeFromList(node*, node**);
+    void eliminateNode(node*, node**, polygonHole*);
+
 public:
     MbcAgent();
 
@@ -80,7 +84,7 @@ public:
 
     void recv(Packet *, Handler *);
 
-    void patchingHole(removable_cell_list *, double, double, int8_t **, int, int);
+    void patchingHole(polygonHole*);
 
     void dumpPatchingHole(Point);
 };

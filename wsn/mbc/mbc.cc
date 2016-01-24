@@ -37,7 +37,7 @@ MbcTimer::expire(Event *e) {
 // ------------------------ Agent ------------------------ //
 MbcAgent::MbcAgent() : GPSRAgent(),
                        boundhole_timer_(this,
-                       &MbcAgent::holeBoundaryDetection) {
+                                        &MbcAgent::holeBoundaryDetection) {
     hole_list_ = NULL;
     boundhole_node_list_ = NULL;
     cover_neighbors_ = NULL;
@@ -120,16 +120,8 @@ void MbcAgent::recvCoverage(Packet *p) {
             newNodeHole->node_list_ = node_head;
             newNodeHole->next_ = boundhole_node_list_;
             boundhole_node_list_ = newNodeHole;
-
-            // circle boundhole list
-            node *temp = newNodeHole->node_list_;
-            while (temp->next_ && temp->next_ != newNodeHole->node_list_) temp = temp->next_;
-            temp->next_ = newNodeHole->node_list_;
-
-            // circle node list
-            temp = newHole->node_list_;
-            while (temp->next_ && temp->next_ != newHole->node_list_) temp = temp->next_;
-            temp->next_ = newHole->node_list_;
+            data->dump();
+            patchingHole(newHole);
 
             drop(p, "COVERAGE_BOUNDHOLE");
             runTimeCounter.finish();
@@ -239,8 +231,6 @@ void MbcAgent::holeBoundaryDetection() {
 /*----------------Utils function----------------------*/
 void MbcAgent::startUp() {
     FILE *fp;
-    fp = fopen("CoverageGrid.tr", "w");
-    fclose(fp);
     fp = fopen("PatchingHole.tr", "w");
     fclose(fp);
 }
@@ -367,9 +357,81 @@ node *MbcAgent::getNextSensorNeighbor(nsaddr_t prev_node) {
     return NULL;
 }
 
-void MbcAgent::patchingHole(removable_cell_list *removables, double base_x, double base_y,
-                                          int8_t **grid, int nx, int ny) {
+void MbcAgent::patchingHole(polygonHole *hole) {
+    node *tmp = hole->node_list_;
+    double min_x, min_y, max_x, max_y;
+    min_x = max_x = tmp->x_;
+    min_y = max_y = tmp->y_;
+    for (tmp = hole->node_list_; tmp; tmp = tmp->next_) {
+        if (min_x > tmp->x_)
+            min_x = tmp->x_;
+        else if (max_x < tmp->x_)
+            max_x = tmp->x_;
+        if (min_y > tmp->y_)
+            min_y = tmp->y_;
+        else if (max_y < tmp->y_)
+            max_y = tmp->y_;
+    }
 
+    double x = 0;
+    double y = min_y + sensor_range_ / 2;
+
+    node *patching_list = NULL;
+
+    // step 1. optimal deployment in the rectangle
+    int i = 1;
+    bool h_flag = false;
+    bool v_flag = false;
+    while (y < max_y) {
+        if (i % 2 == 1) { // odd line
+            x = min_x + sensor_range_ * sqrt(3) / 2;
+        } else { // even line
+            x = min_x;
+        }
+        while (x < max_x) {
+            addNodeToList(x, y, &patching_list);
+            x += sensor_range_ * sqrt(3);
+        }
+        if ((x - max_x) < sensor_range_ * sqrt(3) / 2)
+            addNodeToList(max_x, y, &patching_list);
+        i++;
+        y += sensor_range_ * 3 / 2;
+    }
+    if (y - max_y < sensor_range_ / 2) {
+        if (i % 2 == 1) { // odd line
+            x = min_x + sensor_range_ * sqrt(3) / 2;
+        } else { // even line
+            x = min_x;
+        }
+        if ((max_y - y) > sensor_range_ / 2 && (max_y - y) < sensor_range_ * 3 / 2)
+            y = max_y;
+        while (x < max_x) {
+            addNodeToList(x, y, &patching_list);
+            x += sensor_range_ * sqrt(3);
+        }
+        if ((x - max_x) < sensor_range_ * sqrt(3) / 2)
+            addNodeToList(max_x, y, &patching_list);
+    }
+
+    // step 2 & 3. eliminate nodes located outside
+    for (tmp = patching_list; tmp; tmp = tmp->next_) {
+        if (!G::isPointInsidePolygon(tmp, hole->node_list_)) {
+            eliminateNode(&(*tmp), &patching_list, hole);
+        }
+    }
+
+    // step 4. eliminate redundant nodes
+    for (tmp = patching_list; tmp; tmp = tmp->next_) {
+        dumpPatchingHole(*tmp);
+    }
+}
+
+void MbcAgent::addNodeToList(double x, double y, node **list) {
+    node *newNode = new node();
+    newNode->x_ = x;
+    newNode->y_ = y;
+    newNode->next_ = *list;
+    *list = newNode;
 }
 
 void MbcAgent::dumpPatchingHole(Point point) {
@@ -383,4 +445,60 @@ void MbcAgent::dumpPatchingHole(Point point) {
 //    fprintf(fp, "%f\t%f\n\n", point.x_ - sensor_range_ / 2, point.y_ - sensor_range_ * sqrt(3) / 2);
     fprintf(fp, "%f\t%f\n", point.x_, point.y_);
     fclose(fp);
+}
+
+void MbcAgent::eliminateNode(node *n, node **list, polygonHole *hole) {
+    for (node *tmp = hole->node_list_; tmp; tmp = tmp->next_) {
+        node *tmp2 = tmp->next_ == NULL ? hole->node_list_ : tmp->next_;
+
+        Line line = G::line(tmp, tmp2);
+        Line perpendicular = G::perpendicular_line(n, line);
+        Point intersection;
+        G::intersection(line, perpendicular, &intersection);
+
+        if (G::distance(n, line) < sensor_range_ && G::onSegment(tmp, &intersection, tmp2)) {
+            // distance from s to border < r
+            // if area is covered by other nodes => remove node from list
+            // else get orthogonal project of s
+            n->x_ = intersection.x_;
+            n->y_ = intersection.y_;
+            return;
+        }
+    }
+
+    for (node *tmp = hole->node_list_; tmp; tmp = tmp->next_) {
+        node *tmp2 = tmp->next_ == NULL ? hole->node_list_ : tmp->next_;
+        node *tmp3 = tmp2->next_ == NULL ? hole->node_list_ : tmp2->next_;
+        Point i1, i2;
+        if (G::circleLineIntersect(*n, sensor_range_, *tmp, *tmp2, &i1, &i2) > 0 &&
+            (G::onSegment(tmp, &i1, tmp2) || G::onSegment(tmp, &i2, tmp2))) {
+            if (G::circleLineIntersect(*n, sensor_range_, *tmp2, *tmp3, &i1, &i2) > 0 &&
+                (G::onSegment(tmp2, &i1, tmp3) || G::onSegment(tmp2, &i2, tmp3))) {
+                n->x_ = tmp2->x_;
+                n->y_ = tmp2->y_;
+            }
+            else {
+                n->x_ = tmp->x_;
+                n->y_ = tmp->y_;
+            }
+            return;
+        }
+    }
+    removeNodeFromList(n, &(*list));
+}
+
+void MbcAgent::removeNodeFromList(node *n, node **list) {
+    node *previous = NULL;
+    for (node *tmp = *list; tmp; tmp = tmp->next_) {
+        if (tmp->x_ == n->x_ && tmp->y_ == n->y_) {
+            if (previous) {
+                previous->next_ = tmp->next_;
+            } else {
+                *list = tmp->next_;
+            }
+            delete tmp;
+            return;
+        }
+        previous = tmp;
+    }
 }

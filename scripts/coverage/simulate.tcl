@@ -2,7 +2,7 @@
 
 set opt(x)	600	;# X dimension of the topography
 set opt(y)	600	;# Y dimension of the topography
-set opt(stop)	500	;# simulation time
+set opt(stop)	300	;# simulation time
 set opt(nn)	702	;# number of nodes
 set opt(tr)	Trace.tr	;# trace file
 set opt(nam)	nam.out.tr
@@ -15,7 +15,7 @@ set opt(mac)	Mac/802_11
 set opt(ifq)	Queue/DropTail/PriQueue
 set opt(ll)	LL
 set opt(ant)	Antenna/OmniAntenna
-set opt(rp)	COVERAGE
+set opt(rp)	MBC
 set opt(trans)	UDP
 set opt(apps)	CBR
 
@@ -53,10 +53,6 @@ Antenna/OmniAntenna set Y_ 0
 Antenna/OmniAntenna set Z_ 1.5
 Antenna/OmniAntenna set Gt_ 1
 Antenna/OmniAntenna set Gr_ 1
-
-Agent/GPSR set energy_checkpoint_ 995
-Agent/GPSR set hello_period_ 100
-Agent/GPSR set range_ 40
 
 Agent/UDP set fid_ 2
 
