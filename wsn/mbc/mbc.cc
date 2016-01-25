@@ -373,11 +373,6 @@ void MbcAgent::patchingHole(polygonHole *hole) {
             max_y = tmp->y_;
     }
 
-    printf("%f\t%f\n", min_x, min_y);
-    printf("%f\t%f\n", max_x, min_y);
-    printf("%f\t%f\n", max_x, max_y);
-    printf("%f\t%f\n", min_x, max_y);
-
     double x = 0;
     double y = min_y + sensor_range_ / 2;
 
@@ -418,6 +413,7 @@ void MbcAgent::patchingHole(polygonHole *hole) {
     }
 
     // step 2 & 3. eliminate nodes located outside
+    // note: no use of projection here
     for (node_tmp = patching_list; node_tmp; node_tmp = node_tmp->next_) {
         if (!G::isPointInsidePolygon(node_tmp, hole->node_list_)) {
             eliminateNode(&(*node_tmp), &patching_list, hole);
@@ -428,7 +424,7 @@ void MbcAgent::patchingHole(polygonHole *hole) {
     optimize(&patching_list, hole);
 
     for (node_tmp = patching_list; node_tmp; node_tmp = node_tmp->next_) {
-//        dumpPatchingHole(*node_tmp);
+        dumpPatchingHole(*node_tmp);
     }
 }
 
@@ -472,43 +468,9 @@ void MbcAgent::dumpPatchingHole(Point p1, Point p2) {
 void MbcAgent::eliminateNode(custom_node *n, custom_node **list, polygonHole *hole) {
     for (node *tmp = hole->node_list_; tmp; tmp = tmp->next_) {
         node *tmp2 = tmp->next_ == NULL ? hole->node_list_ : tmp->next_;
-
-        Line line = G::line(tmp, tmp2);
-        Line perpendicular = G::perpendicular_line(n, line);
-        Point intersection;
-        G::intersection(line, perpendicular, &intersection);
-
-        if (G::distance(n, line) < sensor_range_ && G::onSegment(tmp, &intersection, tmp2)) {
-            dumpPatchingHole(*n, intersection);
-            // distance from s to border < r
-            // if area is covered by other nodes => remove node from list
-            // else get orthogonal project of s
-            n->is_removable_ = true;
-            n->x_ = intersection.x_;
-            n->y_ = intersection.y_;
-            return;
-        }
-    }
-
-    for (node *tmp = hole->node_list_; tmp; tmp = tmp->next_) {
-        node *tmp2 = tmp->next_ == NULL ? hole->node_list_ : tmp->next_;
-        node *tmp3 = tmp2->next_ == NULL ? hole->node_list_ : tmp2->next_;
         Point i1, i2;
-        if (G::circleLineIntersect(*n, sensor_range_, *tmp, *tmp2, &i1, &i2) > 0 &&
-            (G::onSegment(tmp, &i1, tmp2) || G::onSegment(tmp, &i2, tmp2))) {
-            if (G::circleLineIntersect(*n, sensor_range_, *tmp2, *tmp3, &i1, &i2) > 0 &&
-                (G::onSegment(tmp2, &i1, tmp3) || G::onSegment(tmp2, &i2, tmp3))) {
-                dumpPatchingHole(*n, *tmp2);
-                n->is_removable_ = true;
-                n->x_ = tmp2->x_;
-                n->y_ = tmp2->y_;
-            }
-            else {
-                dumpPatchingHole(*n, *tmp);
-                n->is_removable_ = true;
-                n->x_ = tmp->x_;
-                n->y_ = tmp->y_;
-            }
+        if (G::circleLineIntersect(*n, sensor_range_, *tmp, *tmp2, &i1, &i2) > 0) {
+            n->is_removable_ = true;
             return;
         }
     }

@@ -15,7 +15,7 @@ set opt(mac)	Mac/802_11
 set opt(ifq)	Queue/DropTail/PriQueue
 set opt(ll)	LL
 set opt(ant)	Antenna/OmniAntenna
-set opt(rp)	COVERAGEONLINE
+set opt(rp)	MBC
 set opt(trans)	UDP
 set opt(apps)	CBR
 
