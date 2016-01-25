@@ -695,6 +695,9 @@ Simulator instproc create-wireless-node args {
             COVERAGE {
             	set ragent [$self create-coverage-agent $node]
         	}
+        	COVERAGEONLINE {
+               	set ragent [$self create-coverageonline-agent $node]
+            }
         	BCPCOVERAGE {
                 set ragent [$self create-bcp-coverage-agent $node]
             }
@@ -1241,6 +1244,22 @@ Simulator instproc create-elbar-gridoffline-agent { node } {
 # COVERAGE
 Simulator instproc create-coverage-agent { node } {
 	set ragent [new Agent/COVERAGE]
+	set addr [$node node-addr]
+	$ragent addr $addr
+	$ragent node $node
+	if [Simulator set mobile_ip_] {
+		$ragent port-dmux [$node demux]
+	}
+	$node addr $addr
+	$node set ragent_ $ragent
+	$self at 0.0 	"$ragent start"    ;# start updates
+    $self at 50	"$ragent coverage"
+	return $ragent
+}
+
+# COVERAGEONLINE
+Simulator instproc create-coverageonline-agent { node } {
+	set ragent [new Agent/COVERAGEONLINE]
 	set addr [$node node-addr]
 	$ragent addr $addr
 	$ragent node $node

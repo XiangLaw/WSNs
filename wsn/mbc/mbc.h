@@ -18,10 +18,9 @@ struct sensor_neighbor : neighbor {
     Point i2_;
 };
 
-struct removable_cell_list {
-    Point intersection;
-    Point triangle;
-    struct removable_cell_list *next;
+struct custom_node : Point {
+    custom_node *next_;
+    bool is_removable_;
 };
 
 typedef void(MbcAgent::*fire)(void);
@@ -73,9 +72,11 @@ protected:
     void addNeighbor(nsaddr_t, Point); // override from GPSRAgent
     node *getNextSensorNeighbor(nsaddr_t prev_node);
 
-    void addNodeToList(double, double, node**);
-    void removeNodeFromList(node*, node**);
-    void eliminateNode(node*, node**, polygonHole*);
+    void addNodeToList(double, double, custom_node **);
+
+    void removeNodeFromList(custom_node *, custom_node **);
+
+    void eliminateNode(custom_node *, custom_node **, polygonHole *);
 
 public:
     MbcAgent();
@@ -84,9 +85,13 @@ public:
 
     void recv(Packet *, Handler *);
 
-    void patchingHole(polygonHole*);
+    void patchingHole(polygonHole *);
 
     void dumpPatchingHole(Point);
+
+    void dumpPatchingHole(Point, Point);
+
+    void optimize(custom_node **, polygonHole *);
 };
 
 #endif

@@ -107,6 +107,9 @@ enum AppDataType {
     // Coverage Bound hole
     COVERAGE_DATA,
 
+    // Coverage Online
+    COVERAGEONLINE_DATA,
+
     // BCP Coverage
     BCPCOVERAGE_DATA,
 

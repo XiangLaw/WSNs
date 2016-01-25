@@ -373,15 +373,19 @@ void MbcAgent::patchingHole(polygonHole *hole) {
             max_y = tmp->y_;
     }
 
+    printf("%f\t%f\n", min_x, min_y);
+    printf("%f\t%f\n", max_x, min_y);
+    printf("%f\t%f\n", max_x, max_y);
+    printf("%f\t%f\n", min_x, max_y);
+
     double x = 0;
     double y = min_y + sensor_range_ / 2;
 
-    node *patching_list = NULL;
+    custom_node *patching_list = NULL;
+    custom_node *node_tmp = NULL;
 
     // step 1. optimal deployment in the rectangle
     int i = 1;
-    bool h_flag = false;
-    bool v_flag = false;
     while (y < max_y) {
         if (i % 2 == 1) { // odd line
             x = min_x + sensor_range_ * sqrt(3) / 2;
@@ -414,24 +418,28 @@ void MbcAgent::patchingHole(polygonHole *hole) {
     }
 
     // step 2 & 3. eliminate nodes located outside
-    for (tmp = patching_list; tmp; tmp = tmp->next_) {
-        if (!G::isPointInsidePolygon(tmp, hole->node_list_)) {
-            eliminateNode(&(*tmp), &patching_list, hole);
+    for (node_tmp = patching_list; node_tmp; node_tmp = node_tmp->next_) {
+        if (!G::isPointInsidePolygon(node_tmp, hole->node_list_)) {
+            eliminateNode(&(*node_tmp), &patching_list, hole);
         }
     }
 
     // step 4. eliminate redundant nodes
-    for (tmp = patching_list; tmp; tmp = tmp->next_) {
-        dumpPatchingHole(*tmp);
+    optimize(&patching_list, hole);
+
+    for (node_tmp = patching_list; node_tmp; node_tmp = node_tmp->next_) {
+//        dumpPatchingHole(*node_tmp);
     }
 }
 
-void MbcAgent::addNodeToList(double x, double y, node **list) {
-    node *newNode = new node();
+void MbcAgent::addNodeToList(double x, double y, custom_node **list) {
+    custom_node *newNode = new custom_node();
     newNode->x_ = x;
     newNode->y_ = y;
     newNode->next_ = *list;
+    newNode->is_removable_ = false;
     *list = newNode;
+//    dumpPatchingHole(*newNode);
 }
 
 void MbcAgent::dumpPatchingHole(Point point) {
@@ -447,7 +455,21 @@ void MbcAgent::dumpPatchingHole(Point point) {
     fclose(fp);
 }
 
-void MbcAgent::eliminateNode(node *n, node **list, polygonHole *hole) {
+void MbcAgent::dumpPatchingHole(Point p1, Point p2) {
+    FILE *fp = fopen("PatchingHole.tr", "a+");
+//    fprintf(fp, "%f\t%f\n", point.x_ - sensor_range_ / 2, point.y_ - sensor_range_ * sqrt(3) / 2);
+//    fprintf(fp, "%f\t%f\n", point.x_ + sensor_range_ / 2, point.y_ - sensor_range_ * sqrt(3) / 2);
+//    fprintf(fp, "%f\t%f\n", point.x_ + sensor_range_, point.y_);
+//    fprintf(fp, "%f\t%f\n", point.x_ + sensor_range_ / 2, point.y_ + sensor_range_ * sqrt(3) / 2);
+//    fprintf(fp, "%f\t%f\n", point.x_ - sensor_range_ / 2, point.y_ + sensor_range_ * sqrt(3) / 2);
+//    fprintf(fp, "%f\t%f\n", point.x_ - sensor_range_, point.y_);
+//    fprintf(fp, "%f\t%f\n\n", point.x_ - sensor_range_ / 2, point.y_ - sensor_range_ * sqrt(3) / 2);
+    fprintf(fp, "%f\t%f\n", p1.x_, p1.y_);
+    fprintf(fp, "%f\t%f\n\n", p2.x_, p2.y_);
+    fclose(fp);
+}
+
+void MbcAgent::eliminateNode(custom_node *n, custom_node **list, polygonHole *hole) {
     for (node *tmp = hole->node_list_; tmp; tmp = tmp->next_) {
         node *tmp2 = tmp->next_ == NULL ? hole->node_list_ : tmp->next_;
 
@@ -457,9 +479,11 @@ void MbcAgent::eliminateNode(node *n, node **list, polygonHole *hole) {
         G::intersection(line, perpendicular, &intersection);
 
         if (G::distance(n, line) < sensor_range_ && G::onSegment(tmp, &intersection, tmp2)) {
+            dumpPatchingHole(*n, intersection);
             // distance from s to border < r
             // if area is covered by other nodes => remove node from list
             // else get orthogonal project of s
+            n->is_removable_ = true;
             n->x_ = intersection.x_;
             n->y_ = intersection.y_;
             return;
@@ -474,10 +498,14 @@ void MbcAgent::eliminateNode(node *n, node **list, polygonHole *hole) {
             (G::onSegment(tmp, &i1, tmp2) || G::onSegment(tmp, &i2, tmp2))) {
             if (G::circleLineIntersect(*n, sensor_range_, *tmp2, *tmp3, &i1, &i2) > 0 &&
                 (G::onSegment(tmp2, &i1, tmp3) || G::onSegment(tmp2, &i2, tmp3))) {
+                dumpPatchingHole(*n, *tmp2);
+                n->is_removable_ = true;
                 n->x_ = tmp2->x_;
                 n->y_ = tmp2->y_;
             }
             else {
+                dumpPatchingHole(*n, *tmp);
+                n->is_removable_ = true;
                 n->x_ = tmp->x_;
                 n->y_ = tmp->y_;
             }
@@ -487,9 +515,9 @@ void MbcAgent::eliminateNode(node *n, node **list, polygonHole *hole) {
     removeNodeFromList(n, &(*list));
 }
 
-void MbcAgent::removeNodeFromList(node *n, node **list) {
-    node *previous = NULL;
-    for (node *tmp = *list; tmp; tmp = tmp->next_) {
+void MbcAgent::removeNodeFromList(custom_node *n, custom_node **list) {
+    custom_node *previous = NULL;
+    for (custom_node *tmp = *list; tmp; tmp = tmp->next_) {
         if (tmp->x_ == n->x_ && tmp->y_ == n->y_) {
             if (previous) {
                 previous->next_ = tmp->next_;
@@ -501,4 +529,9 @@ void MbcAgent::removeNodeFromList(node *n, node **list) {
         }
         previous = tmp;
     }
+}
+
+void MbcAgent::optimize(custom_node **list, polygonHole *hole) {
+    // due to a lot of for loops
+    // do it manually :v
 }
