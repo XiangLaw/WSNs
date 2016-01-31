@@ -263,34 +263,14 @@ void CoverageBoundHoleAgent::gridConstruction(polygonHole *hole,
     node *current_circle_a = NULL;
     node *current_intersect_a = NULL;
     triangle current_unit;
-    struct limits limit;
     direction_list *directions = NULL;
     DIRECTION prev_direction = DOWN; // trick: because we start from top so can not go up anymore
-
-    limit.min_x = limit.max_x = hole->node_list_->x_;
-    limit.min_y = limit.max_y = hole->node_list_->y_;
-    for (node *tmp = hole->node_list_->next_; tmp != hole->node_list_; tmp = tmp->next_) {
-        if (limit.min_x > tmp->x_) limit.min_x = tmp->x_;
-        else if (limit.max_x < tmp->x_) limit.max_x = tmp->x_;
-        if (limit.min_y > tmp->y_) limit.min_y = tmp->y_;
-        else if (limit.max_y < tmp->y_) limit.max_y = tmp->y_;
-    }
+    Point base_point;
 
     current_circle_a = start_circle;
     current_intersect_a = start_intersect;
 
-    limit.min_y -= 1; // trick
-
-    int x_index = 0;
-    int y_index = 0;
-
-    x_index = (int) ((start_intersect->x_ - limit.min_x) / sensor_range_);
-    current_unit.vertices[0].x_ = limit.min_x + x_index * sensor_range_;
-    current_unit.vertices[0].y_ = limit.min_y;
-    current_unit.vertices[1].x_ = current_unit.vertices[0].x_ + sensor_range_;
-    current_unit.vertices[1].y_ = limit.min_y;
-    current_unit.vertices[2].x_ = current_unit.vertices[0].x_ + sensor_range_ / 2;
-    current_unit.vertices[2].y_ = limit.min_y + sensor_range_ * sqrt(3) / 2;
+    current_unit = startUnit(0, *start_intersect);
 
     dumpCoverageGrid(current_unit);
 
@@ -315,9 +295,32 @@ void CoverageBoundHoleAgent::gridConstruction(polygonHole *hole,
     }
 
     /* construct matrix */
-    int nx = (int) ((limit.max_x - limit.min_x) / sensor_range_) + 1;
-    nx = nx * 2 + 1;
-    int ny = (int) ((limit.max_y - limit.min_y) / (sensor_range_ * sqrt(3) / 2)) + 1;
+    int minx = 0, maxx = 0, miny = 0, maxy = 0, x = 0, y = 0;
+    for (struct direction_list *tmp = directions; tmp; tmp = tmp->next_) {
+        switch (tmp->e_) {
+            case UP:
+                y++;
+                if (maxy < y) maxy = y;
+                break;
+            case LEFT:
+                x--;
+                if (minx > x) minx = x;
+                break;
+            case DOWN:
+                y--;
+                if (miny > y) miny = y;
+                break;
+            case RIGHT:
+                x++;
+                if (maxx < x) maxx = x;
+                break;
+            default:
+                break;
+        }
+    }
+
+    int nx = maxx - minx + 1;
+    int ny = maxy - miny + 1;
 
     int8_t **grid = new int8_t *[nx + 2];
     for (int i = 0; i < nx + 2; i++)
@@ -329,29 +332,30 @@ void CoverageBoundHoleAgent::gridConstruction(polygonHole *hole,
         }
     }
 
-    x_index = x_index * 2 + 1;
-    grid[x_index][y_index] = C_BLACK;
+    x = maxx;
+    y = -miny;
+    grid[x][y] = C_BLACK;
     for (struct direction_list *tmp = directions; tmp; tmp = tmp->next_) {
         switch (tmp->e_) {
             case RIGHT:
-                x_index--;
+                x--;
                 break;
             case LEFT:
-                x_index++;
+                x++;
                 break;
             case UP:
-                y_index++;
+                y++;
                 break;
             case DOWN:
-                y_index--;
+                y--;
                 break;
             default:
                 break;
         }
-        grid[x_index][y_index] = C_BLACK;
+        grid[x][y] = C_BLACK;
     }
-
-    patchingHole(removables, limit.min_x, limit.min_y, grid, nx, ny);
+    
+    patchingHole(removables, base_point.x_, base_point.y_, grid, nx, ny);
 
     // free memory
     for (int i = 0; i < nx + 2; i++)
@@ -491,6 +495,45 @@ node *CoverageBoundHoleAgent::getNextSensorNeighbor(nsaddr_t prev_node) {
 }
 
 /************** new *************/
+/// return triangle unit that contains Point p in grid with base b
+/// y = b; y = ... + b; y = -... + b
+triangle CoverageBoundHoleAgent::startUnit(double b, Point p) {
+    triangle tri;
+    Line h1, h2;
+    Line vl1, vl2;
+    Line vr1, vr2;
+
+    h1.a_ = 0;
+    h2.a_ = 0;
+    h1.b_ = -1;
+    h2.b_ = -1;
+    h1.c_ = round((p.x_ - b) / sensor_range_) * sensor_range_ + b;
+    h2.c_ = h1.c_ + sensor_range_;
+
+    vl1.a_ = sqrt(3);
+    vl2.a_ = sqrt(3);
+    vl1.b_ = -1;
+    vl2.b_ = -1;
+    vl1.c_ = round((p.y_ - sqrt(3) * p.x_ - b) / sensor_range_) * sensor_range_ + b;
+    vl2.c_ = vl1.c_ + sensor_range_ * sqrt(3);
+
+
+    vr1.a_ = -sqrt(3);
+    vr2.a_ = -sqrt(3);
+    vr1.b_ = -1;
+    vr2.b_ = -1;
+    vr1.c_ = round((p.y_ + sqrt(3) * p.x_ - b) / sensor_range_) * sensor_range_ + b;
+    vr2.c_ = vr1.c_ + sensor_range_ * sqrt(3);
+
+    G::intersection(vr1, vl2, &tri.vertices[0]);
+    G::intersection(vr2, vl1, &tri.vertices[1]);
+    G::intersection(vr1, vl1, &tri.vertices[2]);
+    if (tri.vertices[2].y_ < h1.c_) {
+        G::intersection(vr2, vl2, &tri.vertices[2]);
+    }
+    return tri;
+}
+
 DIRECTION CoverageBoundHoleAgent::nextTriangle(triangle *current_unit, node **circle_a,
                                                node **intersect_a,
                                                DIRECTION prev_direction, removable_cell_list **removables) {

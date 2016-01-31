@@ -54,13 +54,6 @@ struct removable_cell_list {
     struct removable_cell_list *next;
 };
 
-struct limits {
-    double min_x;
-    double min_y;
-    double max_x;
-    double max_y;
-};
-
 typedef void(CoverageBoundHoleAgent::*fire)(void);
 
 class CoverageBoundHoleTimer : public TimerHandler {
@@ -109,6 +102,8 @@ protected:
 
     void addNeighbor(nsaddr_t, Point); // override from GPSRAgent
     node *getNextSensorNeighbor(nsaddr_t prev_node);
+
+    triangle startUnit(double, Point);
 
     void gridConstruction(polygonHole *, node *, node *);
 
