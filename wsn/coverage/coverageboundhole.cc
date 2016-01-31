@@ -263,6 +263,7 @@ void CoverageBoundHoleAgent::gridConstruction(polygonHole *hole,
     node *current_circle_a = NULL;
     node *current_intersect_a = NULL;
     triangle current_unit;
+    triangle start_unit;
     direction_list *directions = NULL;
     DIRECTION prev_direction = DOWN; // trick: because we start from top so can not go up anymore
     Point base_point;
@@ -271,6 +272,9 @@ void CoverageBoundHoleAgent::gridConstruction(polygonHole *hole,
     current_intersect_a = start_intersect;
 
     current_unit = startUnit(0, *start_intersect);
+    for(int i = 0; i< 3; i++) {
+        start_unit.vertices[i] = current_unit.vertices[i];
+    }
 
     dumpCoverageGrid(current_unit);
 
@@ -354,7 +358,8 @@ void CoverageBoundHoleAgent::gridConstruction(polygonHole *hole,
         }
         grid[x][y] = C_BLACK;
     }
-    
+
+    base_point = basePointCoordinateCalculation(start_unit, maxx, -miny);
     patchingHole(removables, base_point.x_, base_point.y_, grid, nx, ny);
 
     // free memory
@@ -792,14 +797,14 @@ int CoverageBoundHoleAgent::black_node_count(int8_t **grid, int x, int y) {
 
 void CoverageBoundHoleAgent::dumpPatchingHole(Point point) {
     FILE *fp = fopen("PatchingHole.tr", "a+");
-//    fprintf(fp, "%f\t%f\n", point.x_ - sensor_range_ / 2, point.y_ - sensor_range_ * sqrt(3) / 2);
-//    fprintf(fp, "%f\t%f\n", point.x_ + sensor_range_ / 2, point.y_ - sensor_range_ * sqrt(3) / 2);
-//    fprintf(fp, "%f\t%f\n", point.x_ + sensor_range_, point.y_);
-//    fprintf(fp, "%f\t%f\n", point.x_ + sensor_range_ / 2, point.y_ + sensor_range_ * sqrt(3) / 2);
-//    fprintf(fp, "%f\t%f\n", point.x_ - sensor_range_ / 2, point.y_ + sensor_range_ * sqrt(3) / 2);
-//    fprintf(fp, "%f\t%f\n", point.x_ - sensor_range_, point.y_);
-//    fprintf(fp, "%f\t%f\n\n", point.x_ - sensor_range_ / 2, point.y_ - sensor_range_ * sqrt(3) / 2);
-    fprintf(fp, "%f\t%f\n", point.x_, point.y_);
+    fprintf(fp, "%f\t%f\n", point.x_ - sensor_range_ / 2, point.y_ - sensor_range_ * sqrt(3) / 2);
+    fprintf(fp, "%f\t%f\n", point.x_ + sensor_range_ / 2, point.y_ - sensor_range_ * sqrt(3) / 2);
+    fprintf(fp, "%f\t%f\n", point.x_ + sensor_range_, point.y_);
+    fprintf(fp, "%f\t%f\n", point.x_ + sensor_range_ / 2, point.y_ + sensor_range_ * sqrt(3) / 2);
+    fprintf(fp, "%f\t%f\n", point.x_ - sensor_range_ / 2, point.y_ + sensor_range_ * sqrt(3) / 2);
+    fprintf(fp, "%f\t%f\n", point.x_ - sensor_range_, point.y_);
+    fprintf(fp, "%f\t%f\n\n", point.x_ - sensor_range_ / 2, point.y_ - sensor_range_ * sqrt(3) / 2);
+//    fprintf(fp, "%f\t%f\n", point.x_, point.y_);
     fclose(fp);
 }
 
@@ -882,4 +887,53 @@ void CoverageBoundHoleAgent::fillGrid(int8_t **grid, int nx, int ny) {
             }
         }
     }
+}
+
+Point CoverageBoundHoleAgent::basePointCoordinateCalculation(triangle start_unit, int x_index, int y_index) {
+    triangle tmp;
+    int i;
+    if (x_index % 2 == 0 && y_index % 2 == 0) {
+        for (i = 0; i < 3; i++) {
+            tmp.vertices[i].x_ = start_unit.vertices[i].x_ - sensor_range_ * x_index / 2;
+            tmp.vertices[i].y_ = start_unit.vertices[i].y_ - sensor_range_ * sqrt(3) / 2 * y_index;
+        }
+    }
+    else if (x_index % 2 == 0 && y_index % 2 == 1) {
+        for (i = 0; i < 3; i++) {
+            tmp.vertices[i].x_ = start_unit.vertices[i].x_ - sensor_range_ * x_index / 2;
+        }
+        if (start_unit.vertices[0].y_ < start_unit.vertices[2].y_) {
+            tmp.vertices[0].y_ = start_unit.vertices[0].y_ - sensor_range_ * sqrt(3) / 2 * (y_index - 1);
+            tmp.vertices[1].y_ = start_unit.vertices[1].y_ - sensor_range_ * sqrt(3) / 2 * (y_index - 1);
+            tmp.vertices[2].y_ = start_unit.vertices[2].y_ - sensor_range_ * sqrt(3) / 2 * (y_index + 1);
+        }
+        else {
+            tmp.vertices[0].y_ = start_unit.vertices[0].y_ - sensor_range_ * sqrt(3) / 2 * (y_index + 1);
+            tmp.vertices[1].y_ = start_unit.vertices[1].y_ - sensor_range_ * sqrt(3) / 2 * (y_index + 1);
+            tmp.vertices[2].y_ = start_unit.vertices[2].y_ - sensor_range_ * sqrt(3) / 2 * (y_index - 1);
+        }
+    }
+    else if (x_index % 2 == 1 && y_index % 2 == 0) {
+        tmp.vertices[0].x_ = start_unit.vertices[2].x_ - sensor_range_ * (x_index + 1) / 2;
+        tmp.vertices[1].x_ = start_unit.vertices[2].x_ - sensor_range_ * (x_index - 1) / 2;
+        tmp.vertices[2].x_ = start_unit.vertices[0].x_ - sensor_range_ * (x_index - 1) / 2;
+        tmp.vertices[0].y_ = start_unit.vertices[2].y_ - sensor_range_ * sqrt(3) / 2 * y_index;
+        tmp.vertices[1].y_ = start_unit.vertices[2].y_ - sensor_range_ * sqrt(3) / 2 * y_index;
+        tmp.vertices[2].y_ = start_unit.vertices[0].y_ - sensor_range_ * sqrt(3) / 2 * y_index;
+    }
+    else if (x_index % 2 == 1 && y_index % 2 == 1) {
+        tmp.vertices[0].x_ = start_unit.vertices[2].x_ - sensor_range_ * (x_index + 1) / 2;
+        tmp.vertices[1].x_ = start_unit.vertices[2].x_ - sensor_range_ * (x_index - 1) / 2;
+        tmp.vertices[2].x_ = start_unit.vertices[0].x_ - sensor_range_ * (x_index - 1) / 2;
+        for (i = 0; i < 3; i++) {
+            tmp.vertices[i].y_ = start_unit.vertices[i].y_ - sensor_range_ * sqrt(3) / 2 * y_index;
+        }
+    }
+
+    if (tmp.vertices[0].y_ > tmp.vertices[2].y_)
+        return tmp.vertices[2];
+    else if (tmp.vertices[0].x_ < tmp.vertices[1].x_)
+        return tmp.vertices[0];
+    else
+        return tmp.vertices[1];
 }
