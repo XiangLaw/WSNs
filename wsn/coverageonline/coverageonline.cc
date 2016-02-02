@@ -252,110 +252,6 @@ void CoverageOnlineAgent::holeBoundaryDetection() {
     }
 }
 
-void CoverageOnlineAgent::gridConstruction(polygonHole *hole,
-                                           node *start_circle, node *start_intersect) {
-    if (hole == NULL || hole->node_list_ == NULL) return;
-
-    removable_cell_list *removables = NULL;
-    node *current_circle_a = NULL;
-    node *current_intersect_a = NULL;
-    triangle current_unit;
-    struct limits limit;
-    direction_list *directions = NULL;
-    DIRECTION prev_direction = DOWN; // trick: because we start from top so can not go up anymore
-
-    limit.min_x = limit.max_x = hole->node_list_->x_;
-    limit.min_y = limit.max_y = hole->node_list_->y_;
-    for (node *tmp = hole->node_list_->next_; tmp != hole->node_list_; tmp = tmp->next_) {
-        if (limit.min_x > tmp->x_) limit.min_x = tmp->x_;
-        else if (limit.max_x < tmp->x_) limit.max_x = tmp->x_;
-        if (limit.min_y > tmp->y_) limit.min_y = tmp->y_;
-        else if (limit.max_y < tmp->y_) limit.max_y = tmp->y_;
-    }
-
-    current_circle_a = start_circle;
-    current_intersect_a = start_intersect;
-
-    limit.min_y -= 1; // trick
-
-    int x_index = 0;
-    int y_index = 0;
-
-    x_index = (int) ((start_intersect->x_ - limit.min_x) / sensor_range_);
-    current_unit.vertices[0].x_ = limit.min_x + x_index * sensor_range_;
-    current_unit.vertices[0].y_ = limit.min_y;
-    current_unit.vertices[1].x_ = current_unit.vertices[0].x_ + sensor_range_;
-    current_unit.vertices[1].y_ = limit.min_y;
-    current_unit.vertices[2].x_ = current_unit.vertices[0].x_ + sensor_range_ / 2;
-    current_unit.vertices[2].y_ = limit.min_y + sensor_range_ * sqrt(3) / 2;
-
-    dumpCoverageGrid(current_unit);
-
-    while (current_circle_a->next_ != start_circle) {
-        prev_direction = nextTriangle(&current_unit, &current_circle_a, &current_intersect_a, prev_direction,
-                                      &removables);
-        direction_list *dir = new direction_list();
-        dir->e_ = prev_direction;
-        dir->next_ = directions;
-        directions = dir;
-        dumpCoverageGrid(current_unit);
-    }
-
-    while (current_circle_a != start_circle) {
-        prev_direction = nextTriangle(&current_unit, &current_circle_a, &current_intersect_a, prev_direction,
-                                      &removables);
-        direction_list *dir = new direction_list();
-        dir->e_ = prev_direction;
-        dir->next_ = directions;
-        directions = dir;
-        dumpCoverageGrid(current_unit);
-    }
-
-    /* construct matrix */
-    int nx = (int) ((limit.max_x - limit.min_x) / sensor_range_) + 1;
-    nx = nx * 2 + 1;
-    int ny = (int) ((limit.max_y - limit.min_y) / (sensor_range_ * sqrt(3) / 2)) + 1;
-
-    int8_t **grid = new int8_t *[nx + 2];
-    for (int i = 0; i < nx + 2; i++)
-        grid[i] = new int8_t[ny + 1];
-
-    for (int i = 0; i < nx + 2; i++) {
-        for (int j = 0; j < ny + 1; j++) {
-            grid[i][j] = C_BLUE;
-        }
-    }
-
-    x_index = x_index * 2 + 1;
-    grid[x_index][y_index] = C_BLACK;
-    for (struct direction_list *tmp = directions; tmp; tmp = tmp->next_) {
-        switch (tmp->e_) {
-            case RIGHT:
-                x_index--;
-                break;
-            case LEFT:
-                x_index++;
-                break;
-            case UP:
-                y_index++;
-                break;
-            case DOWN:
-                y_index--;
-                break;
-            default:
-                break;
-        }
-        grid[x_index][y_index] = C_BLACK;
-    }
-
-    patchingHole(removables, limit.min_x, limit.min_y, grid, nx, ny);
-
-    // free memory
-    for (int i = 0; i < nx + 2; i++)
-        delete[] grid[i];
-    delete[] grid;
-}
-
 /*----------------Utils function----------------------*/
 void CoverageOnlineAgent::startUp() {
     FILE *fp;
@@ -487,7 +383,21 @@ node *CoverageOnlineAgent::getNextSensorNeighbor(nsaddr_t prev_node) {
     return NULL;
 }
 
-/************** new *************/
+/************** Add data to HBD *************/
+void CoverageOnlineAgent::addData(Packet* p)
+{
+//    struct hdr_coverageonline *hcl = HDR_COVERAGEONLINE(p);
+//    while (current_circle_a->next_ != start_circle) {
+//        prev_direction = nextTriangle(&current_unit, &current_circle_a, &current_intersect_a, prev_direction,
+//                                      &removables);
+//        direction_list *dir = new direction_list();
+//        dir->e_ = prev_direction;
+//        dir->next_ = directions;
+//        directions = dir;
+//        dumpCoverageGrid(current_unit);
+//    }
+}
+
 DIRECTION CoverageOnlineAgent::nextTriangle(triangle *current_unit, node **circle_a,
                                             node **intersect_a,
                                             DIRECTION prev_direction, removable_cell_list **removables) {
@@ -636,15 +546,54 @@ bool CoverageOnlineAgent::isSelectableTriangle(node *circle,
     return false;
 }
 
-void CoverageOnlineAgent::dumpCoverageGrid(triangle current_unit) {
-    FILE *fp = fopen("CoverageGrid.tr", "a+");
-    fprintf(fp, "%f\t%f\n", current_unit.vertices[0].x_, current_unit.vertices[0].y_);
-    fprintf(fp, "%f\t%f\n", current_unit.vertices[1].x_, current_unit.vertices[1].y_);
-    fprintf(fp, "%f\t%f\n", current_unit.vertices[2].x_, current_unit.vertices[2].y_);
-    fprintf(fp, "%f\t%f\n", current_unit.vertices[0].x_, current_unit.vertices[0].y_);
-    fprintf(fp, "%f\t%f\n\n", (current_unit.vertices[1].x_ + current_unit.vertices[2].x_) / 2,
-            (current_unit.vertices[1].y_ + current_unit.vertices[2].y_) / 2);
-    fclose(fp);
+/***** Hole Patching *****/
+Point CoverageOnlineAgent::basePointCoordinateCalculation(triangle start_unit, int x_index, int y_index) {
+    triangle tmp;
+    int i;
+    if (x_index % 2 == 0 && y_index % 2 == 0) {
+        for (i = 0; i < 3; i++) {
+            tmp.vertices[i].x_ = start_unit.vertices[i].x_ - sensor_range_ * x_index / 2;
+            tmp.vertices[i].y_ = start_unit.vertices[i].y_ - sensor_range_ * sqrt(3) / 2 * y_index;
+        }
+    }
+    else if (x_index % 2 == 0 && y_index % 2 == 1) {
+        for (i = 0; i < 3; i++) {
+            tmp.vertices[i].x_ = start_unit.vertices[i].x_ - sensor_range_ * x_index / 2;
+        }
+        if (start_unit.vertices[0].y_ < start_unit.vertices[2].y_) {
+            tmp.vertices[0].y_ = start_unit.vertices[0].y_ - sensor_range_ * sqrt(3) / 2 * (y_index - 1);
+            tmp.vertices[1].y_ = start_unit.vertices[1].y_ - sensor_range_ * sqrt(3) / 2 * (y_index - 1);
+            tmp.vertices[2].y_ = start_unit.vertices[2].y_ - sensor_range_ * sqrt(3) / 2 * (y_index + 1);
+        }
+        else {
+            tmp.vertices[0].y_ = start_unit.vertices[0].y_ - sensor_range_ * sqrt(3) / 2 * (y_index + 1);
+            tmp.vertices[1].y_ = start_unit.vertices[1].y_ - sensor_range_ * sqrt(3) / 2 * (y_index + 1);
+            tmp.vertices[2].y_ = start_unit.vertices[2].y_ - sensor_range_ * sqrt(3) / 2 * (y_index - 1);
+        }
+    }
+    else if (x_index % 2 == 1 && y_index % 2 == 0) {
+        tmp.vertices[0].x_ = start_unit.vertices[2].x_ - sensor_range_ * (x_index + 1) / 2;
+        tmp.vertices[1].x_ = start_unit.vertices[2].x_ - sensor_range_ * (x_index - 1) / 2;
+        tmp.vertices[2].x_ = start_unit.vertices[0].x_ - sensor_range_ * (x_index - 1) / 2;
+        tmp.vertices[0].y_ = start_unit.vertices[2].y_ - sensor_range_ * sqrt(3) / 2 * y_index;
+        tmp.vertices[1].y_ = start_unit.vertices[2].y_ - sensor_range_ * sqrt(3) / 2 * y_index;
+        tmp.vertices[2].y_ = start_unit.vertices[0].y_ - sensor_range_ * sqrt(3) / 2 * y_index;
+    }
+    else if (x_index % 2 == 1 && y_index % 2 == 1) {
+        tmp.vertices[0].x_ = start_unit.vertices[2].x_ - sensor_range_ * (x_index + 1) / 2;
+        tmp.vertices[1].x_ = start_unit.vertices[2].x_ - sensor_range_ * (x_index - 1) / 2;
+        tmp.vertices[2].x_ = start_unit.vertices[0].x_ - sensor_range_ * (x_index - 1) / 2;
+        for (i = 0; i < 3; i++) {
+            tmp.vertices[i].y_ = start_unit.vertices[i].y_ - sensor_range_ * sqrt(3) / 2 * y_index;
+        }
+    }
+
+    if (tmp.vertices[0].y_ > tmp.vertices[2].y_)
+        return tmp.vertices[2];
+    else if (tmp.vertices[0].x_ < tmp.vertices[1].x_)
+        return tmp.vertices[0];
+    else
+        return tmp.vertices[1];
 }
 
 void CoverageOnlineAgent::patchingHole(removable_cell_list *removables, double base_x, double base_y,
@@ -744,19 +693,6 @@ int CoverageOnlineAgent::black_node_count(int8_t **grid, int x, int y) {
     return count;
 }
 
-void CoverageOnlineAgent::dumpPatchingHole(Point point) {
-    FILE *fp = fopen("PatchingHole.tr", "a+");
-//    fprintf(fp, "%f\t%f\n", point.x_ - sensor_range_ / 2, point.y_ - sensor_range_ * sqrt(3) / 2);
-//    fprintf(fp, "%f\t%f\n", point.x_ + sensor_range_ / 2, point.y_ - sensor_range_ * sqrt(3) / 2);
-//    fprintf(fp, "%f\t%f\n", point.x_ + sensor_range_, point.y_);
-//    fprintf(fp, "%f\t%f\n", point.x_ + sensor_range_ / 2, point.y_ + sensor_range_ * sqrt(3) / 2);
-//    fprintf(fp, "%f\t%f\n", point.x_ - sensor_range_ / 2, point.y_ + sensor_range_ * sqrt(3) / 2);
-//    fprintf(fp, "%f\t%f\n", point.x_ - sensor_range_, point.y_);
-//    fprintf(fp, "%f\t%f\n\n", point.x_ - sensor_range_ / 2, point.y_ - sensor_range_ * sqrt(3) / 2);
-    fprintf(fp, "%f\t%f\n", point.x_, point.y_);
-    fclose(fp);
-}
-
 void CoverageOnlineAgent::fillGrid(int8_t **grid, int nx, int ny) {
     int8_t **clone = new int8_t *[nx + 3];
     for (int i = 0; i < nx + 3; ++i) {
@@ -836,4 +772,134 @@ void CoverageOnlineAgent::fillGrid(int8_t **grid, int nx, int ny) {
             }
         }
     }
+}
+
+/***** Grid Construction from HBD message *****/
+void CoverageOnlineAgent::gridConstruction(polygonHole *hole,
+                                           node *start_circle, node *start_intersect) {
+    if (hole == NULL || hole->node_list_ == NULL) return;
+
+    removable_cell_list *removables = NULL;
+    node *current_circle_a = NULL;
+    node *current_intersect_a = NULL;
+    triangle current_unit;
+    struct limits limit;
+    direction_list *directions = NULL;
+    DIRECTION prev_direction = DOWN; // trick: because we start from top so can not go up anymore
+
+    limit.min_x = limit.max_x = hole->node_list_->x_;
+    limit.min_y = limit.max_y = hole->node_list_->y_;
+    for (node *tmp = hole->node_list_->next_; tmp != hole->node_list_; tmp = tmp->next_) {
+        if (limit.min_x > tmp->x_) limit.min_x = tmp->x_;
+        else if (limit.max_x < tmp->x_) limit.max_x = tmp->x_;
+        if (limit.min_y > tmp->y_) limit.min_y = tmp->y_;
+        else if (limit.max_y < tmp->y_) limit.max_y = tmp->y_;
+    }
+
+    current_circle_a = start_circle;
+    current_intersect_a = start_intersect;
+
+    limit.min_y -= 1; // trick
+
+    int x_index = 0;
+    int y_index = 0;
+
+    x_index = (int) ((start_intersect->x_ - limit.min_x) / sensor_range_);
+    current_unit.vertices[0].x_ = limit.min_x + x_index * sensor_range_;
+    current_unit.vertices[0].y_ = limit.min_y;
+    current_unit.vertices[1].x_ = current_unit.vertices[0].x_ + sensor_range_;
+    current_unit.vertices[1].y_ = limit.min_y;
+    current_unit.vertices[2].x_ = current_unit.vertices[0].x_ + sensor_range_ / 2;
+    current_unit.vertices[2].y_ = limit.min_y + sensor_range_ * sqrt(3) / 2;
+
+    dumpCoverageGrid(current_unit);
+
+    while (current_circle_a->next_ != start_circle) {
+        prev_direction = nextTriangle(&current_unit, &current_circle_a, &current_intersect_a, prev_direction,
+                                      &removables);
+        direction_list *dir = new direction_list();
+        dir->e_ = prev_direction;
+        dir->next_ = directions;
+        directions = dir;
+        dumpCoverageGrid(current_unit);
+    }
+
+    while (current_circle_a != start_circle) {
+        prev_direction = nextTriangle(&current_unit, &current_circle_a, &current_intersect_a, prev_direction,
+                                      &removables);
+        direction_list *dir = new direction_list();
+        dir->e_ = prev_direction;
+        dir->next_ = directions;
+        directions = dir;
+        dumpCoverageGrid(current_unit);
+    }
+
+    /* construct matrix */
+    int nx = (int) ((limit.max_x - limit.min_x) / sensor_range_) + 1;
+    nx = nx * 2 + 1;
+    int ny = (int) ((limit.max_y - limit.min_y) / (sensor_range_ * sqrt(3) / 2)) + 1;
+
+    int8_t **grid = new int8_t *[nx + 2];
+    for (int i = 0; i < nx + 2; i++)
+        grid[i] = new int8_t[ny + 1];
+
+    for (int i = 0; i < nx + 2; i++) {
+        for (int j = 0; j < ny + 1; j++) {
+            grid[i][j] = C_BLUE;
+        }
+    }
+
+    x_index = x_index * 2 + 1;
+    grid[x_index][y_index] = C_BLACK;
+    for (struct direction_list *tmp = directions; tmp; tmp = tmp->next_) {
+        switch (tmp->e_) {
+            case RIGHT:
+                x_index--;
+                break;
+            case LEFT:
+                x_index++;
+                break;
+            case UP:
+                y_index++;
+                break;
+            case DOWN:
+                y_index--;
+                break;
+            default:
+                break;
+        }
+        grid[x_index][y_index] = C_BLACK;
+    }
+
+    patchingHole(removables, limit.min_x, limit.min_y, grid, nx, ny);
+
+    // free memory
+    for (int i = 0; i < nx + 2; i++)
+        delete[] grid[i];
+    delete[] grid;
+}
+
+/***** Dump *****/
+void CoverageOnlineAgent::dumpPatchingHole(Point point) {
+    FILE *fp = fopen("PatchingHole.tr", "a+");
+//    fprintf(fp, "%f\t%f\n", point.x_ - sensor_range_ / 2, point.y_ - sensor_range_ * sqrt(3) / 2);
+//    fprintf(fp, "%f\t%f\n", point.x_ + sensor_range_ / 2, point.y_ - sensor_range_ * sqrt(3) / 2);
+//    fprintf(fp, "%f\t%f\n", point.x_ + sensor_range_, point.y_);
+//    fprintf(fp, "%f\t%f\n", point.x_ + sensor_range_ / 2, point.y_ + sensor_range_ * sqrt(3) / 2);
+//    fprintf(fp, "%f\t%f\n", point.x_ - sensor_range_ / 2, point.y_ + sensor_range_ * sqrt(3) / 2);
+//    fprintf(fp, "%f\t%f\n", point.x_ - sensor_range_, point.y_);
+//    fprintf(fp, "%f\t%f\n\n", point.x_ - sensor_range_ / 2, point.y_ - sensor_range_ * sqrt(3) / 2);
+    fprintf(fp, "%f\t%f\n", point.x_, point.y_);
+    fclose(fp);
+}
+
+void CoverageOnlineAgent::dumpCoverageGrid(triangle current_unit) {
+    FILE *fp = fopen("CoverageGrid.tr", "a+");
+    fprintf(fp, "%f\t%f\n", current_unit.vertices[0].x_, current_unit.vertices[0].y_);
+    fprintf(fp, "%f\t%f\n", current_unit.vertices[1].x_, current_unit.vertices[1].y_);
+    fprintf(fp, "%f\t%f\n", current_unit.vertices[2].x_, current_unit.vertices[2].y_);
+    fprintf(fp, "%f\t%f\n", current_unit.vertices[0].x_, current_unit.vertices[0].y_);
+    fprintf(fp, "%f\t%f\n\n", (current_unit.vertices[1].x_ + current_unit.vertices[2].x_) / 2,
+            (current_unit.vertices[1].y_ + current_unit.vertices[2].y_) / 2);
+    fclose(fp);
 }

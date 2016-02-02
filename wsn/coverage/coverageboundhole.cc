@@ -797,14 +797,14 @@ int CoverageBoundHoleAgent::black_node_count(int8_t **grid, int x, int y) {
 
 void CoverageBoundHoleAgent::dumpPatchingHole(Point point) {
     FILE *fp = fopen("PatchingHole.tr", "a+");
-    fprintf(fp, "%f\t%f\n", point.x_ - sensor_range_ / 2, point.y_ - sensor_range_ * sqrt(3) / 2);
-    fprintf(fp, "%f\t%f\n", point.x_ + sensor_range_ / 2, point.y_ - sensor_range_ * sqrt(3) / 2);
-    fprintf(fp, "%f\t%f\n", point.x_ + sensor_range_, point.y_);
-    fprintf(fp, "%f\t%f\n", point.x_ + sensor_range_ / 2, point.y_ + sensor_range_ * sqrt(3) / 2);
-    fprintf(fp, "%f\t%f\n", point.x_ - sensor_range_ / 2, point.y_ + sensor_range_ * sqrt(3) / 2);
-    fprintf(fp, "%f\t%f\n", point.x_ - sensor_range_, point.y_);
-    fprintf(fp, "%f\t%f\n\n", point.x_ - sensor_range_ / 2, point.y_ - sensor_range_ * sqrt(3) / 2);
-//    fprintf(fp, "%f\t%f\n", point.x_, point.y_);
+//    fprintf(fp, "%f\t%f\n", point.x_ - sensor_range_ / 2, point.y_ - sensor_range_ * sqrt(3) / 2);
+//    fprintf(fp, "%f\t%f\n", point.x_ + sensor_range_ / 2, point.y_ - sensor_range_ * sqrt(3) / 2);
+//    fprintf(fp, "%f\t%f\n", point.x_ + sensor_range_, point.y_);
+//    fprintf(fp, "%f\t%f\n", point.x_ + sensor_range_ / 2, point.y_ + sensor_range_ * sqrt(3) / 2);
+//    fprintf(fp, "%f\t%f\n", point.x_ - sensor_range_ / 2, point.y_ + sensor_range_ * sqrt(3) / 2);
+//    fprintf(fp, "%f\t%f\n", point.x_ - sensor_range_, point.y_);
+//    fprintf(fp, "%f\t%f\n\n", point.x_ - sensor_range_ / 2, point.y_ - sensor_range_ * sqrt(3) / 2);
+    fprintf(fp, "%f\t%f\n", point.x_, point.y_);
     fclose(fp);
 }
 

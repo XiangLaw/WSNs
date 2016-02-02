@@ -129,6 +129,10 @@ public:
     void dumpPatchingHole(Point);
 
     void fillGrid(int8_t **grid, int nx, int ny);
+
+    Point basePointCoordinateCalculation(triangle start_unit, int x_index, int y_index);
+
+    void addData(Packet *p);
 };
 
 #endif //NS_CONVERAGEONLINE_H

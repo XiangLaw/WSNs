@@ -5,9 +5,12 @@
 
 struct hdr_coverageonline
 {
+    triangle start_unit;
+    triangle prev_unit;
+
     inline int size()
     {
-        return 0;
+        return 2 * sizeof(triangle);
     }
 
     static int offset_;
