@@ -1589,7 +1589,7 @@ Agent/BOUNDHOLEROUTING set storage_opt_ 0
 Agent/BOUNDHOLEROUTING set limit_boundhole_hop_ 80
 
 Agent/GEAR set hello_period_ 0
-Agent/GEAR set alpha_ 1
+Agent/GEAR set alpha_ 0.8
 Agent/GEAR set range_ 40
 
 Agent/GOAL set hello_period_ 0
