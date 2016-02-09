@@ -271,7 +271,7 @@ void CoverageBoundHoleAgent::gridConstruction(polygonHole *hole,
     current_circle_a = start_circle;
     current_intersect_a = start_intersect;
 
-    current_unit = startUnit(0, *start_intersect);
+    current_unit = startUnit(11, *start_intersect);
     for(int i = 0; i< 3; i++) {
         start_unit.vertices[i] = current_unit.vertices[i];
     }
@@ -357,6 +357,13 @@ void CoverageBoundHoleAgent::gridConstruction(polygonHole *hole,
                 break;
         }
         grid[x][y] = C_BLACK;
+    }
+
+    for (int i = 0; i < ny + 1; i++) {
+        for (int j = 0; j < nx + 2; j++) {
+            printf("%d ", grid[j][i]);
+        }
+        printf("\n");
     }
 
     base_point = basePointCoordinateCalculation(start_unit, maxx, -miny);
@@ -512,22 +519,21 @@ triangle CoverageBoundHoleAgent::startUnit(double b, Point p) {
     h2.a_ = 0;
     h1.b_ = -1;
     h2.b_ = -1;
-    h1.c_ = round((p.x_ - b) / sensor_range_) * sensor_range_ + b;
-    h2.c_ = h1.c_ + sensor_range_;
+    h1.c_ = floor((p.x_ - b) / sensor_range_) * sensor_range_ + b;
+    h2.c_ = h1.c_ + sensor_range_ * sqrt(3) / 2;
 
     vl1.a_ = sqrt(3);
     vl2.a_ = sqrt(3);
     vl1.b_ = -1;
     vl2.b_ = -1;
-    vl1.c_ = round((p.y_ - sqrt(3) * p.x_ - b) / sensor_range_) * sensor_range_ + b;
+    vl1.c_ = floor((p.y_ - sqrt(3) * p.x_ - b) / sensor_range_) * sensor_range_ + b;
     vl2.c_ = vl1.c_ + sensor_range_ * sqrt(3);
-
 
     vr1.a_ = -sqrt(3);
     vr2.a_ = -sqrt(3);
     vr1.b_ = -1;
     vr2.b_ = -1;
-    vr1.c_ = round((p.y_ + sqrt(3) * p.x_ - b) / sensor_range_) * sensor_range_ + b;
+    vr1.c_ = floor((p.y_ + sqrt(3) * p.x_ - b) / sensor_range_) * sensor_range_ + b;
     vr2.c_ = vr1.c_ + sensor_range_ * sqrt(3);
 
     G::intersection(vr1, vl2, &tri.vertices[0]);
@@ -705,7 +711,12 @@ void CoverageBoundHoleAgent::patchingHole(removable_cell_list *removables, doubl
 
     // fill the grid with color
     fillGrid(grid, nx, ny);
-
+    for (int i = 0; i < ny + 1; i++) {
+        for (int j = 0; j < nx + 2; j++) {
+            printf("%d ", grid[j][i]);
+        }
+        printf("\n");
+    }
     // we can start from (-1, -1), (0, 0), (-2, 0)
 
 //    x = -1;
@@ -756,6 +767,13 @@ void CoverageBoundHoleAgent::patchingHole(removable_cell_list *removables, doubl
         }
     }
 
+    for (int i = 0; i < ny + 1; i++) {
+        for (int j = 0; j < nx + 2; j++) {
+            printf("%d ", grid[j][i]);
+        }
+        printf("\n");
+    }
+
     // repainting
 //    x = -1;
 //    y = -1;
@@ -797,14 +815,14 @@ int CoverageBoundHoleAgent::black_node_count(int8_t **grid, int x, int y) {
 
 void CoverageBoundHoleAgent::dumpPatchingHole(Point point) {
     FILE *fp = fopen("PatchingHole.tr", "a+");
-//    fprintf(fp, "%f\t%f\n", point.x_ - sensor_range_ / 2, point.y_ - sensor_range_ * sqrt(3) / 2);
-//    fprintf(fp, "%f\t%f\n", point.x_ + sensor_range_ / 2, point.y_ - sensor_range_ * sqrt(3) / 2);
-//    fprintf(fp, "%f\t%f\n", point.x_ + sensor_range_, point.y_);
-//    fprintf(fp, "%f\t%f\n", point.x_ + sensor_range_ / 2, point.y_ + sensor_range_ * sqrt(3) / 2);
-//    fprintf(fp, "%f\t%f\n", point.x_ - sensor_range_ / 2, point.y_ + sensor_range_ * sqrt(3) / 2);
-//    fprintf(fp, "%f\t%f\n", point.x_ - sensor_range_, point.y_);
-//    fprintf(fp, "%f\t%f\n\n", point.x_ - sensor_range_ / 2, point.y_ - sensor_range_ * sqrt(3) / 2);
-    fprintf(fp, "%f\t%f\n", point.x_, point.y_);
+    fprintf(fp, "%f\t%f\n", point.x_ - sensor_range_ / 2, point.y_ - sensor_range_ * sqrt(3) / 2);
+    fprintf(fp, "%f\t%f\n", point.x_ + sensor_range_ / 2, point.y_ - sensor_range_ * sqrt(3) / 2);
+    fprintf(fp, "%f\t%f\n", point.x_ + sensor_range_, point.y_);
+    fprintf(fp, "%f\t%f\n", point.x_ + sensor_range_ / 2, point.y_ + sensor_range_ * sqrt(3) / 2);
+    fprintf(fp, "%f\t%f\n", point.x_ - sensor_range_ / 2, point.y_ + sensor_range_ * sqrt(3) / 2);
+    fprintf(fp, "%f\t%f\n", point.x_ - sensor_range_, point.y_);
+    fprintf(fp, "%f\t%f\n\n", point.x_ - sensor_range_ / 2, point.y_ - sensor_range_ * sqrt(3) / 2);
+//    fprintf(fp, "%f\t%f\n", point.x_, point.y_);
     fclose(fp);
 }
 
