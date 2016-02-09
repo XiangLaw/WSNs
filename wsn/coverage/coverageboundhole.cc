@@ -512,22 +512,21 @@ triangle CoverageBoundHoleAgent::startUnit(double b, Point p) {
     h2.a_ = 0;
     h1.b_ = -1;
     h2.b_ = -1;
-    h1.c_ = round((p.x_ - b) / sensor_range_) * sensor_range_ + b;
-    h2.c_ = h1.c_ + sensor_range_;
+    h1.c_ = floor((p.x_ - b) / sensor_range_) * sensor_range_ + b;
+    h2.c_ = h1.c_ + sensor_range_ * sqrt(3) / 2;
 
     vl1.a_ = sqrt(3);
     vl2.a_ = sqrt(3);
     vl1.b_ = -1;
     vl2.b_ = -1;
-    vl1.c_ = round((p.y_ - sqrt(3) * p.x_ - b) / sensor_range_) * sensor_range_ + b;
+    vl1.c_ = floor((p.y_ - sqrt(3) * p.x_ - b) / sensor_range_) * sensor_range_ + b;
     vl2.c_ = vl1.c_ + sensor_range_ * sqrt(3);
-
 
     vr1.a_ = -sqrt(3);
     vr2.a_ = -sqrt(3);
     vr1.b_ = -1;
     vr2.b_ = -1;
-    vr1.c_ = round((p.y_ + sqrt(3) * p.x_ - b) / sensor_range_) * sensor_range_ + b;
+    vr1.c_ = floor((p.y_ + sqrt(3) * p.x_ - b) / sensor_range_) * sensor_range_ + b;
     vr2.c_ = vr1.c_ + sensor_range_ * sqrt(3);
 
     G::intersection(vr1, vl2, &tri.vertices[0]);
@@ -797,14 +796,14 @@ int CoverageBoundHoleAgent::black_node_count(int8_t **grid, int x, int y) {
 
 void CoverageBoundHoleAgent::dumpPatchingHole(Point point) {
     FILE *fp = fopen("PatchingHole.tr", "a+");
-//    fprintf(fp, "%f\t%f\n", point.x_ - sensor_range_ / 2, point.y_ - sensor_range_ * sqrt(3) / 2);
-//    fprintf(fp, "%f\t%f\n", point.x_ + sensor_range_ / 2, point.y_ - sensor_range_ * sqrt(3) / 2);
-//    fprintf(fp, "%f\t%f\n", point.x_ + sensor_range_, point.y_);
-//    fprintf(fp, "%f\t%f\n", point.x_ + sensor_range_ / 2, point.y_ + sensor_range_ * sqrt(3) / 2);
-//    fprintf(fp, "%f\t%f\n", point.x_ - sensor_range_ / 2, point.y_ + sensor_range_ * sqrt(3) / 2);
-//    fprintf(fp, "%f\t%f\n", point.x_ - sensor_range_, point.y_);
-//    fprintf(fp, "%f\t%f\n\n", point.x_ - sensor_range_ / 2, point.y_ - sensor_range_ * sqrt(3) / 2);
-    fprintf(fp, "%f\t%f\n", point.x_, point.y_);
+    fprintf(fp, "%f\t%f\n", point.x_ - sensor_range_ / 2, point.y_ - sensor_range_ * sqrt(3) / 2);
+    fprintf(fp, "%f\t%f\n", point.x_ + sensor_range_ / 2, point.y_ - sensor_range_ * sqrt(3) / 2);
+    fprintf(fp, "%f\t%f\n", point.x_ + sensor_range_, point.y_);
+    fprintf(fp, "%f\t%f\n", point.x_ + sensor_range_ / 2, point.y_ + sensor_range_ * sqrt(3) / 2);
+    fprintf(fp, "%f\t%f\n", point.x_ - sensor_range_ / 2, point.y_ + sensor_range_ * sqrt(3) / 2);
+    fprintf(fp, "%f\t%f\n", point.x_ - sensor_range_, point.y_);
+    fprintf(fp, "%f\t%f\n\n", point.x_ - sensor_range_ / 2, point.y_ - sensor_range_ * sqrt(3) / 2);
+//    fprintf(fp, "%f\t%f\n", point.x_, point.y_);
     fclose(fp);
 }
 
