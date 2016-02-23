@@ -704,6 +704,9 @@ Simulator instproc create-wireless-node args {
             MBC {
                 set ragent [$self create-mbc-agent $node]
             }
+            TAAGENT {
+                set ragent [$self create-taagent-agent $node]
+            }
 			MDART {
 				set ragent [$self create-mdart-agent $node]
                         }
@@ -1302,6 +1305,21 @@ Simulator instproc create-mbc-agent { node } {
 	$node set ragent_ $ragent
 	$self at 0.0 	"$ragent start"    ;# start updates
     $self at 50	"$ragent coverage"
+	return $ragent
+}
+
+# TAAGENT
+Simulator instproc create-taagent-agent { node } {
+	set ragent [new Agent/TAAGENT]
+	set addr [$node node-addr]
+	$ragent addr $addr
+	$ragent node $node
+	if [Simulator set mobile_ip_] {
+		$ragent port-dmux [$node demux]
+	}
+	$node addr $addr
+	$node set ragent_ $ragent
+	$self at 0.0 	"$ragent start"    ;# start updates
 	return $ragent
 }
 
