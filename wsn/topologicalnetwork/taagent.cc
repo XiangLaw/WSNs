@@ -66,6 +66,9 @@ int TAAgent::command(int argc, const char *const *argv) {
         if (strcasecmp(argv[1], "addr") == 0) {
             my_id_ = Address::instance().str2addr(argv[2]);
             return TCL_OK;
+        } else if (strcmp(argv[1], "add-neighbor") == 0) {
+            addNeighbor(atoi(argv[2]));
+            return TCL_OK;
         }
 
         TclObject *obj;
@@ -113,6 +116,25 @@ void TAAgent::startUp() {
         fp = fopen("Energy.tr", "w");
         fclose(fp);
     }
+}
+
+void TAAgent::addNeighbor(nsaddr_t id) {
+    neighbor *temp = getNeighbor(id);
+
+    if (temp == NULL)            // it is a new node
+    {
+        temp = new neighbor;
+        temp->id_ = id;
+        temp->next_ = neighbor_list_;
+        neighbor_list_ = temp;
+    }
+}
+
+neighbor *TAAgent::getNeighbor(nsaddr_t nid) {
+    for (neighbor *temp = neighbor_list_; temp; temp = temp->next_) {
+        if (temp->id_ == nid) return temp;
+    }
+    return NULL;
 }
 
 /*

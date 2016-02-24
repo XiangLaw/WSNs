@@ -35,6 +35,9 @@ protected:
 
     nsaddr_t my_id_;					// node id (address), which is essential part of topological network
 
+    void addNeighbor(nsaddr_t);
+    neighbor* getNeighbor(nsaddr_t);
+
     void dumpNeighbor();
     void dumpEnergy();
 public:
