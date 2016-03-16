@@ -280,6 +280,7 @@ set(OBJ_CC
   wsn/mbc/mbc.cc wsn/mbc/mbc_packet_data.cc
   wsn/coverageonline/coverageonline.cc wsn/coverageonline/coverageonline_packet_data.cc
   wsn/topologicalnetwork/taagent.cc
+  wsn/nearholerouting/nhr.cc wsn/nearholerouting/nhr_packet_data.cc
   ${OBJ_STL}
 )
 set(OBJ_C

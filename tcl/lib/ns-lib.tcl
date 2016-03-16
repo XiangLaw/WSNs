@@ -707,6 +707,9 @@ Simulator instproc create-wireless-node args {
             TAAGENT {
                 set ragent [$self create-taagent-agent $node]
             }
+            NHR {
+                set ragent [$self create-nhr-agent $node]
+            }
 			MDART {
 				set ragent [$self create-mdart-agent $node]
                         }
@@ -1088,6 +1091,22 @@ Simulator instproc create-behds-agent { node } {
 	$self at 30	"$ragent boundhole"
 	$self at 50	"$ragent routing"
 	$self at 99	"$ragent bcenergy"
+	return $ragent
+}
+
+# NHR
+Simulator instproc create-nhr-agent { node } {
+	set ragent [new Agent/NHR]
+	set addr [$node node-addr]
+	$ragent addr $addr
+	$ragent node $node
+	if [Simulator set mobile_ip_] {
+		$ragent port-dmux [$node demux]
+	}
+	$node addr $addr
+	$node set ragent_ $ragent
+	$self at 0.0 	"$ragent start"    ;# start updates
+	$self at 30	"$ragent boundhole"
 	return $ragent
 }
 
