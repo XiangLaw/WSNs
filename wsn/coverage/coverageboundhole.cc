@@ -138,18 +138,20 @@ void CoverageBoundHoleAgent::recvCoverage(Packet *p) {
             newNodeHole->node_list_ = node_head;
             newNodeHole->next_ = boundhole_node_list_;
             boundhole_node_list_ = newNodeHole;
+            data->dump();
+            doHPA(newNodeHole);
 
             // circle boundhole list
-            node *temp = newNodeHole->node_list_;
-            while (temp->next_ && temp->next_ != newNodeHole->node_list_) temp = temp->next_;
-            temp->next_ = newNodeHole->node_list_;
+            // node *temp = newNodeHole->node_list_;
+            // while (temp->next_ && temp->next_ != newNodeHole->node_list_) temp = temp->next_;
+            // temp->next_ = newNodeHole->node_list_;
 
             // circle node list
-            temp = newHole->node_list_;
-            while (temp->next_ && temp->next_ != newHole->node_list_) temp = temp->next_;
-            temp->next_ = newHole->node_list_;
+            // temp = newHole->node_list_;
+            // while (temp->next_ && temp->next_ != newHole->node_list_) temp = temp->next_;
+            // temp->next_ = newHole->node_list_;
 
-            gridConstruction(newHole, first_circle, first_intersect);
+            // gridConstruction(newHole, first_circle, first_intersect);
             drop(p, "COVERAGE_BOUNDHOLE");
             runTimeCounter.finish();
             return;
@@ -838,5 +840,36 @@ void CoverageBoundHoleAgent::fillGrid(int8_t **grid, int nx, int ny) {
                 grid[i][j] = C_GRAY;
             }
         }
+    }
+}
+/*
+ * This is code for illustration of HPA algorithm (Yao - Decentralized Detection and Patching of Coverage Hole in WSNs)
+ */
+void CoverageBoundHoleAgent::doHPA(polygonHole *hole) {
+    // 1. choose two adjacent sensors on hole boundary (boundary node)
+    // 2. find N which lies on perpendicular line of AB and AN = BN = sensor_range_ and N is inside hole
+    // 3. out put N
+    node *a = hole->node_list_;
+    node *b = hole->node_list_->next_;
+
+    Line ab = G::line(a, b);
+    Point midpoint = G::midpoint(a, b);
+    Line pline = G::perpendicular_line(midpoint, ab);
+    Point tmp;
+    if(pline.a_ == 0) {
+        tmp.x_ = 0;
+        tmp.y_ = - pline.c_ / pline.b_;
+    } else {
+        tmp.y_ = 0;
+        tmp.x_ = - pline.c_ / pline.a_;
+    }
+
+    Point n1, n2;
+    G::circleLineIntersect(*a, sensor_range_, midpoint, tmp, &n1, &n2);
+    
+    if(G::isPointReallyInsidePolygon(&n1, hole->node_list_)) {
+        printf("NewPointX:%fNewPointY:%f\n", n1.x_, n1.y_);
+    } else {
+        printf("NewPointX:%fNewPointY:%f\n", n2.x_, n2.y_);
     }
 }

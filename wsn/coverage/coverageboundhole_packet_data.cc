@@ -45,10 +45,10 @@ void CoverageBoundHolePacketData::dump() {
 
     for (int i = 0; i < data_len_ / element_size_; i++)
     {
-        node n = get_intersect_data(i);
+        node n = get_node_data(i);
         fprintf(fp, "%d\t%f\t%f\n", n.id_, n.x_, n.y_);
     }
-    node n = get_intersect_data(0);
+    node n = get_node_data(0);
     fprintf(fp, "%d\t%f\t%f\n", n.id_, n.x_, n.y_);
     fprintf(fp, "\n");
 

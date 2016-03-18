@@ -134,6 +134,8 @@ public:
     void dumpPatchingHole(Point);
 
     void fillGrid(int8_t **grid, int nx, int ny);
+    
+    void doHPA(polygonHole*);
 };
 
 #endif //NS_CONVERAGEHOLE_H
