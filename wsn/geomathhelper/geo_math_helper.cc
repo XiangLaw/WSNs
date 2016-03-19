@@ -927,6 +927,7 @@ bool G::doIntersect(Point p1, Point q1, Point p2, Point q2)
 
 /**
  * Check if a Point is inside (including lies on edge) of a grid
+ * TODO: return wrong if intersect is also a vertex of polygon
  */
 bool G::isPointInsidePolygon(Point *d, node *node_list) {
 	Point y;

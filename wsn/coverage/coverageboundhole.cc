@@ -867,7 +867,7 @@ void CoverageBoundHoleAgent::doHPA(polygonHole *hole) {
     Point n1, n2;
     G::circleLineIntersect(*a, sensor_range_, midpoint, tmp, &n1, &n2);
     
-    if(G::isPointReallyInsidePolygon(&n1, hole->node_list_)) {
+    if(G::orientation(a, n1, b) == 2) {
         printf("NewPointX:%fNewPointY:%f\n", n1.x_, n1.y_);
     } else {
         printf("NewPointX:%fNewPointY:%f\n", n2.x_, n2.y_);
