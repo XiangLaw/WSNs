@@ -58,7 +58,7 @@ int CoverageBoundHoleAgent::command(int argc, const char *const *argv) {
     } else if (strcasecmp(argv[1], "coverage") == 0) {
         runTimeCounter.start();
         boundaryNodeDetection();
-        boundhole_timer_.resched(10 + randSend_.uniform(0.0, 5));
+        boundhole_timer_.resched(10 + 0.02 * my_id_);
         return TCL_OK;
     }
 
