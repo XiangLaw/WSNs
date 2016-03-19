@@ -927,59 +927,50 @@ bool G::doIntersect(Point p1, Point q1, Point p2, Point q2)
 
 /**
  * Check if a Point is inside (including lies on edge) of a grid
- * TODO: return wrong if intersect is also a vertex of polygon
  */
 bool G::isPointInsidePolygon(Point *d, node *node_list) {
-	Point y;
-	node *tmp;
-	y.x_ = 0;
-	y.y_ = d->y_;
+    node *tmp;
+    bool odd = false;
 
-	int greater_horizontal = 0;
-	int less_horizontal = 0;
-	Line dy = G::line(d, y);
+    // count horizontal
+    for (tmp = node_list; tmp != NULL; tmp = tmp->next_) {
+        if (tmp->next_ != NULL) {
+            if (G::is_in_line(tmp, tmp->next_, d)) {
+                if (G::onSegment(tmp, d, tmp->next_)) {
+                    return true;
+                }
+            }
+            if (((tmp->y_ < d->y_ && tmp->next_->y_ >= d->y_) ||
+                 (tmp->next_->y_ < d->y_ && tmp->y_ >= d->y_)) &&
+                (tmp->x_ <= d->x_ && tmp->next_->x_ <= d->x_)) {
+                double denominator = (tmp->next_->y_ - tmp->y_) * (tmp->next_->x_ - tmp->x_);
+                if(denominator != 0) {
+                    if(tmp->x_ + (d->y_ - tmp->y_) / denominator < d->x_) {
+                        odd = !odd;
+                    }
+                }
+            }
+        }
+        else { // end-point & start-point
+            if (G::is_in_line(tmp, node_list, d)) {
+                if (G::onSegment(tmp, d, node_list)) {
+                    return true;
+                }
+            }
+            if (((tmp->y_ < d->y_ && node_list->y_ >= d->y_) ||
+                 (node_list->y_ < d->y_ && tmp->y_ >= d->y_)) &&
+                (tmp->x_ <= d->x_ && node_list->x_ <= d->x_)) {
+                double denominator = (node_list->y_ - tmp->y_) * (node_list->x_ - tmp->x_);
+                if(denominator != 0) {
+                    if(tmp->x_ + (d->y_ - tmp->y_) / denominator < d->x_) {
+                        odd = !odd;
+                    }
+                }
+            }
+        }
+    }
 
-	Point intersect;
-	intersect.x_ = -1;
-	intersect.y_ = -1;
-
-	// count horizontal
-	for (tmp = node_list; tmp != NULL; tmp = tmp->next_) {
-		if (tmp->next_ != NULL) {
-			if( G::is_in_line(tmp, tmp->next_, d)) {
-				if(G::onSegment(tmp, d, tmp->next_)) {
-					return true;
-				} else {
-					if (tmp->x_ > d->x_) greater_horizontal++;
-					else if (tmp->x_ < d->x_) less_horizontal++;
-				}
-			}
-			else if (G::lineSegmentIntersection(tmp, tmp->next_, dy, intersect)) {
-				if (intersect.x_ > d->x_) greater_horizontal++;
-				else if (intersect.x_ < d->x_) less_horizontal++;
-				else return true;
-			}
-
-		}
-		else { // end-point & start-point
-			if( G::is_in_line(tmp, node_list, d)) {
-				if(G::onSegment(tmp, d, node_list)) {
-					return true;
-				} else {
-					if (tmp->x_ > d->x_) greater_horizontal++;
-					else if (tmp->x_ < d->x_) less_horizontal++;
-				}
-			}
-			else if (G::lineSegmentIntersection(tmp, node_list, dy, intersect)) {
-				if (intersect.x_ > d->x_) greater_horizontal++;
-				else if (intersect.x_ < d->x_) less_horizontal++;
-				else return true;
-			}
-
-		}
-	}
-
-	return !(greater_horizontal % 2 == 0 || less_horizontal % 2 == 0);
+    return odd;
 }
 
 /**
@@ -997,56 +988,48 @@ bool G::isPointLiesInTriangle(Point *p, Point *p1, Point *p2, Point *p3) {
 }
 
 bool G::isPointReallyInsidePolygon(Point *d, node *node_list) {
-    Point y;
     node *tmp;
-    y.x_ = 0;
-    y.y_ = d->y_;
-
-    int greater_horizontal = 0;
-    int less_horizontal = 0;
-    Line dy = G::line(d, y);
-
-    Point intersect;
-    intersect.x_ = -1;
-    intersect.y_ = -1;
+    bool odd = false;
 
     // count horizontal
     for (tmp = node_list; tmp != NULL; tmp = tmp->next_) {
         if (tmp->next_ != NULL) {
-            if( G::is_in_line(tmp, tmp->next_, d)) {
-                if(G::onSegment(tmp, d, tmp->next_)) {
+            if (G::is_in_line(tmp, tmp->next_, d)) {
+                if (G::onSegment(tmp, d, tmp->next_)) {
                     return false;
-                } else {
-                    if (tmp->x_ > d->x_) greater_horizontal++;
-                    else if (tmp->x_ < d->x_) less_horizontal++;
                 }
             }
-            else if (G::lineSegmentIntersection(tmp, tmp->next_, dy, intersect)) {
-                if (intersect.x_ > d->x_) greater_horizontal++;
-                else if (intersect.x_ < d->x_) less_horizontal++;
-                else return true;
+            if (((tmp->y_ < d->y_ && tmp->next_->y_ >= d->y_) ||
+                 (tmp->next_->y_ < d->y_ && tmp->y_ >= d->y_)) &&
+                (tmp->x_ <= d->x_ && tmp->next_->x_ <= d->x_)) {
+                double denominator = (tmp->next_->y_ - tmp->y_) * (tmp->next_->x_ - tmp->x_);
+                if(denominator != 0) {
+                    if(tmp->x_ + (d->y_ - tmp->y_) / denominator < d->x_) {
+                        odd = !odd;
+                    }
+                }
             }
-
         }
         else { // end-point & start-point
-            if( G::is_in_line(tmp, node_list, d)) {
-                if(G::onSegment(tmp, d, node_list)) {
+            if (G::is_in_line(tmp, node_list, d)) {
+                if (G::onSegment(tmp, d, node_list)) {
                     return false;
-                } else {
-                    if (tmp->x_ > d->x_) greater_horizontal++;
-                    else if (tmp->x_ < d->x_) less_horizontal++;
                 }
             }
-            else if (G::lineSegmentIntersection(tmp, node_list, dy, intersect)) {
-                if (intersect.x_ > d->x_) greater_horizontal++;
-                else if (intersect.x_ < d->x_) less_horizontal++;
-                else return true;
+            if (((tmp->y_ < d->y_ && node_list->y_ >= d->y_) ||
+                 (node_list->y_ < d->y_ && tmp->y_ >= d->y_)) &&
+                (tmp->x_ <= d->x_ && node_list->x_ <= d->x_)) {
+                double denominator = (node_list->y_ - tmp->y_) * (node_list->x_ - tmp->x_);
+                if(denominator != 0) {
+                    if(tmp->x_ + (d->y_ - tmp->y_) / denominator < d->x_) {
+                        odd = !odd;
+                    }
+                }
             }
-
         }
     }
 
-    return !(greater_horizontal % 2 == 0 || less_horizontal % 2 == 0);
+    return odd;
 }
 
 // get aggregation between segment [a1, a2] and [b1, b2]
