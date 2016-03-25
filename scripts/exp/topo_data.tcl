@@ -301,3 +301,5 @@ $mnode_(298) set X_ 210 ;	$mnode_(298) set Y_ 153 ;	$mnode_(298) set Z_ 0
 $mnode_(299) set X_ 161 ;	$mnode_(299) set Y_ 221 ;	$mnode_(299) set Z_ 0
 $mnode_(300) set X_ 354 ;	$mnode_(300) set Y_ 199 ;	$mnode_(300) set Z_ 0
 $mnode_(301) set X_ 325 ;	$mnode_(301) set Y_ 260 ;	$mnode_(301) set Z_ 0
+$mnode_(301) set-neighbor 3
+$mnode_(1) set-neighbor 5

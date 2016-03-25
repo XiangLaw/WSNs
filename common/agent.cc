@@ -177,6 +177,8 @@ int Agent::command(int argc, const char*const* argv)
 		} else if (strcmp(argv[1], "set_pkttype") == 0) {
 			set_pkttype(packet_t(atoi(argv[2])));
 			return (TCL_OK);
+		} else if(strcmp(argv[1], "add-neighbor") == 0) {
+			return TCL_OK;
 		}
 	}
 	else if (argc == 4) {	

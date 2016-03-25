@@ -1717,3 +1717,5 @@ Agent/MBC set hello_period_ 0
 Agent/MBC set energy_checkpoint_ 995
 Agent/MBC set range_ 40
 Agent/MBC set limit_boundhole_hop_ 50
+
+Agent/TAAGENT set range_ 40

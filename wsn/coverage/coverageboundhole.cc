@@ -271,7 +271,7 @@ void CoverageBoundHoleAgent::gridConstruction(polygonHole *hole,
     current_circle_a = start_circle;
     current_intersect_a = start_intersect;
 
-    current_unit = startUnit(0, *start_intersect);
+    current_unit = startUnit(11, *start_intersect);
     for(int i = 0; i< 3; i++) {
         start_unit.vertices[i] = current_unit.vertices[i];
     }
@@ -357,6 +357,13 @@ void CoverageBoundHoleAgent::gridConstruction(polygonHole *hole,
                 break;
         }
         grid[x][y] = C_BLACK;
+    }
+
+    for (int i = 0; i < ny + 1; i++) {
+        for (int j = 0; j < nx + 2; j++) {
+            printf("%d ", grid[j][i]);
+        }
+        printf("\n");
     }
 
     base_point = basePointCoordinateCalculation(start_unit, maxx, -miny);
@@ -704,7 +711,12 @@ void CoverageBoundHoleAgent::patchingHole(removable_cell_list *removables, doubl
 
     // fill the grid with color
     fillGrid(grid, nx, ny);
-
+    for (int i = 0; i < ny + 1; i++) {
+        for (int j = 0; j < nx + 2; j++) {
+            printf("%d ", grid[j][i]);
+        }
+        printf("\n");
+    }
     // we can start from (-1, -1), (0, 0), (-2, 0)
 
 //    x = -1;
@@ -753,6 +765,13 @@ void CoverageBoundHoleAgent::patchingHole(removable_cell_list *removables, doubl
             x += 3;
             y = x % 2 == 0 ? 0 : -1;
         }
+    }
+
+    for (int i = 0; i < ny + 1; i++) {
+        for (int j = 0; j < nx + 2; j++) {
+            printf("%d ", grid[j][i]);
+        }
+        printf("\n");
     }
 
     // repainting
