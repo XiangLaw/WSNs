@@ -695,8 +695,17 @@ Simulator instproc create-wireless-node args {
             COVERAGE {
             	set ragent [$self create-coverage-agent $node]
         	}
+        	COVERAGEONLINE {
+               	set ragent [$self create-coverageonline-agent $node]
+            }
         	BCPCOVERAGE {
                 set ragent [$self create-bcp-coverage-agent $node]
+            }
+            MBC {
+                set ragent [$self create-mbc-agent $node]
+            }
+            TAAGENT {
+                set ragent [$self create-taagent-agent $node]
             }
 			MDART {
 				set ragent [$self create-mdart-agent $node]
@@ -1251,6 +1260,22 @@ Simulator instproc create-coverage-agent { node } {
 	return $ragent
 }
 
+# COVERAGEONLINE
+Simulator instproc create-coverageonline-agent { node } {
+	set ragent [new Agent/COVERAGEONLINE]
+	set addr [$node node-addr]
+	$ragent addr $addr
+	$ragent node $node
+	if [Simulator set mobile_ip_] {
+		$ragent port-dmux [$node demux]
+	}
+	$node addr $addr
+	$node set ragent_ $ragent
+	$self at 0.0 	"$ragent start"    ;# start updates
+    $self at 50	"$ragent coverage"
+	return $ragent
+}
+
 # BCPCOVERAGE
 Simulator instproc create-bcp-coverage-agent { node } {
 	set ragent [new Agent/BCPCOVERAGE]
@@ -1264,6 +1289,37 @@ Simulator instproc create-bcp-coverage-agent { node } {
 	$node set ragent_ $ragent
 	$self at 0.0 	"$ragent start"    ;# start updates
     $self at 50	"$ragent coverage"
+	return $ragent
+}
+
+# MBC
+Simulator instproc create-mbc-agent { node } {
+	set ragent [new Agent/MBC]
+	set addr [$node node-addr]
+	$ragent addr $addr
+	$ragent node $node
+	if [Simulator set mobile_ip_] {
+		$ragent port-dmux [$node demux]
+	}
+	$node addr $addr
+	$node set ragent_ $ragent
+	$self at 0.0 	"$ragent start"    ;# start updates
+    $self at 50	"$ragent coverage"
+	return $ragent
+}
+
+# TAAGENT
+Simulator instproc create-taagent-agent { node } {
+	set ragent [new Agent/TAAGENT]
+	set addr [$node node-addr]
+	$ragent addr $addr
+	$ragent node $node
+	if [Simulator set mobile_ip_] {
+		$ragent port-dmux [$node demux]
+	}
+	$node addr $addr
+	$node set ragent_ $ragent
+	$self at 0.0 	"$ragent start"    ;# start updates
 	return $ragent
 }
 

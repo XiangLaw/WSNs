@@ -277,6 +277,9 @@ set(OBJ_CC
   wsn/bcpcoverage/bcpcoverage.cc wsn/bcpcoverage/bcpcoverage_packet_data.cc
   wsn/runtimecounter/runtimecounter.cc
   wsn/boundholerouting/boundholerouting.cc
+  wsn/mbc/mbc.cc wsn/mbc/mbc_packet_data.cc
+  wsn/coverageonline/coverageonline.cc wsn/coverageonline/coverageonline_packet_data.cc
+  wsn/topologicalnetwork/taagent.cc
   ${OBJ_STL}
 )
 set(OBJ_C

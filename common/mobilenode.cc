@@ -285,7 +285,17 @@ MobileNode::command(int argc, const char*const* argv)
 			if(base_stn_ == -1)
 				return TCL_ERROR;
 			return TCL_OK;
-		} 
+		} else if(strcmp(argv[1], "set-neighbor") == 0) {
+            /* huyvq: 02-23-2016
+		     * update command for supporting topological network
+		     * (i.e, node stores its connectivity, not its location information)
+             * format (topo_data.tcl): $mnode_(<id>) set-neighbor <id>
+		     */
+            tcl.evalf("%s set ragent_", name_);
+            const char *str = tcl.result();
+            tcl.evalf("%s add-neighbor %s", str, argv[2]);
+            return TCL_OK;
+        }
 	} else if (argc == 4) {
 		if (strcmp(argv[1], "idleenergy") == 0) {
 			idle_energy_patch(atof(argv[2]),atof(argv[3]));

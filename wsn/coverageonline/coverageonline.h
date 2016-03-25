@@ -1,9 +1,5 @@
-//
-// Created by eleven on 9/10/15.
-//
-
-#ifndef NS_CONVERAGEHOLE_H
-#define NS_CONVERAGEHOLE_H
+#ifndef NS_CONVERAGEONLINE_H
+#define NS_CONVERAGEONLINE_H
 
 #include <wsn/runtimecounter/runtimecounter.h>
 #include "config.h"
@@ -16,7 +12,6 @@
 
 #include "../gpsr/gpsr.h"
 #include "../boundhole/boundhole.h"
-#include "coverageboundhole_packet.h"
 #include "node.h"
 
 #include "wsn/geomathhelper/geo_math_helper.h"
@@ -36,7 +31,7 @@ enum DIRECTION {
 };
 
 
-class CoverageBoundHoleAgent;
+class CoverageOnlineAgent;
 
 struct sensor_neighbor : neighbor {
     Point i1_; // intersects
@@ -54,11 +49,18 @@ struct removable_cell_list {
     struct removable_cell_list *next;
 };
 
-typedef void(CoverageBoundHoleAgent::*fire)(void);
+struct limits {
+    double min_x;
+    double min_y;
+    double max_x;
+    double max_y;
+};
 
-class CoverageBoundHoleTimer : public TimerHandler {
+typedef void(CoverageOnlineAgent::*fire)(void);
+
+class CoverageOnlineTimer : public TimerHandler {
 public:
-    CoverageBoundHoleTimer(Agent *a, fire f) : TimerHandler() {
+    CoverageOnlineTimer(Agent *a, fire f) : TimerHandler() {
         a_ = a;
         firing_ = f;
     }
@@ -70,11 +72,11 @@ protected:
     fire firing_;
 };
 
-class CoverageBoundHoleAgent : public GPSRAgent {
+class CoverageOnlineAgent : public GPSRAgent {
 private:
     friend class BoundHoleHelloTimer;
 
-    CoverageBoundHoleTimer boundhole_timer_;
+    CoverageOnlineTimer boundhole_timer_;
     RunTimeCounter runTimeCounter;
 
     bool isBoundary;
@@ -103,8 +105,6 @@ protected:
     void addNeighbor(nsaddr_t, Point); // override from GPSRAgent
     node *getNextSensorNeighbor(nsaddr_t prev_node);
 
-    triangle startUnit(double, Point);
-
     void gridConstruction(polygonHole *, node *, node *);
 
     bool isOutdatedCircle(node *, triangle);
@@ -114,7 +114,7 @@ protected:
     DIRECTION nextTriangle(triangle *, node **, node **, DIRECTION, removable_cell_list **);
 
 public:
-    CoverageBoundHoleAgent();
+    CoverageOnlineAgent();
 
     int command(int, const char *const *);
 
@@ -132,7 +132,7 @@ public:
 
     Point basePointCoordinateCalculation(triangle start_unit, int x_index, int y_index);
 
-    void doHPA(polygonHole*);
+    void addData(Packet *p);
 };
 
-#endif //NS_CONVERAGEHOLE_H
+#endif //NS_CONVERAGEONLINE_H

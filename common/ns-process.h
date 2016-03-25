@@ -107,8 +107,14 @@ enum AppDataType {
     // Coverage Bound hole
     COVERAGE_DATA,
 
+    // Coverage Online
+    COVERAGEONLINE_DATA,
+
     // BCP Coverage
-    BCPCOVERAGE_DATA
+    BCPCOVERAGE_DATA,
+
+	// MaxBound Coverage
+	MBC_DATA
 };
 
 // Interface for generic application-level data unit. It should know its 

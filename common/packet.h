@@ -219,7 +219,10 @@ static const packet_t PT_BEHDS = 87; // basic ehds
 static const packet_t PT_COVERAGE = 88; // coverage boundhole
 static const packet_t PT_BCPCOVERAGE = 89; // coverage with boundary critical point
 static const packet_t PT_BOUNDHOLEROUTING = 90; // boundhole routing protocol (Ji.Gao)
-static packet_t       PT_NTYPE = 91; 			// This MUST be the LAST one
+static const packet_t PT_MBC = 91;
+static const packet_t PT_COVERAGEONLINE = 92;
+static const packet_t PT_TAAGENT = 93; // topological approach base class
+static packet_t       PT_NTYPE = 94; 			// This MUST be the LAST one
 
 enum packetClass
 {
@@ -457,7 +460,9 @@ public:
         name_[PT_COVERAGE]="COVERAGE";
         name_[PT_BCPCOVERAGE]="BCPCOVERAGE";
 		name_[PT_BOUNDHOLEROUTING] = "BOUNDHOLEROUTING";
-
+		name_[PT_MBC] = "MBC";
+		name_[PT_COVERAGEONLINE] = "COVERAGEONLINE";
+		name_[PT_TAAGENT] = "TAAGENT";
 		name_[PT_NTYPE]= "undefined";
 	}
 	static int addPacket(char *name);
