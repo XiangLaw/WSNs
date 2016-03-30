@@ -1,0 +1,51 @@
+#pragma once
+
+#include <wsn/graph/voronoi/VoronoiSite.h>
+#include <wsn/graph/voronoi/VoronoiEdge.h>
+#include <wsn/geometry/Parabola.h>
+
+namespace voronoi {
+    namespace fortune {
+
+        class CircleEvent;
+
+        class BeachLine;
+
+        class Arc {
+        public:
+            friend class BeachLine;
+
+            VoronoiSite *site() const;
+
+            Arc *prev() const;
+
+            Arc *next() const;
+
+            VoronoiEdge *leftEdge() const;
+
+            VoronoiEdge *rightEdge() const;
+
+            geometry::Parabola parabola(double baselineY) const;
+
+            void setLeftEdge(VoronoiEdge *leftEdge); //TODO: avoid public call
+
+            void invalidateCircleEvent();
+
+            void resetCircleEvent(CircleEvent *event);
+
+            bool hasTwoDifferentNeighborSites() const;
+
+        protected:
+            BeachLine *beachLine;
+            VoronoiSite *_site;
+            CircleEvent *_event;
+            VoronoiEdge *_leftEdge;
+            Arc *_prev;
+            Arc *_next;
+
+            Arc(BeachLine *beachLine, VoronoiSite *site);
+        };
+
+    } //end namespace fortune
+} //end namespace voronoi
+

@@ -281,6 +281,10 @@ set(OBJ_CC
   wsn/coverageonline/coverageonline.cc wsn/coverageonline/coverageonline_packet_data.cc
   wsn/topologicalnetwork/taagent.cc
   wsn/nearholerouting/nhr.cc wsn/nearholerouting/nhr_packet_data.cc
+  wsn/geometry/Circle.cpp wsn/geometry/Line.cpp wsn/geometry/Parabola.cpp
+  wsn/geometry/Point.cpp wsn/geometry/Vector.cpp
+  wsn/graph/voronoi/VoronoiCell.cpp wsn/graph/voronoi/VoronoiDiagram.cpp wsn/graph/voronoi/VoronoiSite.cpp wsn/graph/voronoi/VoronoiEdge.cpp
+  wsn/graph/voronoi/fortune/Arc.cpp wsn/graph/voronoi/fortune/BeachLine.cpp wsn/graph/voronoi/fortune/Event.cpp wsn/graph/voronoi/fortune/Fortune.cpp
   ${OBJ_STL}
 )
 set(OBJ_C
