@@ -12,10 +12,15 @@ namespace voronoi {
 
         VoronoiSite(double x, double y);
 
+        VoronoiSite(int id, double x, double y);
+
         const geometry::Point &position() const;
+
+        const int &id() const { return _id; };
 
     protected:
         geometry::Point _position;
+        int _id;
     };
 
 } //end namespace voronoi

@@ -31,6 +31,7 @@ struct Point
 
 	inline bool operator==(const Point& rhs) { return x_ == rhs.x_ && y_ == rhs.y_; }
 	inline bool operator!=(const Point& rhs) { return !operator==(rhs); }
+    inline bool operator<(const Point& rhs) const { return x_ < rhs.x_ || (x_ == rhs.x_ && y_ < rhs.y_); }
 };
 
 struct node : Point

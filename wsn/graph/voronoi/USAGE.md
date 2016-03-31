@@ -7,7 +7,7 @@
 		sites.push_back(new VoronoiSite(p.x(), p.y()));
 	}
 
-	VoronoiDiagram *diagram = Voronoi::create(sites);
+	VoronoiDiagram *diagram = VoronoiDiagram::create(sites);
 
 	delete diagram;
 ```

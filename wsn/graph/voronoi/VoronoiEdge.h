@@ -24,6 +24,10 @@ namespace voronoi {
 
         geometry::Line edge() { return line; }
 
+        VoronoiSite leftSite() { return *left; }
+
+        VoronoiSite rightSite() { return *right; }
+
     protected:
         VoronoiSite *left;
         VoronoiSite *right;

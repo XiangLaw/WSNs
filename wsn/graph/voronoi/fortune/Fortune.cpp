@@ -117,7 +117,9 @@ void Fortune::handleCircleEvent(CircleEvent *event) {
     he->setStartPoint(centerPoint);
     he->setPrev(leftEdge->halfEdgeFor(prev->site()));
 
-
+    diagram->addVertex(newEdge->edge().startPoint());
+    if (newEdge->edge().isSegment())
+        diagram->addVertex(newEdge->edge().endPoint());
     beachLine.replaceArc(arc, newEdge);
 
     checkForCircleEvent(prev);

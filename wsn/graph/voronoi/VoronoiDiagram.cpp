@@ -38,6 +38,10 @@ std::map<VoronoiSite *, VoronoiCell *> &VoronoiDiagram::cells() {
     return _cells;
 }
 
+std::set<geometry::Point> &VoronoiDiagram::vertices() {
+    return _vextices;
+}
+
 void VoronoiDiagram::initialize(std::vector<VoronoiSite *> &sites) {
     VoronoiDiagram::removeDuplicates(sites);
     _sites = sites;
@@ -59,6 +63,10 @@ VoronoiEdge *VoronoiDiagram::createEdge(VoronoiSite *left, VoronoiSite *right) {
     _cells[right]->edges.push_back(edge);
 
     return edge;
+}
+
+void VoronoiDiagram::addVertex(geometry::Point p) {
+    _vextices.insert(p);
 }
 
 bool compareSites(VoronoiSite *site1, VoronoiSite *site2) {

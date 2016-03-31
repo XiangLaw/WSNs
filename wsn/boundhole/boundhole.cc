@@ -248,6 +248,7 @@ void BoundHoleAgent::recvBoundHole(Packet *p)
 			if (storage_opt_ == STORAGE_ONE)
 			{
 				drop(p, " BOUNDHOLE");
+				broadcastHCI();
 			}
 			else // storage_opt_ == STORAGE_ALL
 			{

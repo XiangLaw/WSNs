@@ -1724,3 +1724,4 @@ Agent/NHR set limit_boundhole_hop_ 100
 Agent/NHR set hello_period_ 0
 Agent/NHR set range_ 40
 Agent/NHR set storage_opt_ 1
+Agent/NHR set limit_angle_ 2.094
