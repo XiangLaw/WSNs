@@ -1719,3 +1719,11 @@ Agent/MBC set range_ 40
 Agent/MBC set limit_boundhole_hop_ 50
 
 Agent/TAAGENT set range_ 40
+
+Agent/CORBAL set limit_boundhole_hop_ 80
+Agent/CORBAL set energy_checkpoint_ 995
+Agent/CORBAL set hello_period_ 0
+Agent/CORBAL set range_ 40
+Agent/CORBAL set n_ 8
+Agent/CORBAL set min_boundhole_hop_ 10
+Agent/CORBAL set s_ 1.1

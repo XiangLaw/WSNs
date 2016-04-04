@@ -114,7 +114,9 @@ enum AppDataType {
     BCPCOVERAGE_DATA,
 
 	// MaxBound Coverage
-	MBC_DATA
+	MBC_DATA,
+	// Corbal
+	CORBAL_DATA,
 };
 
 // Interface for generic application-level data unit. It should know its 

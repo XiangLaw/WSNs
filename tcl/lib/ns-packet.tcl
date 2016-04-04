@@ -201,6 +201,7 @@ set protolist {
 	BOUNDHOLEROUTING
 	MBC
 	TAAGENT
+	CORBAL
 # WSN-EXT
 	GREEDY
 # Other:

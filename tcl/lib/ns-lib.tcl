@@ -665,6 +665,9 @@ Simulator instproc create-wireless-node args {
             OCTAGON {
 				set ragent [$self create-octagon-agent $node]
             }
+            CORBAL {
+            	set ragent [$self create-corbal-agent $node]
+            }
 			GOAL {
 				set ragent [$self create-goal-agent $node]
 			}
@@ -1179,6 +1182,22 @@ Simulator instproc create-scalehexagon-agent { node } {
 # OCTAGON
 Simulator instproc create-octagon-agent { node } {
 	set ragent [new Agent/OCTAGON]
+	set addr [$node node-addr]
+	$ragent addr $addr
+	$ragent node $node
+	if [Simulator set mobile_ip_] {
+		$ragent port-dmux [$node demux]
+	}
+	$node addr $addr
+	$node set ragent_ $ragent
+	$self at 0.0 	"$ragent start"    ;# start updates
+	$self at 30 	"$ragent boundhole"
+	return $ragent
+}
+
+# CORBAL
+Simulator instproc create-corbal-agent { node } {
+	set ragent [new Agent/CORBAL]
 	set addr [$node node-addr]
 	$ragent addr $addr
 	$ragent node $node
