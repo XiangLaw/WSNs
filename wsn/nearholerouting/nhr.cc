@@ -2,6 +2,7 @@
 #include <stack>
 #include "nhr_packet.h"
 #include "nhr_packet_data.h"
+#include "nhr_graph.h"
 #include <wsn/graph/voronoi/VoronoiDiagram.h>
 #include <queue>
 
@@ -28,7 +29,9 @@ NHRAgent::NHRAgent() : BoundHoleAgent(), broadcast_timer_(this) {
     // initialize default value
     endpoint_.x_ = this->x_;
     endpoint_.y_ = this->y_; // default: endpoint of node is itself
+    isPivot_ = true;
     limit_angle_ = M_PI * 2 / 3;
+    scale_factor_ = 0;
 
     bind("limit_angle_", &limit_angle_);
 
@@ -42,6 +45,8 @@ NHRAgent::NHRAgent() : BoundHoleAgent(), broadcast_timer_(this) {
     fp = fopen("Dump.tr", "w");
     fclose(fp);
     fp = fopen("Voronoi.tr", "w");
+    fclose(fp);
+    fp = fopen("ScalePolygon.tr", "w");
     fclose(fp);
 }
 
@@ -330,7 +335,13 @@ void NHRAgent::broadcastHCI() {
     iph->dport() = RT_PORT;
     iph->ttl_ = 4 * IP_DEF_TTL;
 
-    constructGraph();
+    Point agent;
+    agent.x_ = this->x_;
+    agent.y_ = this->y_;
+    NHRGraph *graph = new NHRGraph(agent, hole_);
+    endpoint_ = graph->endpoint();
+    isPivot_ = graph->isPivot();
+    delete graph;
 
     send(p, 0);
 }
@@ -371,11 +382,17 @@ void NHRAgent::recvHCI(Packet *p) {
     }
     else {
         broadcast_timer_.setParameter(p);
-        broadcast_timer_.resched(randSend_.uniform(0.0, 5.0));
+        broadcast_timer_.resched(randSend_.uniform(0.0, 1.0));
     }
 
     // construct graph
-    constructGraph();
+    Point agent;
+    agent.x_ = this->x_;
+    agent.y_ = this->y_;
+    NHRGraph *graph = new NHRGraph(agent, hole_);
+    endpoint_ = graph->endpoint();
+    isPivot_ = graph->isPivot();
+    delete graph;
 
     dumpBroadcastRegion();
 }
@@ -414,241 +431,254 @@ bool NHRAgent::canBroadcast() {
     return angle >= limit_angle_;
 }
 
-/*------------- Graph construction  phase -------------*/
-void NHRAgent::constructGraph() {
-    vector<BoundaryNode> cave;
-    map<Point, vector<Point> > graph;
-    int site_contains_node;
-    Point gate_endpoint;
-    set<Point> endpoints;
-
-    // reconstruct caves & determine cave containing current node
-    // NOTE: if the current node is the gate then return immediately
-    for (unsigned int i = 0; i < hole_.size() - 1; i++) {
-        if (hole_.at(i).is_convex_hull_boundary_ && this->x_ == hole_.at(i).x_ && this->y_ == hole_.at(i).y_)
-            return;
-        if (hole_.at(i).is_convex_hull_boundary_ && !hole_.at(i + 1).is_convex_hull_boundary_) {
-            cave.push_back(hole_.at(i++));
-            while (!hole_.at(i).is_convex_hull_boundary_) {
-                cave.push_back(hole_.at(i++));
-            }
-            cave.push_back(hole_.at(i--));
-            if (cave.size() >= MIN_CAVE_VERTEX) {
-                polygonHole *node_list = new polygonHole();
-                node_list->node_list_ = NULL;
-                node_list->next_ = NULL;
-                for (unsigned int j = 0; j < cave.size(); j++) {
-                    node *tmp = new node();
-                    tmp->x_ = cave.at(j).x_;
-                    tmp->y_ = cave.at(j).y_;
-                    tmp->next_ = node_list->node_list_;
-                    node_list->node_list_ = tmp;
-                }
-                if (G::isPointInsidePolygon(this, node_list->node_list_)) {
-                    delete node_list;
-                    break;
-                }
-                vector<BoundaryNode>().swap(cave);
-                delete node_list;
-            }
-        }
-    }
-
-    if (cave.empty()) return;
-
-    // 1. check if perpendicular line from current node to gate line intersects with any edge of polygon (except gate) or not
-    bool no_voronoi = true;
-    Line gate_line = G::line(cave[0], cave[cave.size() - 1]);
-    Line perpendicular_line = G::perpendicular_line(this, gate_line);
-    Point perpendicular_point;
-    G::intersection(gate_line, perpendicular_line, &perpendicular_point);
-    for (int i = 0; i < cave.size() - 2; i++) {
-        Point ins;
-        if (G::lineSegmentIntersection(&cave[i], &cave[i + 1], perpendicular_line, ins) &&
-            G::onSegment(this, &ins, &perpendicular_point)) {
-            no_voronoi = false;
-            break;
-        }
-    }
-
-    if (no_voronoi) {
-        endpoint_.x_ = perpendicular_point.x_;
-        endpoint_.y_ = perpendicular_point.y_;
-        return;
-    }
-
-    // 2. else find endpoint from voronoi graph
-    double min_distance = G::distance(this, cave[0]);
-    site_contains_node = 0;
-    for (int i = 1; i < cave.size(); i++) {
-        double tmp_distance = G::distance(this, cave[i]);
-        if (min_distance > tmp_distance) {
-            min_distance = tmp_distance;
-            site_contains_node = cave[i].id_;
-        }
-    }
-
-    // calculate voronoi diagram
-    std::vector<voronoi::VoronoiSite *> sites;
-
-    for (int i = 0; i < cave.size(); i++) {
-        BoundaryNode p = cave[i];
-        sites.push_back(new voronoi::VoronoiSite(p.id_, p.x_, p.y_));
-    }
-
-    voronoi::VoronoiDiagram *diagram = voronoi::VoronoiDiagram::create(sites);
-
-    // validate voronoi vertices (i.e. remove vertices outside the polygon)
-    // find rectangle boundary of polygon
-    double min_x, max_x, min_y, max_y;
-    min_x = cave[0].x_;
-    max_x = cave[0].x_;
-    min_y = cave[0].x_;
-    max_y = cave[0].x_;
-    for (int i = 1; i < cave.size(); i++) {
-        if (cave[i].x_ < min_x) {
-            min_x = cave[i].x_;
-        } else if (cave[i].x_ > max_x) {
-            max_x = cave[i].x_;
-        }
-        if (cave[i].y_ < min_y) {
-            min_y = cave[i].y_;
-        } else if (cave[i].y_ > max_y) {
-            max_y = cave[i].y_;
-        }
-    }
-
-    for (std::set<geometry::Point>::iterator it = diagram->vertices().begin(); it != diagram->vertices().end();) {
-        Point tmp_point;
-        tmp_point.x_ = (*it).x();
-        tmp_point.y_ = (*it).y();
-        if (!validateVoronoiVertex(tmp_point, cave, min_x, max_x, min_y, max_y)) {
-            diagram->vertices().erase(it++);
-        } else {
-            ++it;
-        }
-    }
-
-    // construct graph
-    for (std::vector<voronoi::VoronoiEdge *>::iterator it = diagram->edges().begin();
-         it != diagram->edges().end(); ++it) {
-        Point p1, p2;
-        p1.x_ = (*it)->edge().startPoint().x();
-        p1.y_ = (*it)->edge().startPoint().y();
-        p2.x_ = (*it)->edge().endPoint().x();
-        p2.y_ = (*it)->edge().endPoint().y();
-        bool b1 = diagram->vertices().find((*it)->edge().startPoint()) != diagram->vertices().end();
-        bool b2 = diagram->vertices().find((*it)->edge().endPoint()) != diagram->vertices().end();
-        if (b1 && b2) {
-            if ((*it)->leftSite().id() == site_contains_node || (*it)->rightSite().id() == site_contains_node) {
-                endpoints.insert(p1);
-                endpoints.insert(p2);
-            }
-            addVertexToGraph(graph, p1, p2);
-        } else if (b1 || b2) { // determine gate point
-            Line pp = G::line(p1, p2);
-            Point ins;
-            if (G::lineSegmentIntersection(&cave[0], &cave[cave.size() - 1], pp, ins) &&
-                G::onSegment(p1, ins, p2)) {
-                addVertexToGraph(graph, b1 ? p1 : p2, ins);
-                gate_endpoint.x_ = ins.x_;
-                gate_endpoint.y_ = ins.y_;
-            }
-        }
-    }
-    delete diagram;
-    findShortestPath(graph, gate_endpoint, endpoints);
-    dumpVoronoi(cave, graph);
-}
-
-bool NHRAgent::validateVoronoiVertex(Point p, vector<BoundaryNode> polygon,
-                                     double min_x, double max_x, double min_y, double max_y) {
-    if (p.x_ < min_x || p.x_ > max_x || p.y_ < min_y || p.y_ > max_y)
-        return false;
-
-    bool odd = false;
-    int i, j;
-
-    for (i = 0, j = (int) polygon.size() - 1; i < polygon.size(); j = i++) {
-        if (((polygon[i].y_ > p.y_) != (polygon[j].y_ > p.y_)) &&
-            (p.x_ < (polygon[j].x_ - polygon[i].x_) * (p.y_ - polygon[i].y_) / (polygon[j].y_ - polygon[i].y_) +
-                    polygon[i].x_))
-            odd = !odd;
-    }
-
-    return odd;
-}
-
-void NHRAgent::addVertexToGraph(std::map<Point, vector<Point> > &graph, Point v1, Point v2) {
-    std::map<Point, vector<Point> >::iterator it;
-    it = graph.find(v1);
-    if (it != graph.end()) {
-        it->second.push_back(v2);
-    } else {
-        vector<Point> val;
-        val.push_back(v2);
-        graph.insert(std::pair<Point, vector<Point> >(v1, val));
-    }
-    it = graph.find(v2);
-    if (it != graph.end()) {
-        it->second.push_back(v1);
-    } else {
-        vector<Point> val;
-        val.push_back(v1);
-        graph.insert(std::pair<Point, vector<Point> >(v2, val));
-    }
-}
-
-void NHRAgent::findShortestPath(std::map<Point, vector<Point> > &graph, Point gate, set<Point> endpoints) {
-    if (endpoints.size() == 0)
-        return;
-    map<Point, Point> trace;
-    map<Point, int> level;
-    std::queue<Point> queue;
-    int n_level = 0;
-    std::map<Point, vector<Point> >::iterator root;
-    root = graph.find(gate);
-    queue.push(root->first);
-    trace.insert(std::pair<Point, Point>(root->first, root->first));
-    level.insert(std::pair<Point, int>(root->first, n_level));
-
-    while (!queue.empty()) {
-        n_level++;
-        Point p = queue.front();
-        queue.pop();
-        std::vector<Point> tmp = graph.find(p)->second;
-        for (std::vector<Point>::iterator it = tmp.begin(); it != tmp.end(); ++it) {
-            if (trace.find((*it)) == trace.end()) {
-                trace.insert(std::pair<Point, Point>((*it), p));
-                level.insert(std::pair<Point, int>((*it), n_level));
-                queue.push((*it));
-            }
-        }
-    }
-
-    Point closet_endpoint;
-    int closet_level = INT_MAX;
-    for (std::set<Point>::iterator it = endpoints.begin(); it != endpoints.end(); ++it) {
-        int level_tmp = level.find(*it)->second;
-        if (level_tmp < closet_level) {
-            closet_level = level_tmp;
-            closet_endpoint.x_ = (*it).x_;
-            closet_endpoint.y_ = (*it).y_;
-        }
-    }
-
-    endpoint_ = trace.find(closet_endpoint)->second;
-}
-
 /*------------- Sending Data -------------*/
 void NHRAgent::sendData(Packet *p) {
+    hdr_cmn *cmh = HDR_CMN(p);
+    hdr_ip *iph = HDR_IP(p);
+    hdr_nhr *edh = HDR_NHR(p);
 
+    cmh->size() += IP_HDR_LEN + edh->size();
+    cmh->direction_ = hdr_cmn::DOWN;
+
+    edh->daddr_ = iph->daddr();
+    edh->ap_index = 0;
+    edh->anchor_points[1] = endpoint_;
+    edh->type = NHR_CBR_GPSR;
+    edh->dest_level = 0;
+    edh->anchor_points[0] = *dest;
+    edh->dest_ = *dest;
+
+    iph->saddr() = my_id_;
+    iph->daddr() = -1;
+    iph->ttl_ = 4 * IP_DEF_TTL;
 }
 
 void NHRAgent::recvData(Packet *p) {
+    struct hdr_cmn *cmh = HDR_CMN(p);
+    struct hdr_nhr *edh = HDR_NHR(p);
+    node *nexthop = NULL;
 
+    if (cmh->direction() == hdr_cmn::UP && edh->daddr_ == my_id_)    // up to destination
+    {
+        port_dmux_->recv(p, 0);
+        return;
+    }
+
+    switch (edh->type) {
+        case NHR_CBR_GPSR:
+            if (!hole_.empty()) {
+                edh->anchor_points[0] = calculateDestEndpoint(edh->dest_, edh->dest_level);
+                edh->type = NHR_CBR_AWARE_SOURCE_ESCAPE;
+                edh->ap_index = 1;
+            }
+            break;
+        case NHR_CBR_AWARE_SOURCE_ESCAPE:
+            edh->anchor_points[1] = endpoint_;
+            if (isPivot_) {
+                edh->type = NHR_CBR_AWARE_SOURCE_PIVOT;
+            }
+            break;
+        default:
+            break;
+    }
+
+    nexthop = getNeighborByGreedy(edh->anchor_points[edh->ap_index]);
+    if (nexthop == NULL) {
+        switch (edh->type) {
+            case NHR_CBR_AWARE_SOURCE_PIVOT:
+                determineOctagonAnchorPoints(p);
+                edh->type = NHR_CBR_AWARE_OCTAGON;
+                break;
+            case NHR_CBR_AWARE_OCTAGON:
+                if (edh->ap_index == 2) {
+                    edh->ap_index = 0;
+                    edh->type = NHR_CBR_AWARE_DESTINATION;
+                } else {
+                    --edh->ap_index;
+                }
+                break;
+            case NHR_CBR_AWARE_DESTINATION:
+                routeToDest(p);
+                break;
+            default:
+                drop(p, DROP_RTR_NO_ROUTE);
+                return;
+        }
+    }
+
+    nexthop = getNeighborByGreedy(edh->anchor_points[edh->ap_index]);
+    if (nexthop == NULL) {
+        drop(p, DROP_RTR_NO_ROUTE);
+        return;
+    } else {
+        cmh->direction() = hdr_cmn::DOWN;
+        cmh->addr_type() = NS_AF_INET;
+        cmh->last_hop_ = my_id_;
+        cmh->next_hop_ = nexthop->id_;
+        send(p, 0);
+    }
 }
 
+Point NHRAgent::calculateDestEndpoint(Point dest, int &level) {
+    Point gate_point;
+    NHRGraph *graph = new NHRGraph(dest, hole_);
+    gate_point = graph->isPivot() ? graph->endpoint() : graph->gatePoint(level);
+    delete graph;
+    return gate_point;
+}
+
+void NHRAgent::determineOctagonAnchorPoints(Packet *p) {
+    struct hdr_nhr *hdc = HDR_NHR(p);
+
+    calculateScaleFactor(p);
+    if (scale_factor_ > 0) {
+        // random I
+        Point I;
+        I.x_ = 0;
+        I.y_ = 0;
+        double fr = 0;
+        for (int i = 0; i < octagon_hole_.size(); i++) {
+            int ra = randSend_.uniform_positive_int();
+            I.x_ += octagon_hole_[i].x_ * ra;
+            I.y_ += octagon_hole_[i].y_ * ra;
+            fr += ra;
+        }
+
+        I.x_ = I.x_ / fr;
+        I.y_ = I.y_ / fr;
+
+        // scale hole by I and scale_factor_
+        vector<Point> scaleHole;
+
+        for (int i = 0; i < octagon_hole_.size(); i++) {
+            Point newPoint;
+            newPoint.x_ = scale_factor_ * octagon_hole_[i].x_ + (1 - scale_factor_) * I.x_;
+            newPoint.y_ = scale_factor_ * octagon_hole_[i].y_ + (1 - scale_factor_) * I.y_;
+            scaleHole.push_back(newPoint);
+        }
+        dumpScalePolygon(scaleHole, I);
+        // generate new anchor points
+        Point dest = hdc->anchor_points[0];
+        bypassHole(p, this, &dest, scaleHole);
+    }
+}
+
+void NHRAgent::calculateScaleFactor(Packet *p) {
+    // TODO: implement + check if hole intersects with source dest
+    struct hdr_nhr *hdc = HDR_NHR(p);
+    if (scale_factor_ > 0 || scale_factor_ == -1) return; // calculated in the last time
+    scale_factor_ = 1.1;
+}
+
+void NHRAgent::bypassHole(Packet *p, Point *source, Point *dest, vector<Point> scaleHole) {
+    struct hdr_nhr *edh = HDR_NHR(p);
+    Point s1, d1;
+    int si1, si2, di1, di2;
+    Line sd = G::line(source, dest);
+    Point ins;
+
+    si1 = si2 = di1 = di2 = 0;
+    for (int i = 0; i <= scaleHole.size(); ++i) {
+        bool isIntersect = G::lineSegmentIntersection(&scaleHole[i % 8], &scaleHole[(i + 1) % 8], sd, ins);
+        if (isIntersect && G::onSegment(&ins, source, dest)) {
+            s1 = ins;
+            si1 = i % 8;
+            si2 = (i + 1) % 8;
+        } else if (isIntersect && G::onSegment(&ins, dest, source)) {
+            d1 = ins;
+            di1 = i % 8;
+            di2 = (i + 1) % 8;
+        }
+    }
+
+    if (G::position(scaleHole[si1], sd) * G::position(scaleHole[di1], sd) < 0) {
+        int tmp = si2;
+        si2 = si1;
+        si1 = tmp;
+    }
+
+    double length = 0;
+    double dis = 0;
+
+    if (si1 <= di1) {
+        dis = G::distance(s1, scaleHole[si1]);
+        for (int i = si1; i <= di1; i++) {
+            dis += G::distance(scaleHole[i], scaleHole[i + 1]);
+        }
+        dis += G::distance(scaleHole[di1], d1);
+        length = dis;
+        edh->ap_index = 2;
+        edh->anchor_points[edh->ap_index] = d1;
+        for (int i = di1; i >= si1; --i) {
+            edh->ap_index++;
+            edh->anchor_points[edh->ap_index] = scaleHole[i];
+        }
+        edh->ap_index++;
+        edh->anchor_points[edh->ap_index] = s1;
+    } else {
+        dis = G::distance(s1, scaleHole[si1]);
+        for (int i = di1; i <= si1; i++) {
+            dis += G::distance(scaleHole[i], scaleHole[i + 1]);
+        }
+        dis += G::distance(scaleHole[di1], d1);
+        length = dis;
+        edh->ap_index = 2;
+        edh->anchor_points[edh->ap_index] = d1;
+        for (int i = di1; i <= si1; ++i) {
+            edh->ap_index++;
+            edh->anchor_points[edh->ap_index] = scaleHole[i];
+        }
+        edh->ap_index++;
+        edh->anchor_points[edh->ap_index] = s1;
+    }
+
+    if (si2 <= di2) {
+        dis = G::distance(s1, scaleHole[si2]);
+        for (int i = si2; i <= di2; i++) {
+            dis += G::distance(scaleHole[i], scaleHole[i + 1]);
+        }
+        dis += G::distance(scaleHole[di2], d1);
+        if (dis < length) {
+            edh->ap_index = 2;
+            edh->anchor_points[edh->ap_index] = d1;
+            for (int i = di2; i >= si2; --i) {
+                edh->ap_index++;
+                edh->anchor_points[edh->ap_index] = scaleHole[i];
+            }
+            edh->ap_index++;
+            edh->anchor_points[edh->ap_index] = s1;
+        }
+    } else {
+        dis = G::distance(s1, scaleHole[si2]);
+        for (int i = di2; i <= si2; i++) {
+            dis += G::distance(scaleHole[i], scaleHole[i + 1]);
+        }
+        dis += G::distance(scaleHole[di2], d1);
+        if (dis < length) {
+            edh->ap_index = 2;
+            edh->anchor_points[edh->ap_index] = d1;
+            for (int i = di2; i <= si2; ++i) {
+                edh->ap_index++;
+                edh->anchor_points[edh->ap_index] = scaleHole[i];
+            }
+            edh->ap_index++;
+            edh->anchor_points[edh->ap_index] = s1;
+        }
+    }
+}
+
+void NHRAgent::routeToDest(Packet *p) {
+    struct hdr_nhr *edh = HDR_NHR(p);
+    NHRGraph *graph = new NHRGraph(edh->dest_, hole_);
+    node *nexthop = getNeighborByGreedy(edh->anchor_points[edh->ap_index]);
+    while (nexthop == NULL || edh->anchor_points[edh->ap_index] != edh->dest_) {
+        edh->anchor_points[0] = graph->traceBack(edh->dest_level);
+        nexthop = getNeighborByGreedy(edh->anchor_points[edh->ap_index]);
+    }
+    delete graph;
+}
+
+/*------------- Dump -------------*/
 void NHRAgent::dump() {
     FILE *fp = fopen("Dump.tr", "a+");
     for (std::vector<BoundaryNode>::iterator it = hole_.begin(); it != hole_.end(); ++it)
@@ -665,17 +695,12 @@ void NHRAgent::dumpBroadcastRegion() {
     fclose(fp);
 }
 
-void NHRAgent::dumpVoronoi(vector<BoundaryNode> polygon, map<Point, vector<Point> > vertices) {
-    if (my_id_ != 303)
-        return;
-    FILE *fp = fopen("Voronoi.tr", "a+");
-    for (std::vector<BoundaryNode>::iterator it = polygon.begin(); it != polygon.end(); ++it)
-        fprintf(fp, "%d\t%f\t%f\n", my_id_, (*it).x_, (*it).y_);
-    for (map<Point, vector<Point> >::iterator it = vertices.begin(); it != vertices.end(); ++it) {
-        for (vector<Point>::iterator it2 = it->second.begin(); it2 != it->second.end(); ++it2) {
-            fprintf(fp, "==%d\t%f\t%f\n", my_id_, (*it).first.x_, (*it).first.y_);
-            fprintf(fp, "==%d\t%f\t%f\n\n", my_id_, (*it2).x_, (*it2).y_);
-        }
+void NHRAgent::dumpScalePolygon(vector<Point> scale, Point center) {
+    FILE *fp = fopen("ScalePolygon.tr", "a+");
+    fprintf(fp, "%f\t%f\n\n", center.x_, center.y_);
+    for (int i = 0; i < scale.size(); ++i) {
+        fprintf(fp, "%f\t%f\n", scale[i].x_, scale[i].y_);
     }
+    fprintf(fp, "\n");
     fclose(fp);
 }

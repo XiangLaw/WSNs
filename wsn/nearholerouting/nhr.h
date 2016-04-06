@@ -48,6 +48,8 @@ private:
     vector<BoundaryNode> octagon_hole_;
     AgentBroadcastTimer broadcast_timer_;
     Point endpoint_; // endpoint of the node
+    bool isPivot_; // node that can go straight to the gate
+    double scale_factor_;
 
     void createHole(Packet *p);
 
@@ -61,23 +63,25 @@ private:
 
     bool canBroadcast();
 
-    void constructGraph();
-
-    bool validateVoronoiVertex(Point, vector<BoundaryNode>, double, double, double, double);
-
-    void addVertexToGraph(std::map<Point, vector<Point> > &, Point, Point);
-
-    void findShortestPath(std::map<Point, vector<Point> > &, Point, set<Point>);
-
     void sendData(Packet *p);
 
     void recvData(Packet *p);
+
+    Point calculateDestEndpoint(Point, int &);
+
+    void determineOctagonAnchorPoints(Packet *);
+
+    void calculateScaleFactor(Packet *);
+
+    void bypassHole(Packet *, Point *, Point *, vector<Point>);
+
+    void routeToDest(Packet *p);
 
     void dump();
 
     void dumpBroadcastRegion();
 
-    void dumpVoronoi(vector<BoundaryNode>, map<Point, vector<Point> >);
+    void dumpScalePolygon(vector<Point>, Point);
 
 public:
     NHRAgent();

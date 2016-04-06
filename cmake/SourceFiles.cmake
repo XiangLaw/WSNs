@@ -280,7 +280,7 @@ set(OBJ_CC
   wsn/mbc/mbc.cc wsn/mbc/mbc_packet_data.cc
   wsn/coverageonline/coverageonline.cc wsn/coverageonline/coverageonline_packet_data.cc
   wsn/topologicalnetwork/taagent.cc
-  wsn/nearholerouting/nhr.cc wsn/nearholerouting/nhr_packet_data.cc
+  wsn/nearholerouting/nhr.cc wsn/nearholerouting/nhr_packet_data.cc wsn/nearholerouting/nhr_graph.cc
   wsn/geometry/Circle.cpp wsn/geometry/Line.cpp wsn/geometry/Parabola.cpp
   wsn/geometry/Point.cpp wsn/geometry/Vector.cpp
   wsn/graph/voronoi/VoronoiCell.cpp wsn/graph/voronoi/VoronoiDiagram.cpp wsn/graph/voronoi/VoronoiSite.cpp wsn/graph/voronoi/VoronoiEdge.cpp
