@@ -22,7 +22,6 @@ public:
 private:
     Point agent_;
     Point endpoint_;
-    Point gatePoint_;
     bool isPivot_;
     map<Point, Point> trace_;
     map<Point, int> level_;

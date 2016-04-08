@@ -42,7 +42,7 @@ struct POLAR_ORDER {
 
 class NHRAgent : public BoundHoleAgent {
 private:
-    Angle limit_angle_;
+    Angle delta_;
 
     vector<BoundaryNode> hole_;
     vector<BoundaryNode> octagon_hole_;
@@ -63,17 +63,21 @@ private:
 
     bool canBroadcast();
 
+    double distanceToPolygon(node *polygon);
+
     void sendData(Packet *p);
 
     void recvData(Packet *p);
 
     Point calculateDestEndpoint(Point, int &);
 
-    void determineOctagonAnchorPoints(Packet *);
+    bool determineOctagonAnchorPoints(Packet *);
 
-    void calculateScaleFactor(Packet *);
+    bool sdPolygonIntersect(Packet *);
 
     void bypassHole(Packet *, Point *, Point *, vector<Point>);
+
+    bool isPointInsidePolygon(Point, vector<BoundaryNode>);
 
     void routeToDest(Packet *p);
 

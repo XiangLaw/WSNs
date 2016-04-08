@@ -3,7 +3,6 @@
 #include "nhr_packet.h"
 #include "nhr_packet_data.h"
 #include "nhr_graph.h"
-#include <wsn/graph/voronoi/VoronoiDiagram.h>
 #include <queue>
 
 int hdr_nhr::offset_;
@@ -30,10 +29,10 @@ NHRAgent::NHRAgent() : BoundHoleAgent(), broadcast_timer_(this) {
     endpoint_.x_ = this->x_;
     endpoint_.y_ = this->y_; // default: endpoint of node is itself
     isPivot_ = true;
-    limit_angle_ = M_PI * 2 / 3;
+    delta_ = 2;
     scale_factor_ = 0;
 
-    bind("limit_angle_", &limit_angle_);
+    bind("delta_", &delta_);
 
     FILE *fp;
     fp = fopen("Neighbors.tr", "w");
@@ -397,6 +396,7 @@ void NHRAgent::recvHCI(Packet *p) {
     dumpBroadcastRegion();
 }
 
+// check if node is inside NHR region. also calculate the scale factor = min distance from node to octagon
 bool NHRAgent::canBroadcast() {
     vector<BoundaryNode *> convex;
 
@@ -405,30 +405,71 @@ bool NHRAgent::canBroadcast() {
     node_list->node_list_ = NULL;
     node_list->next_ = NULL;
 
-    for (int i = 0; i < hole_.size(); i++) {
-        if (hole_[i].is_convex_hull_boundary_) {
-            convex.push_back(&hole_[i]);
-            node *tmp = new node();
-            tmp->x_ = hole_[i].x_;
-            tmp->y_ = hole_[i].y_;
-            tmp->next_ = node_list->node_list_;
-            node_list->node_list_ = tmp;
+    for (int i = 0; i < octagon_hole_.size(); i++) {
+        convex.push_back(&octagon_hole_[i]);
+        node *tmp = new node();
+        tmp->x_ = octagon_hole_[i].x_;
+        tmp->y_ = octagon_hole_[i].y_;
+        tmp->next_ = node_list->node_list_;
+        node_list->node_list_ = tmp;
+    }
+
+    double distance = distanceToPolygon(node_list->node_list_) / range_;
+    delete node_list;
+    if (distance <= delta_) {
+        scale_factor_ = distance;
+        return true;
+    }
+
+    return false;
+}
+
+double NHRAgent::distanceToPolygon(node *polygon) {
+    node *tmp0;
+    node *tmp1;
+    node *tmp2;
+    node *tmp3;
+    Line l, l1, l2; // l: line P(i+1)P(i+2),l1: parallel with P(i)P(i+1), l2: parallel with P(i+2)P(i+3)
+
+    // check if point inside polygon return communication range // minimum scale factor
+    if (G::isPointInsidePolygon(this, polygon)) return range_;
+
+    double distance;
+    double d = DBL_MAX;
+    int n = 8; // number of vertices of octagon = 8
+
+    for (tmp0 = polygon; n; tmp0 = tmp0->next_, n--) {
+        tmp1 = tmp0->next_ == NULL ? polygon : tmp0->next_;
+        tmp2 = tmp1->next_ == NULL ? polygon : tmp1->next_;
+        l = G::line(tmp1, tmp2);
+
+        if (G::position(this, tmp0, &l) > 0) continue;
+
+        distance = G::distance(this, l);
+        if (distance < d) {
+            // detect if node stays on covering polygon's boundary
+            tmp3 = tmp2->next_ == NULL ? polygon : tmp2->next_;
+            l1 = G::line(tmp0, tmp1);
+            l2 = G::line(tmp2, tmp3);
+
+            int pos1 = G::position(this, tmp2, &l1);
+            int pos2 = G::position(this, tmp1, &l2);
+
+            if (pos1 * pos2 >= 0 && pos1 >= 0) {
+                d = distance;
+            } else if (pos1 * pos2 >= 0 && pos1 < 0) {
+                if (G::distance(this, l1) <= distance && G::distance(this, l2) <= distance)
+                    d = distance;
+            } else {
+                if ((pos1 < 0 && G::distance(this, l1) <= distance)
+                    || (pos2 < 0 && G::distance(this, l2) <= distance)) {
+                    d = distance;
+                }
+            }
         }
     }
 
-    if (G::isPointInsidePolygon(this, node_list->node_list_)) {
-        delete node_list;
-        return true;
-    }
-    delete node_list;
-
-    BoundaryNode pivot;
-    pivot.x_ = this->x_;
-    pivot.y_ = this->y_;
-    sort(convex.begin(), convex.end(), POLAR_ORDER(pivot));
-
-    Angle angle = G::angle((convex[0]), this, (convex[convex.size() - 1]));
-    return angle >= limit_angle_;
+    return d;
 }
 
 /*------------- Sending Data -------------*/
@@ -485,9 +526,14 @@ void NHRAgent::recvData(Packet *p) {
     nexthop = getNeighborByGreedy(edh->anchor_points[edh->ap_index]);
     if (nexthop == NULL) {
         switch (edh->type) {
+            case NHR_CBR_AWARE_SOURCE_ESCAPE:
             case NHR_CBR_AWARE_SOURCE_PIVOT:
-                determineOctagonAnchorPoints(p);
-                edh->type = NHR_CBR_AWARE_OCTAGON;
+                if (determineOctagonAnchorPoints(p)) {
+                    edh->type = NHR_CBR_AWARE_OCTAGON;
+                } else {
+                    edh->ap_index = 0;
+                    edh->type = NHR_CBR_AWARE_DESTINATION;
+                }
                 break;
             case NHR_CBR_AWARE_OCTAGON:
                 if (edh->ap_index == 2) {
@@ -527,143 +573,189 @@ Point NHRAgent::calculateDestEndpoint(Point dest, int &level) {
     return gate_point;
 }
 
-void NHRAgent::determineOctagonAnchorPoints(Packet *p) {
+// return false if cannot determine octagon
+bool NHRAgent::determineOctagonAnchorPoints(Packet *p) {
     struct hdr_nhr *hdc = HDR_NHR(p);
 
-    calculateScaleFactor(p);
-    if (scale_factor_ > 0) {
-        // random I
-        Point I;
-        I.x_ = 0;
-        I.y_ = 0;
-        double fr = 0;
-        for (int i = 0; i < octagon_hole_.size(); i++) {
-            int ra = randSend_.uniform_positive_int();
-            I.x_ += octagon_hole_[i].x_ * ra;
-            I.y_ += octagon_hole_[i].y_ * ra;
-            fr += ra;
-        }
-
-        I.x_ = I.x_ / fr;
-        I.y_ = I.y_ / fr;
-
-        // scale hole by I and scale_factor_
-        vector<Point> scaleHole;
-
-        for (int i = 0; i < octagon_hole_.size(); i++) {
-            Point newPoint;
-            newPoint.x_ = scale_factor_ * octagon_hole_[i].x_ + (1 - scale_factor_) * I.x_;
-            newPoint.y_ = scale_factor_ * octagon_hole_[i].y_ + (1 - scale_factor_) * I.y_;
-            scaleHole.push_back(newPoint);
-        }
-        dumpScalePolygon(scaleHole, I);
-        // generate new anchor points
-        Point dest = hdc->anchor_points[0];
-        bypassHole(p, this, &dest, scaleHole);
+    // if sd doesnt intersect with the hole -> go by GPSR (set hdc->ap_index = 0)
+    if (sdPolygonIntersect(p)) {
+        return false;
     }
+    // else calculate the scale octagon
+
+    // random I
+    Point I;
+    I.x_ = 0;
+    I.y_ = 0;
+    double fr = 0;
+    for (int i = 0; i < octagon_hole_.size(); i++) {
+        int ra = randSend_.uniform_positive_int();
+        I.x_ += octagon_hole_[i].x_ * ra;
+        I.y_ += octagon_hole_[i].y_ * ra;
+        fr += ra;
+    }
+
+    I.x_ = I.x_ / fr;
+    I.y_ = I.y_ / fr;
+
+    // scale hole by I and scale_factor_
+    vector<Point> scaleHole;
+
+    for (int i = 0; i < octagon_hole_.size(); i++) {
+        Point newPoint;
+        newPoint.x_ = scale_factor_ * octagon_hole_[i].x_ + (1 - scale_factor_) * I.x_;
+        newPoint.y_ = scale_factor_ * octagon_hole_[i].y_ + (1 - scale_factor_) * I.y_;
+        scaleHole.push_back(newPoint);
+    }
+    dumpScalePolygon(scaleHole, I);
+    // generate new anchor points
+    Point dest = hdc->anchor_points[0];
+    bypassHole(p, this, &dest, scaleHole);
+    return true;
 }
 
-void NHRAgent::calculateScaleFactor(Packet *p) {
-    // TODO: implement + check if hole intersects with source dest
+bool NHRAgent::sdPolygonIntersect(Packet *p) {
     struct hdr_nhr *hdc = HDR_NHR(p);
-    if (scale_factor_ > 0 || scale_factor_ == -1) return; // calculated in the last time
-    scale_factor_ = 1.1;
+    Point dest = hdc->dest_;
+    int num_intersection = 0;
+
+    for (int i = 0; i < hole_.size() - 1; i++) {
+        int j = (i == hole_.size() - 1 ? 0 : (i + 1));
+        if (G::is_in_line(this, &dest, hole_[i]) && G::is_in_line(this, &dest, hole_[j])) break;
+        if (G::is_intersect(this, &dest, hole_[i], hole_[j])) num_intersection++;
+    }
+
+    return false;
 }
 
-void NHRAgent::bypassHole(Packet *p, Point *source, Point *dest, vector<Point> scaleHole) {
+bool NHRAgent::isPointInsidePolygon(Point p, vector<BoundaryNode> polygon) {
+    bool odd = false;
+    int i, j;
+
+    for (i = 0, j = (int) polygon.size() - 1; i < polygon.size(); j = i++) {
+        if (((polygon[i].y_ > p.y_) != (polygon[j].y_ > p.y_)) &&
+            (p.x_ < (polygon[j].x_ - polygon[i].x_) * (p.y_ - polygon[i].y_) / (polygon[j].y_ - polygon[i].y_) +
+                    polygon[i].x_))
+            odd = !odd;
+    }
+
+    return odd;
+}
+
+void NHRAgent::bypassHole(Packet *p, Point *source, Point *dest, vector<Point> scaleOctagon) {
     struct hdr_nhr *edh = HDR_NHR(p);
+    bool isSourceInside = isPointInsidePolygon(*source, octagon_hole_);
+    bool isDestInside = isPointInsidePolygon(*dest, octagon_hole_);
+
     Point s1, d1;
-    int si1, si2, di1, di2;
+    int si, si2, di, di2;
     Line sd = G::line(source, dest);
     Point ins;
+    vector<Point> aps;
 
-    si1 = si2 = di1 = di2 = 0;
-    for (int i = 0; i <= scaleHole.size(); ++i) {
-        bool isIntersect = G::lineSegmentIntersection(&scaleHole[i % 8], &scaleHole[(i + 1) % 8], sd, ins);
-        if (isIntersect && G::onSegment(&ins, source, dest)) {
+    // double scaleOctagon
+    for (int i = 0; i < 8; ++i) {
+        scaleOctagon.push_back(scaleOctagon[i]);
+    }
+
+    si = si2 = di = di2 = 0;
+    for (int i = 0; i <= 8; ++i) {
+        bool isIntersect = G::lineSegmentIntersection(&scaleOctagon[i], &scaleOctagon[i + 1], sd, ins);
+        if (isIntersect &&
+            (
+                    (isSourceInside && G::onSegment(&ins, source, dest)) ||
+                    (!isSourceInside && G::onSegment(source, &ins, dest))
+            )) {
             s1 = ins;
-            si1 = i % 8;
-            si2 = (i + 1) % 8;
-        } else if (isIntersect && G::onSegment(&ins, dest, source)) {
+            si = i;
+            si2 = i + 1;
+        } else if (isIntersect &&
+                   (
+                           (isDestInside && G::onSegment(&ins, dest, source)) ||
+                           (!isDestInside && G::onSegment(source, &ins, dest))
+                   )) {
             d1 = ins;
-            di1 = i % 8;
-            di2 = (i + 1) % 8;
+            di = i;
+            di2 = i + 1;
         }
     }
 
-    if (G::position(scaleHole[si1], sd) * G::position(scaleHole[di1], sd) < 0) {
+    if (G::position(scaleOctagon[si], sd) * G::position(scaleOctagon[di], sd) < 0) {
         int tmp = si2;
-        si2 = si1;
-        si1 = tmp;
+        si2 = si;
+        si = tmp;
     }
+
+    // octagon order: counter clockwise
+    // si -> di: counter clockwise
+    // si2 -> di2: clockwise
+    if (di < si) di += 8;
+    if (si2 < di2) si2 += 8;
 
     double length = 0;
     double dis = 0;
 
-    if (si1 <= di1) {
-        dis = G::distance(s1, scaleHole[si1]);
-        for (int i = si1; i <= di1; i++) {
-            dis += G::distance(scaleHole[i], scaleHole[i + 1]);
+    // s - si - di - d
+    dis = isSourceInside ? G::distance(s1, scaleOctagon[si]) : G::distance(source, scaleOctagon[si]);
+    for (int i = si; i <= di; i++) {
+        dis += G::distance(scaleOctagon[i], scaleOctagon[i + 1]);
+    }
+    dis = isDestInside ? dis + G::distance(scaleOctagon[di], d1) : dis + G::distance(scaleOctagon[di], dest);
+    length = dis;
+    if (isDestInside)
+        aps.push_back(d1);
+    for (int i = di; i >= si; --i) {
+        aps.push_back(scaleOctagon[i]);
+    }
+    if (isSourceInside)
+        aps.push_back(s1);
+
+    // s - si2 - di2 - d
+    dis = isSourceInside ? G::distance(s1, scaleOctagon[si2]) : G::distance(source, scaleOctagon[si2]);
+    for (int i = di2; i <= si2; ++i) {
+        dis += G::distance(scaleOctagon[i], scaleOctagon[i + 1]);
+    }
+    dis = isDestInside ? dis + G::distance(scaleOctagon[di2], d1) : dis + G::distance(scaleOctagon[di2], dest);
+    if (dis < length) {
+        vector<Point>().swap(aps);
+        if (isDestInside)
+            aps.push_back(d1);
+        for (int i = di2; i <= si2; ++i) {
+            aps.push_back(scaleOctagon[i]);
         }
-        dis += G::distance(scaleHole[di1], d1);
-        length = dis;
-        edh->ap_index = 2;
-        edh->anchor_points[edh->ap_index] = d1;
-        for (int i = di1; i >= si1; --i) {
-            edh->ap_index++;
-            edh->anchor_points[edh->ap_index] = scaleHole[i];
-        }
-        edh->ap_index++;
-        edh->anchor_points[edh->ap_index] = s1;
-    } else {
-        dis = G::distance(s1, scaleHole[si1]);
-        for (int i = di1; i <= si1; i++) {
-            dis += G::distance(scaleHole[i], scaleHole[i + 1]);
-        }
-        dis += G::distance(scaleHole[di1], d1);
-        length = dis;
-        edh->ap_index = 2;
-        edh->anchor_points[edh->ap_index] = d1;
-        for (int i = di1; i <= si1; ++i) {
-            edh->ap_index++;
-            edh->anchor_points[edh->ap_index] = scaleHole[i];
-        }
-        edh->ap_index++;
-        edh->anchor_points[edh->ap_index] = s1;
+        if (isSourceInside)
+            aps.push_back(s1);
     }
 
-    if (si2 <= di2) {
-        dis = G::distance(s1, scaleHole[si2]);
-        for (int i = si2; i <= di2; i++) {
-            dis += G::distance(scaleHole[i], scaleHole[i + 1]);
-        }
-        dis += G::distance(scaleHole[di2], d1);
-        if (dis < length) {
-            edh->ap_index = 2;
-            edh->anchor_points[edh->ap_index] = d1;
-            for (int i = di2; i >= si2; --i) {
-                edh->ap_index++;
-                edh->anchor_points[edh->ap_index] = scaleHole[i];
-            }
-            edh->ap_index++;
-            edh->anchor_points[edh->ap_index] = s1;
-        }
-    } else {
-        dis = G::distance(s1, scaleHole[si2]);
-        for (int i = di2; i <= si2; i++) {
-            dis += G::distance(scaleHole[i], scaleHole[i + 1]);
-        }
-        dis += G::distance(scaleHole[di2], d1);
-        if (dis < length) {
-            edh->ap_index = 2;
-            edh->anchor_points[edh->ap_index] = d1;
-            for (int i = di2; i <= si2; ++i) {
-                edh->ap_index++;
-                edh->anchor_points[edh->ap_index] = scaleHole[i];
-            }
-            edh->ap_index++;
-            edh->anchor_points[edh->ap_index] = s1;
-        }
+//    if (isSourceInside) {
+//        for (int i = 0; i < 2; i++) {
+//            Line edge = G::line(scaleOctagon[si + i], scaleOctagon[si + i - 1]);
+//            Line perpendicular_line = G::perpendicular_line(source, edge);
+//            Point intersect;
+//            if (G::lineSegmentIntersection(&scaleOctagon[si + i], &scaleOctagon[si + i - 1], perpendicular_line,
+//                                           intersect)) {
+//                aps.erase(aps.end() - i, aps.end());
+//                aps.insert(aps.end(), intersect);
+//            }
+//        }
+//    }
+//
+//    if (isDestInside) {
+//        for (int i = 1; i >= 0; --i) {
+//            Line edge = G::line(scaleOctagon[di + i], scaleOctagon[di + i - 1]);
+//            Line perpendicular_line = G::perpendicular_line(dest, edge);
+//            Point intersect;
+//            if (G::lineSegmentIntersection(&scaleOctagon[di + i], &scaleOctagon[di + i - 1], perpendicular_line,
+//                                           intersect)) {
+//                aps.erase(aps.begin(), aps.begin() + i);
+//                aps.insert(aps.begin(), intersect);
+//            }
+//        }
+//    }
+
+    // update routing table
+    for (vector<Point>::iterator it = aps.begin(); it != aps.end(); ++it) {
+        edh->anchor_points[++edh->ap_index] = *it;
     }
 }
 
