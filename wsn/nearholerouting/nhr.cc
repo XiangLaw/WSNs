@@ -765,6 +765,7 @@ void NHRAgent::routeToDest(Packet *p) {
     node *nexthop = getNeighborByGreedy(edh->anchor_points[edh->ap_index]);
     while (nexthop == NULL || edh->anchor_points[edh->ap_index] != edh->dest_) {
         edh->anchor_points[0] = graph->traceBack(edh->dest_level);
+        if (edh->dest_level == 0) break;
         nexthop = getNeighborByGreedy(edh->anchor_points[edh->ap_index]);
     }
     delete graph;

@@ -6,6 +6,7 @@ NHRGraph::NHRGraph(Point agent, vector<BoundaryNode> hole) {
     agent_ = agent;
     hole_ = hole;
     isPivot_ = true;
+    endpoint_ = agent; // default endpoint is this node if it is not inside hole
     constructGraph();
 }
 
