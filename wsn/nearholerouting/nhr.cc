@@ -578,7 +578,7 @@ bool NHRAgent::determineOctagonAnchorPoints(Packet *p) {
     struct hdr_nhr *hdc = HDR_NHR(p);
 
     // if sd doesnt intersect with the hole -> go by GPSR (set hdc->ap_index = 0)
-    if (sdPolygonIntersect(p)) {
+    if (!sdPolygonIntersect(p)) {
         return false;
     }
     // else calculate the scale octagon
@@ -614,9 +614,10 @@ bool NHRAgent::determineOctagonAnchorPoints(Packet *p) {
     return true;
 }
 
+// source - dest-endpoint intersects with hole or not
 bool NHRAgent::sdPolygonIntersect(Packet *p) {
     struct hdr_nhr *hdc = HDR_NHR(p);
-    Point dest = hdc->dest_;
+    Point dest = hdc->anchor_points[0];
     int num_intersection = 0;
 
     for (int i = 0; i < hole_.size() - 1; i++) {
@@ -625,7 +626,7 @@ bool NHRAgent::sdPolygonIntersect(Packet *p) {
         if (G::is_intersect(this, &dest, hole_[i], hole_[j])) num_intersection++;
     }
 
-    return false;
+    return num_intersection > 0;
 }
 
 bool NHRAgent::isPointInsidePolygon(Point p, vector<BoundaryNode> polygon) {
