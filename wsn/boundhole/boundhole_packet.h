@@ -19,7 +19,8 @@ struct hdr_boundhole
 {
 	u_int8_t type_;
 	Point prev_;
-	inline int size() { return sizeof(u_int8_t) + sizeof(Point); }
+	int index_; // for refresh type only
+	inline int size() { return sizeof(u_int8_t) + sizeof(Point) + sizeof(index_); }
 
 	static int offset_;
 	inline static int& offset() { return offset_; }

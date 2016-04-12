@@ -247,7 +247,7 @@ void BoundHoleAgent::recvBoundHole(Packet *p)
 			createHole(p);
 			if (storage_opt_ == STORAGE_ONE)
 			{
-				drop(p, " BOUNDHOLE");
+				drop(p, " BOUNDHOLE_ONE");
 			}
 			else // storage_opt_ == STORAGE_ALL
 			{
@@ -375,6 +375,7 @@ void BoundHoleAgent::sendRefresh(Packet* p)
 	iph->ttl_ 	 = IP_DEF_TTL;
 
 	bhh->type_ = BOUNDHOLE_REFRESH;
+	bhh->index_ = 2;
 
 	send(p, 0);
 }
@@ -382,14 +383,15 @@ void BoundHoleAgent::sendRefresh(Packet* p)
 void BoundHoleAgent::recvRefresh(Packet *p)
 {
 	struct hdr_ip 		*iph = HDR_IP(p);
+	struct hdr_boundhole 		*bhh = HDR_BOUNDHOLE(p);
 	BoundHolePacketData *data = (BoundHolePacketData*)p->userdata();
 
 	// create hole item
 	createHole(p);
 
-	int i = 1;
-//	while (data->get_data(i).id_ != my_id_ && i <= data->size()) i++;
-	while (data->get_data(i).id_ != my_id_) i++;
+	int i = bhh->index_; // convert to use index in header instead of query data and check id due to a special case
+                         // which is: A sends refresh packet to B, then B sends back to A (B has no other boundhole neighbor but A)
+                         // which leads to infinite loop (A->B->A->B-> ...)
 
 	if (i < data->size())
 	{
@@ -401,12 +403,13 @@ void BoundHoleAgent::recvRefresh(Packet *p)
 		cmh->next_hop_  = next_id;
 
 		iph->daddr() = next_id;
+		bhh->index_++;
 
 		send(p, 0);
 	}
 	else
 	{
-		drop(p, " BOUNDHOLE");
+		drop(p, "BOUNDHOLE_REFRESHED");
 	}
 }
 
