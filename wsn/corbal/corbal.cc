@@ -360,6 +360,9 @@ void CorbalAgent::sendHBA(Packet *p) {
     // update data payload - alloc memory for set of B(i) nodes
     data->add(my_id_, x_, y_); // add back H0 to end of array
     data->addHBA(n_, kn);
+    // TODO: refactor this scope. we need to call this function twice since there is a special case:
+    // a node is belong to 2 edges of core polygon, i.e. this node is a vertex of core polygon
+    isNodeStayOnBoundaryOfCorePolygon(p);
     isNodeStayOnBoundaryOfCorePolygon(p);
 
     node n = data->get_data(2);
@@ -394,6 +397,7 @@ void CorbalAgent::recvHBA(Packet *p) {
     int i = bhh->index_;
 
     if (i < data->size() - (n_ + 1) * kn) {
+        isNodeStayOnBoundaryOfCorePolygon(p);
         isNodeStayOnBoundaryOfCorePolygon(p);
         nsaddr_t next_id = data->get_data(i + 1).id_;
 
