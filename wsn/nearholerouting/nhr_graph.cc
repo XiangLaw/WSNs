@@ -220,9 +220,9 @@ Point NHRGraph::findShortestPath(std::map<Point, vector<Point> > &graph, Point g
 }
 
 bool NHRGraph::perpendicularLinePolygonIntersect(Point p, vector<BoundaryNode> cave, Point &perpendicular_point) {
-    gate_line_ = G::line(cave[0], cave[cave.size() - 1]);
-    Line perpendicular_line = G::perpendicular_line(p, gate_line_);
-    G::intersection(gate_line_, perpendicular_line, &perpendicular_point);
+    Line gate_line = G::line(cave[0], cave[cave.size() - 1]);
+    Line perpendicular_line = G::perpendicular_line(p, gate_line);
+    G::intersection(gate_line, perpendicular_line, &perpendicular_point);
     for (int i = 0; i < cave.size() - 2; i++) {
         Point ins;
         if (G::lineSegmentIntersection(&cave[i], &cave[i + 1], perpendicular_line, ins) &&
@@ -265,4 +265,11 @@ Point NHRGraph::traceBack(int &dest_level) {
     } while ((prev = level_.find(point_tmp)->second) != 0);
 
     return prev_point;
+}
+
+void NHRGraph::getGateNodeIds(int &gate1, int &gate2) {
+    if (cave_.empty())
+        return;
+    gate1 = cave_[0].id_;
+    gate2 = cave_[cave_.size() - 1].id_;
 }

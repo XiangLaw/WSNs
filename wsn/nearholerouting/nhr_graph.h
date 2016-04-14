@@ -19,6 +19,8 @@ public:
 
     Point traceBack(int &);
 
+    void getGateNodeIds(int &, int &);
+
 private:
     Point agent_;
     Point endpoint_;
@@ -26,7 +28,6 @@ private:
     map<Point, Point> trace_;
     map<Point, int> level_;
     vector<BoundaryNode> hole_;
-    Line gate_line_;
     vector<BoundaryNode> cave_;
 
     void constructGraph();

@@ -42,14 +42,14 @@ struct POLAR_ORDER {
 
 class NHRAgent : public BoundHoleAgent {
 private:
-    Angle delta_;
+    double delta_; // scale factor
 
     vector<BoundaryNode> hole_;
     vector<BoundaryNode> octagon_hole_;
     AgentBroadcastTimer broadcast_timer_;
     Point endpoint_; // endpoint of the node
     bool isPivot_; // node that can go straight to the gate
-    double scale_factor_;
+    int gate1_, gate2_; // store id of gate nodes if node is inside a cave
 
     void createHole(Packet *p);
 
@@ -63,19 +63,25 @@ private:
 
     bool canBroadcast();
 
+    void calculateScaleFactor(double d);
+
     double distanceToPolygon(node *polygon);
 
     void sendData(Packet *p);
 
     void recvData(Packet *p);
 
-    Point calculateDestEndpoint(Point, int &);
+    Point calculateDestEndpoint(Point, int &, int &, int &);
 
     bool determineOctagonAnchorPoints(Packet *);
 
     bool sdPolygonIntersect(Packet *);
 
-    void bypassHole(Packet *, Point *, Point *, vector<Point>);
+    void bypassHole(Packet *, Point *, Point *, vector<BoundaryNode>);
+
+    void findLimitAnchorPoint(Point *, int, int, vector<BoundaryNode>, vector<BoundaryNode>, int &, int &);
+
+    void findViewLimitVertices(Point, vector<BoundaryNode>, int &, int &);
 
     bool isPointInsidePolygon(Point, vector<BoundaryNode>);
 
@@ -85,7 +91,7 @@ private:
 
     void dumpBroadcastRegion();
 
-    void dumpScalePolygon(vector<Point>, Point);
+    void dumpScalePolygon(vector<BoundaryNode>, Point);
 
 public:
     NHRAgent();
