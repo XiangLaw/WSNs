@@ -223,8 +223,9 @@ static const packet_t PT_MBC = 91;
 static const packet_t PT_COVERAGEONLINE = 92;
 static const packet_t PT_TAAGENT = 93; // topological approach base class
 static const packet_t PT_CORBAL = 94;
+static const packet_t PT_HACH = 95;
 
-static packet_t       PT_NTYPE = 95; 			// This MUST be the LAST one
+static packet_t       PT_NTYPE = 96; 			// This MUST be the LAST one
 
 enum packetClass
 {
@@ -466,7 +467,7 @@ public:
 		name_[PT_COVERAGEONLINE] = "COVERAGEONLINE";
 		name_[PT_TAAGENT] = "TAAGENT";
 		name_[PT_CORBAL] = "CORBAL";
-
+		name_[PT_HACH] = "HACH";
 		name_[PT_NTYPE]= "undefined";
 	}
 	static int addPacket(char *name);

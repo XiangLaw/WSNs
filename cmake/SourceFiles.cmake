@@ -281,6 +281,7 @@ set(OBJ_CC
   wsn/coverageonline/coverageonline.cc wsn/coverageonline/coverageonline_packet_data.cc
   wsn/topologicalnetwork/taagent.cc
   wsn/corbal/corbal.cc wsn/corbal/corbal_packet_data.cc
+wsn/hach/hach.cc wsn/hach/hach_packet_data.cc
   ${OBJ_STL}
 )
 set(OBJ_C

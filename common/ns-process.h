@@ -117,6 +117,8 @@ enum AppDataType {
 	MBC_DATA,
 	// Corbal
 	CORBAL_DATA,
+	// HACH
+	HACH_DATA,
 };
 
 // Interface for generic application-level data unit. It should know its 

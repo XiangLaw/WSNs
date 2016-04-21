@@ -202,6 +202,7 @@ set protolist {
 	MBC
 	TAAGENT
 	CORBAL
+	HACH
 # WSN-EXT
 	GREEDY
 # Other:
