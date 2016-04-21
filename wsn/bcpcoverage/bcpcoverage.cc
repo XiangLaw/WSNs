@@ -54,7 +54,7 @@ int BCPCoverageAgent::command(int argc, const char *const *argv) {
         runTimeCounter.start();
         bcpDetection();
         // dumpBoundaryDetect();
-        boundhole_timer_.resched(randSend_.uniform(10.0, 30.0));
+        boundhole_timer_.resched(10 + 0.02 * my_id_);
         return TCL_OK;
     }
 
