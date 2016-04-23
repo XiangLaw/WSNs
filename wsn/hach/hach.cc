@@ -33,13 +33,17 @@ HACHTimer::expire(Event *e) {
 }
 
 // ------------------------ Agent ------------------------ //
-HACHAgent::HACHAgent() : GPSRAgent(), boundhole_timer_(this, &HACHAgent::holeBoundaryDetection) {
+HACHAgent::HACHAgent() : GPSRAgent(),
+                         boundhole_timer_(this,
+                                          &HACHAgent::holeBoundaryDetection) {
     hole_list_ = NULL;
-    bcp_list = NULL;
+    boundhole_node_list_ = NULL;
+    cover_neighbors_ = NULL;
+    sensor_neighbor_list_ = NULL;
+    isBoundary = false;
 
     bind("range_", &communication_range_);
-    bind("limit_boundhole_hop_", &limit_hop);
-    bind("degree_coverage_", &degree_coverage_);
+    bind("limit_boundhole_hop_", &limit_hop_);
     sensor_range_ = 0.5 * communication_range_;
 }
 
@@ -47,9 +51,7 @@ int HACHAgent::command(int argc, const char *const *argv) {
     if (strcasecmp(argv[1], "start") == 0) {
         startUp();
     } else if (strcasecmp(argv[1], "coverage") == 0) {
-        runTimeCounter.start();
-        bcpDetection();
-        // dumpBoundaryDetect();
+        boundaryNodeDetection();
         boundhole_timer_.resched(10 + 0.02 * my_id_);
         return TCL_OK;
     }
@@ -59,14 +61,20 @@ int HACHAgent::command(int argc, const char *const *argv) {
 
 void HACHAgent::recv(Packet *p, Handler *h) {
     struct hdr_cmn *cmh = HDR_CMN(p);
-    struct hdr_ip *iph = HDR_IP(p);
+    struct hdr_hach *ch = HDR_HACH(p);
 
     switch (cmh->ptype()) {
         case PT_HACH:
-            recvHACH(p);
-            break;
-        case PT_BCPCOVERAGE:
-            recvCoverage(p);
+            switch (ch->type_) {
+                case HACH_BOUNDHOLE:
+                    recvCoverage(p);
+                    break;
+                case HACH_HACH:
+                    recvHACH(p);
+                    break;
+                default:
+                    drop(p, "UnknownType");
+            }
             break;
         default:
             GPSRAgent::recv(p, h);
@@ -79,38 +87,56 @@ void HACHAgent::recvCoverage(Packet *p) {
 
     HACHPacketData *data = (HACHPacketData *) p->userdata();
 
-    if (data->size() == 0) {
-        drop(p);
-        return;
-    }
-
     // if the boundhole packet has came back to the initial node
-    node firstNode = data->get_data(0);
-    node lastNode = data->get_data(data->size() - 1);
-    lastNode.id_ = cmh->last_hop_;
-    node *nextBCP = getNextBCP(&lastNode);
-    if (data->size() >= 3 && firstNode.id_ == nextBCP->id_) {
-        node *head = NULL;
-        for (int i = data->size() - 1; i >= 0; i--) {
-            node n = data->get_data(i);
-            node *item = new node();
-            item->x_ = n.x_;
-            item->y_ = n.y_;
-            item->id_ = n.id_;
-            item->next_ = head;
-            head = item;
+    if (iph->saddr() == my_id_) {
+        if (data->size() < 3) {
+            drop(p);
+            return;
         }
 
-        polygonHole *newHole = new polygonHole();
-        newHole->node_list_ = head;
-        newHole->next_ = hole_list_;
-        hole_list_ = newHole;
+        node firstNode = data->get_intersect_data(0);
+        node secondNode = data->get_intersect_data(1);
+        if (firstNode.id_ == cmh->last_hop_ && secondNode.id_ == my_id_) {
+            node nexthop = secondNode;
+            nexthop.id_ = getNextSensorNeighbor(cmh->last_hop_)->id_;
+            node lasthop = firstNode;
+            lasthop.id_ = my_id_;
 
-        dumpCoverageBoundhole(newHole);
-        drop(p, "BCPCOVERAGE");
+            node *intersect_head = NULL;
+            node *node_head = NULL;
 
-        sendHACH(lastNode, *nextBCP);
-        return;
+            for (int i = 0; i < data->size(); i++) {
+                node n_intersect = data->get_intersect_data(i);
+                node *intersect = new node();
+                intersect->x_ = n_intersect.x_;
+                intersect->y_ = n_intersect.y_;
+                intersect->id_ = n_intersect.id_;
+                intersect->next_ = intersect_head;
+                intersect_head = intersect;
+
+                node n_node = data->get_node_data(i);
+                node *node_ = new node();
+                node_->x_ = n_node.x_;
+                node_->y_ = n_node.y_;
+                node_->id_ = n_node.id_;
+                node_->next_ = node_head;
+                node_head = node_;
+            }
+
+            polygonHole *newHole = new polygonHole();
+            newHole->node_list_ = intersect_head;
+            newHole->next_ = hole_list_;
+            hole_list_ = newHole;
+
+            polygonHole *newNodeHole = new polygonHole();
+            newNodeHole->node_list_ = node_head;
+            newNodeHole->next_ = boundhole_node_list_;
+            boundhole_node_list_ = newNodeHole;
+            data->dump();
+            drop(p, "HACH_COVERAGE");
+            sendHACH(lasthop, nexthop);
+            return;
+        }
     }
 
     if (iph->ttl_-- <= 0) {
@@ -123,187 +149,117 @@ void HACHAgent::recvCoverage(Packet *p) {
         return;
     }
 
-    data->add(nextBCP->id_, nextBCP->x_, nextBCP->y_);
+    node *nexthop = getNextSensorNeighbor(cmh->last_hop_);
+    if (nexthop == NULL) {
+        drop(p, DROP_RTR_NO_ROUTE);
+        return;
+    }
+
+    sensor_neighbor *n = getSensorNeighbor(cmh->last_hop_);
+    data->add(n->id_, n->i2_.x_, n->i2_.y_, n->x_, n->y_);
 
     cmh->direction() = hdr_cmn::DOWN;
-    cmh->next_hop_ = nextBCP->id_;
+    cmh->next_hop_ = nexthop->id_;
     cmh->last_hop_ = my_id_;
 
-    iph->daddr() = nextBCP->id_;
+    iph->daddr() = nexthop->id_;
 
     send(p, 0);
 }
 
-/*----------------BCP DETECTION------------------------*/
-bool HACHAgent::checkBCP(node *pNode) {
-    int count = 0;
-    for (node *temp = neighbor_list_; temp; temp = temp->next_) {
-        double d = G::distance(temp, pNode);
-        if (fabs(d - sensor_range_) < EPSILON) continue;
-        else if (d < sensor_range_) {
-            count++;
-        }
-
-        if (count >= degree_coverage_) return false;
+/*----------------------------BOUNDARY DETECTION------------------------------------------------------*/
+bool HACHAgent::boundaryNodeDetection() {
+    bool isOnBoundary = false;
+    if (sensor_neighbor_list_ == NULL) return true;
+    if (sensor_neighbor_list_->next_ == NULL) {
+        cover_neighbors_ = new stuckangle();
+        cover_neighbors_->a_ = sensor_neighbor_list_;
+        cover_neighbors_->b_ = sensor_neighbor_list_;
+        cover_neighbors_->next_ = NULL;
+        return true;
     }
 
-    return true;
-}
+    for (sensor_neighbor *temp = sensor_neighbor_list_; temp; temp = (sensor_neighbor *) temp->next_) {
+        sensor_neighbor *next = temp->next_ == NULL ? sensor_neighbor_list_ : (sensor_neighbor *) temp->next_;
 
-node *HACHAgent::getBCP(Point point) {
-    for (node *tmp = bcp_list; tmp; tmp = tmp->next_)
-        if (fabs(tmp->x_ - point.x_) < EPSILON && fabs(tmp->y_ - point.y_) < EPSILON) return tmp;
-    return NULL;
-}
+        if (G::distance(temp->i2_, next) - sensor_range_ > EPSILON) {
+            isOnBoundary = true;
+            stuckangle *p = new stuckangle();
+            p->a_ = temp;
+            p->b_ = next;
+            p->next_ = NULL;
 
-void HACHAgent::updateBCP(node *pNode, node *compare) {
-    neighbor *n = getNeighbor(pNode->id_);
-    Angle angle = G::angle(this, n, this, pNode);
-    Angle angle1 = G::angle(this, compare, this, pNode);
-    if (angle1 > angle) {
-        pNode->id_ = compare->id_;
-    }
-}
-
-void HACHAgent::bcpDetection() {
-    for (sensor_neighbor *n = (sensor_neighbor *) neighbor_list_; n; n = (sensor_neighbor *) n->next_) {
-        // add intersect 1
-        node *temp = getBCP(n->i1_);
-        if (temp == NULL) {
-            temp = new node;
-            temp->x_ = n->i1_.x_;
-            temp->y_ = n->i1_.y_;
-            temp->id_ = n->id_;
-            temp->next_ = NULL;
-
-            if (checkBCP(temp)) {
-                if (bcp_list == NULL) {
-                    bcp_list = temp;
-                } else {
-                    Angle angle = G::angle(this, bcp_list, this, temp);
-                    node *i;
-                    for (i = bcp_list; i->next_; i = i->next_) {
-                        if (G::angle(this, bcp_list, this, i->next_) > angle) {
-                            temp->next_ = i->next_;
-                            i->next_ = temp;
-                            break;
-                        }
-                    }
-
-                    if (i->next_ == NULL)    // if angle is maximum, add temp to end of neighobrs list
-                    {
-                        i->next_ = temp;
-                    }
-                }
+            if (cover_neighbors_ == NULL) {
+                cover_neighbors_ = p;
+            } else {
+                cover_neighbors_->next_ = p;
             }
-        } else {
-            updateBCP(temp, n);
-        }
-
-        // check intersect 2
-        if (n->i2_.x_ == n->i1_.x_ && n->i2_.y_ == n->i1_.y_) continue;
-        // if not same as intersect 1, add intersect 2
-        temp = getBCP(n->i2_);
-        if (temp == NULL) {
-            temp = new node;
-            temp->x_ = n->i2_.x_;
-            temp->y_ = n->i2_.y_;
-            temp->id_ = n->id_;
-            temp->next_ = NULL;
-
-            if (checkBCP(temp)) {
-                if (bcp_list == NULL) {
-                    bcp_list = temp;
-                } else {
-                    Angle angle = G::angle(this, bcp_list, this, temp);
-                    node *i;
-                    for (i = bcp_list; i->next_; i = i->next_) {
-                        if (G::angle(this, bcp_list, this, i->next_) > angle) {
-                            temp->next_ = i->next_;
-                            i->next_ = temp;
-                            break;
-                        }
-                    }
-
-                    if (i->next_ == NULL)    // if angle is maximum, add temp to end of neighobrs list
-                    {
-                        i->next_ = temp;
-                    }
-                }
-            }
-        } else {
-            updateBCP(temp, n);
         }
     }
-}
 
-/*----------------Coverage Hole DETECTION------------------------*/
-node *HACHAgent::getNextBCP(node *pNode) {
-    neighbor *n = getNeighbor(pNode->id_);
-    if (G::angle(this, pNode, this, n) >= M_PI) {
-        node *bcp = getBCP(*pNode);
-        node *next = bcp->next_ == NULL ? bcp_list : bcp->next_;
-        neighbor *next_n = getNeighbor(next->id_);
-        if (G::angle(this, next, this, next_n) >= M_PI) return bcp;
-        else return next;
-    }
-
-    return NULL;
+    this->isBoundary = isOnBoundary;
+    return isOnBoundary;
 }
 
 void HACHAgent::holeBoundaryDetection() {
-    if (bcp_list == NULL) return;
-    Packet *p;
-    hdr_cmn *cmh;
-    hdr_ip *iph;
-    hdr_hach *ch;
+    if (isBoundary) {
+        Packet *p;
+        hdr_cmn *cmh;
+        hdr_ip *iph;
+        hdr_hach *ch;
 
-    for (node *n = bcp_list; n; n = n->next_) {
-        node *nextBCP = getNextBCP(n);
-        if (nextBCP != NULL) continue;
+        for (stuckangle *sa = cover_neighbors_; sa; sa = sa->next_) {
+            p = allocpkt();
 
-        p = allocpkt();
+            HACHPacketData *chpkt_data = new HACHPacketData();
+            sensor_neighbor *n = getSensorNeighbor(sa->a_->id_);
+            chpkt_data->add(n->id_, n->i2_.x_, n->i2_.y_, n->x_, n->y_);
+            p->setdata(chpkt_data);
 
-        HACHPacketData *chpkt_data = new HACHPacketData();
-        chpkt_data->add(n->id_, n->x_, n->y_);
-        p->setdata(chpkt_data);
+            cmh = HDR_CMN(p);
+            iph = HDR_IP(p);
+            ch = HDR_HACH(p);
 
-        cmh = HDR_CMN(p);
-        iph = HDR_IP(p);
-        ch = HDR_HACH(p);
+            cmh->ptype() = PT_HACH;
+            cmh->direction() = hdr_cmn::DOWN;
+            cmh->size() += IP_HDR_LEN + ch->size() + chpkt_data->data_len_;
+            cmh->next_hop_ = sa->b_->id_;
+            cmh->last_hop_ = my_id_;
+            cmh->addr_type_ = NS_AF_INET;
 
-        cmh->ptype() = PT_BCPCOVERAGE;
-        cmh->direction() = hdr_cmn::DOWN;
-        cmh->size() += IP_HDR_LEN + ch->size() + chpkt_data->data_len_;
-        cmh->next_hop_ = n->id_;
-        cmh->last_hop_ = my_id_;
-        cmh->addr_type_ = NS_AF_INET;
+            iph->saddr() = my_id_;
+            iph->daddr() = sa->b_->id_;
+            iph->sport() = RT_PORT;
+            iph->dport() = RT_PORT;
+            iph->ttl_ = limit_hop_;            // more than ttl_ hop => boundary => remove
 
-        iph->saddr() = my_id_;
-        iph->daddr() = n->id_;
-        iph->sport() = RT_PORT;
-        iph->dport() = RT_PORT;
-        iph->ttl_ = limit_hop;            // more than ttl_ hop => boundary => remove
+            ch->type_ = HACH_BOUNDHOLE;
 
-        send(p, 0);
+            send(p, 0);
+        }
     }
 }
 
 /*----------------Utils function----------------------*/
-void
-HACHAgent::startUp() {
+void HACHAgent::startUp() {
     FILE *fp;
-    fp = fopen("BCPCoverageHole.tr", "w");
-    fclose(fp);
-    fp = fopen("PatchingHole.tr", "a");
+    fp = fopen("PatchingHole.tr", "w");
     fclose(fp);
 }
 
-void HACHAgent::addNeighbor(nsaddr_t nid, Point location) {
-    sensor_neighbor *temp = (sensor_neighbor *) getNeighbor(nid);
+void HACHAgent::addNeighbor(nsaddr_t addr, Point p) {
+    GPSRAgent::addNeighbor(addr, p);
+
+    addSensorNeighbor(addr, p, 2); // fixed add level 2 sensor neighbors
+}
+
+void HACHAgent::addSensorNeighbor(nsaddr_t nid, Point location, int level) {
+    sensor_neighbor *temp = getSensorNeighbor(nid);
 
     if (temp == NULL)            // it is a new node
     {
+        if (G::distance(this, location) > level * sensor_range_) return;
+
         temp = new sensor_neighbor;
         temp->id_ = nid;
         temp->x_ = location.x_;
@@ -312,25 +268,82 @@ void HACHAgent::addNeighbor(nsaddr_t nid, Point location) {
         G::circleCircleIntersect(this, sensor_range_, temp, sensor_range_, &temp->i1_, &temp->i2_);
         temp->next_ = NULL;
 
-        if (neighbor_list_ == NULL)        // the list now is empty
+
+        if (sensor_neighbor_list_ == NULL)        // the list now is empty
         {
-            neighbor_list_ = temp;
+            sensor_neighbor_list_ = temp;
         }
-        else                        // the nodes list is not empty
+        else    // the nodes list is not empty
         {
-            Angle angle = G::angle(this, neighbor_list_, this, temp);
-            node *i;
-            for (i = neighbor_list_; i->next_; i = i->next_) {
-                if (G::angle(this, neighbor_list_, this, i->next_) > angle) {
-                    temp->next_ = i->next_;
-                    i->next_ = temp;
-                    break;
+            Angle angle = G::angle(*this, sensor_neighbor_list_->i1_, *this, temp->i1_);
+            sensor_neighbor *i, *next, *i2 = NULL;
+
+            for (i = sensor_neighbor_list_; i->next_; i = (sensor_neighbor *) i->next_) {
+                next = (sensor_neighbor *) i->next_;
+                double a = G::angle(*this, sensor_neighbor_list_->i1_, *this, next->i1_);
+                if (a == angle) {
+                    Angle angle2 = G::angle(*this, temp->i1_, *this, temp->i2_);
+                    if (G::angle(*this, next->i1_, *this, next->i2_) < angle2) {
+                        continue;
+                    } else {
+                        temp->next_ = i->next_;
+                        i->next_ = temp;
+                        break;
+                    }
+                }
+
+                if (a > angle) {
+                    Angle ai_ = G::angle(*this, i->i1_, *this, i->i2_);
+                    if (G::angle(*this, i->i1_, *this, temp->i1_) < ai_
+                        && G::angle(*this, i->i1_, *this, temp->i2_) < ai_) {
+                        break;
+                    } else {
+                        i->next_ = temp;
+                        Angle atemp_ = G::angle(*this, temp->i1_, *this, temp->i2_);
+                        for (i2 = next; i2; i2 = (sensor_neighbor *) i2->next_) {
+                            if (G::angle(*this, temp->i1_, *this, i2->i1_) < atemp_
+                                && G::angle(*this, temp->i1_, *this, i2->i2_) < atemp_) {
+                                continue;
+                            } else {
+                                break;
+                            }
+                        }
+
+                        temp->next_ = i2;
+                        if (i2 == NULL) {
+                            for (i2 = sensor_neighbor_list_; i2; i2 = (sensor_neighbor *) i2->next_) {
+                                if (G::angle(*this, temp->i1_, *this, i2->i1_) < atemp_
+                                    && G::angle(*this, temp->i1_, *this, i2->i2_) < atemp_) {
+                                    continue;
+                                } else {
+                                    break;
+                                }
+                            }
+                            sensor_neighbor_list_ = i2;
+                        }
+                        break;
+                    }
                 }
             }
 
-            if (i->next_ == NULL)    // if angle is maximum, add temp to end of neighobrs list
+            if (i->next_ == NULL) // if angle is maximum, add temp to end of neighobrs list
             {
-                i->next_ = temp;
+                Angle ai_ = G::angle(*this, i->i1_, *this, i->i2_);
+                if (G::angle(*this, i->i1_, *this, temp->i1_) < ai_
+                    && G::angle(*this, i->i1_, *this, temp->i2_) < ai_) {
+                } else {
+                    i->next_ = temp;
+                    Angle atemp_ = G::angle(*this, temp->i1_, *this, temp->i2_);
+                    for (i2 = sensor_neighbor_list_; i2; i2 = (sensor_neighbor *) i2->next_) {
+                        if (G::angle(*this, temp->i1_, *this, i2->i1_) < atemp_
+                            && G::angle(*this, temp->i1_, *this, i2->i2_) < atemp_) {
+                            continue;
+                        } else {
+                            break;
+                        }
+                    }
+                    sensor_neighbor_list_ = i2;
+                }
             }
         }
     }
@@ -342,17 +355,21 @@ void HACHAgent::addNeighbor(nsaddr_t nid, Point location) {
     }
 }
 
-/*-------------------------- DUMP --------------*/
-void HACHAgent::dumpCoverageBoundhole(polygonHole *hole) {
-    FILE *fp;
-    fp = fopen("BCPCoverageHole.tr", "a");
-    for (node *temp = hole->node_list_; temp; temp = temp->next_) {
-        fprintf(fp, "%d\t%f\t%f\n", temp->id_, temp->x_, temp->y_);
+sensor_neighbor *HACHAgent::getSensorNeighbor(nsaddr_t addr) {
+    for (sensor_neighbor *temp = sensor_neighbor_list_; temp; temp = (sensor_neighbor *) temp->next_) {
+        if (temp->id_ == addr) return temp;
     }
-    fprintf(fp, "\n");
-    fclose(fp);
+    return NULL;
 }
 
+node *HACHAgent::getNextSensorNeighbor(nsaddr_t prev_node) {
+    for (stuckangle *pair = cover_neighbors_; pair; pair = pair->next_) {
+        if (prev_node == pair->a_->id_) return pair->b_;
+    }
+    return NULL;
+}
+
+/*-------------------------- DUMP --------------*/
 void HACHAgent::dumpPatchingHole(Point p) {
     FILE *fp;
     fp = fopen("PatchingHole.tr", "a");
@@ -367,23 +384,22 @@ void HACHAgent::recvHACH(Packet *p) {
 
     if (iph->saddr() == my_id_) {
         drop(p, "HPA_FINISH");
-        runTimeCounter.finish();
         return;
     }
 
     Point cp = ch->cp_;
-    sensor_neighbor *lasthop = (sensor_neighbor *) getNeighbor(cmh->last_hop_);
-    node last;
-    last.x_ = lasthop->i2_.x_;
-    last.y_ = lasthop->i2_.y_;
-    last.id_ = lasthop->id_;
-    node *next = getNextBCP(&last);
+    node next;
+    next.id_ = getNextSensorNeighbor(cmh->last_hop_)->id_;
+    sensor_neighbor *neighbor = getSensorNeighbor(next.id_);
+    next.x_ = neighbor->i1_.x_;
+    next.y_ = neighbor->i1_.y_;
+
     Point a, b;
 
     bool inside1 = G::distance(next, cp) <= sensor_range_ + EPSILON;
     if (!inside1) {
-        b.x_ = next->x_;
-        b.y_ = next->y_;
+        b.x_ = next.x_;
+        b.y_ = next.y_;
 
         Point n1, n2;
         G::circleCircleIntersect(&cp, sensor_range_, this, sensor_range_, &n1, &n2);
@@ -393,9 +409,9 @@ void HACHAgent::recvHACH(Packet *p) {
     }
 
     cmh->direction() = hdr_cmn::DOWN;
-    cmh->next_hop_ = next->id_;
+    cmh->next_hop_ = next.id_;
     cmh->last_hop_ = my_id_;
-    iph->daddr() = next->id_;
+    iph->daddr() = next.id_;
 
     send(p, 0);
 }
@@ -421,7 +437,7 @@ void HACHAgent::sendHACH(node lasthop, node nexthop) {
     iph->daddr() = nexthop.id_;
     iph->sport() = RT_PORT;
     iph->dport() = RT_PORT;
-    iph->ttl_ = limit_hop;            // more than ttl_ hop => boundary => remove
+    iph->ttl_ = limit_hop_;            // more than ttl_ hop => boundary => remove
 
     Point a, b;
     a.x_ = lasthop.x_;
@@ -429,6 +445,7 @@ void HACHAgent::sendHACH(node lasthop, node nexthop) {
     b.x_ = nexthop.x_;
     b.y_ = nexthop.y_;
     ch->cp_ = calculatePatchingPoint(a, b);
+    ch->type_ = HACH_HACH;
 
     send(p, 0);
 }
@@ -449,7 +466,7 @@ Point HACHAgent::calculatePatchingPoint(Point a, Point b) {
     }
 
     Point n1, n2;
-    G::circleLineIntersect(a, sensor_range_, midpoint, tmp, &n1, &n2);
+    G::circleLineIntersect(a, sensor_range_ - 0.01, midpoint, tmp, &n1, &n2);
 
     if (G::orientation(a, n1, b) == 1) {
         cp = n1;

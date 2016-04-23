@@ -15,12 +15,13 @@ public:
     HACHPacketData(HACHPacketData &d);	// Copy
 
     // collect new id
-    void add(nsaddr_t id, double x, double y);
+    void add(nsaddr_t id, double x, double y, double x_node, double y_node);
 
     // get all ids collected
     void dump();
 
-    node get_data(int index);
+    node get_intersect_data(int index);
+    node get_node_data(int index);
 
     int indexOf(node);
     int indexOf(nsaddr_t id, double x, double y);
