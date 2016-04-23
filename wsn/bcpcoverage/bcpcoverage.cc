@@ -160,10 +160,33 @@ node *BCPCoverageAgent::getBCP(Point point) {
 
 void BCPCoverageAgent::updateBCP(node *pNode, node *compare) {
     neighbor *n = getNeighbor(pNode->id_);
-    Angle angle = G::angle(this, n, this, pNode);
-    Angle angle1 = G::angle(this, compare, this, pNode);
-    if (angle1 > angle) {
-        pNode->id_ = compare->id_;
+    int orientCompare = G::orientation(*compare, *this, *pNode);
+    int orientN = G::orientation(*n, *this, *pNode);
+
+    if (orientN == 0) {
+        if (orientCompare == 1) {
+            pNode->id_ = compare->id_;
+        }
+        return;
+    } else if (orientN == 1){
+        if (orientCompare == 1) {
+            Angle angle = G::angle(this, n, this, pNode);
+            Angle angle1 = G::angle(this, compare, this, pNode);
+            if (angle1 < angle) {
+                pNode->id_ = compare->id_;
+            }
+        }
+        return;
+    } else { // == 2
+        if (orientCompare == 1 || orientCompare == 0) {
+            pNode->id_ = compare->id_;
+        } else { // == 2
+            Angle angle = G::angle(this, n, this, pNode);
+            Angle angle1 = G::angle(this, compare, this, pNode);
+            if (angle1 < angle) {
+                pNode->id_ = compare->id_;
+            }
+        }
     }
 }
 
@@ -244,10 +267,14 @@ node *BCPCoverageAgent::getNextBCP(node *pNode) {
     neighbor *n = getNeighbor(pNode->id_);
     if (G::angle(this, pNode, this, n) >= M_PI) {
         node *bcp = getBCP(*pNode);
-        node *next = bcp->next_ == NULL ? bcp_list : bcp->next_;
-        neighbor *next_n = getNeighbor(next->id_);
-        if (G::angle(this, next, this, next_n) >= M_PI) return bcp;
-        else return next;
+        node *next;
+        neighbor *next_n;
+        if (bcp->id_ == pNode->id_) {
+            next = bcp->next_ == NULL ? bcp_list : bcp->next_;
+            return next;
+        } else {
+            return bcp;
+        }
     }
 
     return NULL;
