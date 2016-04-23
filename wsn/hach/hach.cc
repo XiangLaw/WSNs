@@ -243,7 +243,7 @@ void HACHAgent::holeBoundaryDetection() {
 /*----------------Utils function----------------------*/
 void HACHAgent::startUp() {
     FILE *fp;
-    fp = fopen("PatchingHole.tr", "w");
+    fp = fopen("PatchingHole.tr", "a");
     fclose(fp);
 }
 
@@ -466,16 +466,18 @@ Point HACHAgent::calculatePatchingPoint(Point a, Point b) {
     }
 
     Point n1, n2;
-    G::circleLineIntersect(a, sensor_range_ - 0.01, midpoint, tmp, &n1, &n2);
-
-    if (G::orientation(a, n1, b) == 1) {
-        cp = n1;
-        dumpPatchingHole(n1);
-        printf("NewPointX:%fNewPointY:%f\n", n1.x_, n1.y_);
+    if(G::circleLineIntersect(a, sensor_range_ - 0.1, midpoint, tmp, &n1, &n2) == 0) {
+        cp = midpoint;
     } else {
-        cp = n2;
-        dumpPatchingHole(n2);
-        printf("NewPointX:%fNewPointY:%f\n", n2.x_, n2.y_);
+        if (G::orientation(a, n1, b) == 1) {
+            cp = n1;
+            dumpPatchingHole(n1);
+            printf("NewPointX:%fNewPointY:%f\n", n1.x_, n1.y_);
+        } else {
+            cp = n2;
+            dumpPatchingHole(n2);
+            printf("NewPointX:%fNewPointY:%f\n", n2.x_, n2.y_);
+        }
     }
 
     return cp;
