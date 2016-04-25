@@ -28,7 +28,6 @@ NHRAgent::NHRAgent() : BoundHoleAgent(), broadcast_timer_(this) {
     // initialize default value
     endpoint_.x_ = this->x_;
     endpoint_.y_ = this->y_; // default: endpoint of node is itself
-    gate1_ = gate2_ = -1;
     isPivot_ = true;
     delta_ = 2;
 
@@ -342,7 +341,6 @@ void NHRAgent::broadcastHCI() {
     NHRGraph *graph = new NHRGraph(agent, hole_);
     endpoint_ = graph->endpoint();
     isPivot_ = graph->isPivot();
-    graph->getGateNodeIds(gate1_, gate2_);
     delete graph;
 
     send(p, 0);
@@ -394,7 +392,6 @@ void NHRAgent::recvHCI(Packet *p) {
     NHRGraph *graph = new NHRGraph(agent, hole_);
     endpoint_ = graph->endpoint();
     isPivot_ = graph->isPivot();
-    graph->getGateNodeIds(gate1_, gate2_);
     delete graph;
 
     dumpBroadcastRegion();
@@ -547,7 +544,10 @@ void NHRAgent::recvData(Packet *p) {
                     edh->ap_index = 0;
                     edh->type = NHR_CBR_AWARE_DESTINATION;
                 } else {
-                    --edh->ap_index;
+                    while(edh->ap_index != 2 && nexthop == NULL) {
+                        nexthop = getNeighborByGreedy(edh->anchor_points[edh->ap_index]);
+                        --edh->ap_index;
+                    }
                 }
                 break;
             case NHR_CBR_AWARE_DESTINATION:
@@ -635,14 +635,7 @@ bool NHRAgent::determineOctagonAnchorPoints(Packet *p) {
     }
     dumpScalePolygon(scaleHole, I);
     // generate new anchor points
-    struct SourceDest sourceDest;
-    sourceDest.source = *this;
-    sourceDest.dest = hdc->anchor_points[0];
-    sourceDest.s_gate1 = gate1_;
-    sourceDest.s_gate2 = gate2_;
-    sourceDest.d_gate1 = d_gate1;
-    sourceDest.d_gate2 = d_gate2;
-    bypassHole(p, sourceDest, scaleHole);
+    bypassHole(p, *this, hdc->anchor_points[0], scaleHole);
     return true;
 }
 
@@ -675,27 +668,28 @@ bool NHRAgent::isPointInsidePolygon(Point p, vector<BoundaryNode> polygon) {
     return odd;
 }
 
-void NHRAgent::bypassHole(Packet *p, struct SourceDest sourceDest, vector<BoundaryNode> scaleOctagon) {
+void NHRAgent::bypassHole(Packet *p, Point source, Point dest, vector<BoundaryNode> scaleOctagon) {
     struct hdr_nhr *edh = HDR_NHR(p);
 
     int si1, si2, di1, di2;
-    Line sd = G::line(sourceDest.source, sourceDest.dest);
+    Line sd = G::line(source, dest);
     vector<Point> aps;
 
-    vector<BoundaryNode> convex;
-    for (int i = 0; i < hole_.size(); i++) {
-        if (hole_[i].is_convex_hull_boundary_) {
-            convex.push_back(hole_[i]);
-        }
-    }
+    Point SI1, SI2;
+    Point DI1, DI2;
 
-    findLimitAnchorPoint(&sourceDest.source, sourceDest.s_gate1, sourceDest.s_gate2, scaleOctagon, convex, si1, si2);
-    findLimitAnchorPoint(&sourceDest.dest, sourceDest.d_gate1, sourceDest.d_gate2, scaleOctagon, convex, di1, di2);
+    findLimitAnchorPoint(source, dest, scaleOctagon, si1, si2, SI1, SI2);
+    findLimitAnchorPoint(dest, source, scaleOctagon, di1, di2, DI1, DI2);
 
     if (G::position(scaleOctagon[si1], sd) * G::position(scaleOctagon[di1], sd) < 0) {
         int tmp = si2;
         si2 = si1;
         si1 = tmp;
+    }
+    if (G::position(SI1, sd) * G::position(DI1, sd) < 0) {
+        Point tmp = SI2;
+        SI2 = SI1;
+        SI1 = tmp;
     }
 
     // octagon order: counter clockwise
@@ -713,27 +707,36 @@ void NHRAgent::bypassHole(Packet *p, struct SourceDest sourceDest, vector<Bounda
     }
 
     // s - si1 - di1 - d
-    dis = G::distance(sourceDest.source, scaleOctagon[si1]);
+    dis = G::distance(source, SI1);
+    dis += G::distance(SI1, scaleOctagon[si1]);
     for (int i = si1; i < di1; i++) {
         dis += G::distance(scaleOctagon[i], scaleOctagon[i + 1]);
     }
-    dis += G::distance(scaleOctagon[di1], sourceDest.dest);
+    dis += G::distance(scaleOctagon[di1], DI1);
+    dis += G::distance(DI1, dest);
     length = dis;
+
+    aps.push_back(DI1);
     for (int i = di1; i >= si1; --i) {
         aps.push_back(scaleOctagon[i]);
     }
+    aps.push_back(SI1);
 
-    // s - si2 - di2 - d
-    dis = G::distance(sourceDest.source, scaleOctagon[si2]);
+    // s - sp - si2 - i2 - i4 - di2 - dp - d
+    dis = G::distance(source, SI2);
+    dis += G::distance(SI2, scaleOctagon[si2]);
     for (int i = di2; i < si2; ++i) {
         dis += G::distance(scaleOctagon[i], scaleOctagon[i + 1]);
     }
-    dis += G::distance(scaleOctagon[di2], sourceDest.dest);
+    dis += G::distance(scaleOctagon[di2], DI2);
+    dis += G::distance(DI2, dest);
     if (dis < length) {
         vector<Point>().swap(aps);
+        aps.push_back(DI2);
         for (int i = di2; i <= si2; ++i) {
             aps.push_back(scaleOctagon[i]);
         }
+        aps.push_back(SI2);
     }
 
     // update routing table
@@ -742,45 +745,23 @@ void NHRAgent::bypassHole(Packet *p, struct SourceDest sourceDest, vector<Bounda
     }
 }
 
-void NHRAgent::findLimitAnchorPoint(Point *point, int gate1, int gate2,
-                                    vector<BoundaryNode> scaleHole, vector<BoundaryNode> hole,
-                                    int &i1, int &i2) {
-    if (!isPointInsidePolygon(*point, scaleHole)) {
-        // point is outside scaleHole
-        findViewLimitVertices(*point, scaleHole, i1, i2);
+void NHRAgent::findLimitAnchorPoint(Point point, Point spoint, vector<BoundaryNode> scaleHole,
+                                    int &i1, int &i2, Point &I1, Point &I2) {
+    if (!isPointInsidePolygon(point, scaleHole)) { // point is outside scaleHole
+        findViewLimitVertices(point, scaleHole, i1, i2);
+        I1 = scaleHole[i1];
+        I2 = scaleHole[i2];
+        return;
     } else {
-        int it1, it2;
-        it1 = it2 = 0;
-        if (gate1 != -1 && gate2 != -1) { // work around for floating point round error
-            for (int i = 0; i < hole.size(); i++) {
-                if (hole[i].id_ == gate1) {
-                    it1 = i;
-                } else if (hole[i].id_ == gate2) {
-                    it2 = i;
-                }
-            }
-        } else {
-            // point lies between scaleHole & hole
-            findViewLimitVertices(*point, hole, it1, it2);
-        }
-        Line l1 = G::line(point, hole.at((uint) it1));
-        Line l2 = G::line(point, hole.at((uint) it2));
-        for (int i = 0; i < 8; i++) {
+        Line sd = G::line(point, spoint);
+        for (int i = 0; i < scaleHole.size(); i++) {
             Point ins;
-            if (G::lineSegmentIntersection(&scaleHole[i], &scaleHole[(i + 1) % 8], l1, ins) &&
-                G::onSegment(*point, hole.at((uint) it1), ins)) {
-                if (G::orientation(*point, scaleHole[i], ins) == 1) {
-                    i1 = i;
-                } else {
-                    i1 = (i + 1) % 8;
-                }
-            } else if (G::lineSegmentIntersection(&scaleHole[i], &scaleHole[(i + 1) % 8], l2, ins) &&
-                       G::onSegment(*point, hole.at((uint) it2), ins)) {
-                if (G::orientation(*point, scaleHole[i], ins) == 2) {
-                    i2 = i;
-                } else {
-                    i2 = (i + 1) % 8;
-                }
+            if (G::lineSegmentIntersection(&scaleHole[i % 8], &scaleHole[(i + 1) % 8], sd, ins) &&
+                G::onSegment(spoint, point, ins)) {
+                I1 = I2 = ins;
+                i1 = i;
+                i2 = (i + 1) % 8;
+                break;
             }
         }
     }

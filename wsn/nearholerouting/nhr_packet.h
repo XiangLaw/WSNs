@@ -14,7 +14,7 @@
 struct hdr_nhr {
     nsaddr_t daddr_;
     Point dest_;
-    Point anchor_points[8];
+    Point anchor_points[10];
     // 0. dest's endpoint
     // 1. source's endpoint
     // 2 -> 7. octagon vertices
@@ -23,7 +23,7 @@ struct hdr_nhr {
     int dest_level;
 
     inline int size() {
-        return 9 * sizeof(Point) + 2 * sizeof(uint8_t) + sizeof(nsaddr_t) + sizeof(int);
+        return 11 * sizeof(Point) + 2 * sizeof(uint8_t) + sizeof(nsaddr_t) + sizeof(int);
     }
 
     static int offset_;
