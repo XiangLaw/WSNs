@@ -40,6 +40,15 @@ struct POLAR_ORDER {
     struct BoundaryNode pivot;
 };
 
+struct SourceDest {
+    Point source;
+    Point dest;
+    int s_gate1;
+    int s_gate2;
+    int d_gate1;
+    int d_gate2;
+};
+
 class NHRAgent : public BoundHoleAgent {
 private:
     double delta_; // scale factor
@@ -77,7 +86,7 @@ private:
 
     bool sdPolygonIntersect(Packet *);
 
-    void bypassHole(Packet *, Point *, Point *, vector<BoundaryNode>);
+    void bypassHole(Packet *, struct SourceDest, vector<BoundaryNode>);
 
     void findLimitAnchorPoint(Point *, int, int, vector<BoundaryNode>, vector<BoundaryNode>, int &, int &);
 
