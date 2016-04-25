@@ -8,9 +8,11 @@
 struct hdr_hach {
     Point cp_;
     uint8_t type_;
+    nsaddr_t prev_;
+
 
     inline int size() {
-        return sizeof(Point) + sizeof(uint8_t);
+        return sizeof(Point) + sizeof(uint8_t) + sizeof(nsaddr_t));
     }
 
     static int offset_;

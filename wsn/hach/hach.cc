@@ -382,7 +382,7 @@ void HACHAgent::recvHACH(Packet *p) {
     hdr_ip *iph = HDR_IP(p);
     hdr_hach *ch = HDR_HACH(p);
 
-    if (iph->saddr() == my_id_) {
+    if (ch->prev_ == cmh->last_hop_ && iph->saddr() == my_id_) {
         drop(p, "HPA_FINISH");
         return;
     }
@@ -446,6 +446,7 @@ void HACHAgent::sendHACH(node lasthop, node nexthop) {
     b.y_ = nexthop.y_;
     ch->cp_ = calculatePatchingPoint(a, b);
     ch->type_ = HACH_HACH;
+    ch->prev_ = lasthop.id_;    
 
     send(p, 0);
 }
