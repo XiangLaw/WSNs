@@ -496,7 +496,7 @@ void NHRAgent::sendData(Packet *p) {
 
     iph->saddr() = my_id_;
     iph->daddr() = -1;
-    iph->ttl_ = 4 * IP_DEF_TTL;
+    iph->ttl_ = 6 * IP_DEF_TTL;
 }
 
 void NHRAgent::recvData(Packet *p) {

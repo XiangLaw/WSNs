@@ -1,9 +1,9 @@
-# Script for WisSim simulator. Last edit 3/30/2016 9:06:10 PM
+# Script for WisSim simulator. Last edit 4/26/2016 3:29:45 PM
 
 set opt(x)	1000	;# X dimension of the topography
 set opt(y)	1000	;# Y dimension of the topography
 set opt(stop)	500	;# simulation time
-set opt(nn)	1394	;# number of nodes
+set opt(nn)	1440	;# number of nodes
 set opt(tr)	Trace.tr	;# trace file
 set opt(nam)	nam.out.tr
 
@@ -58,7 +58,6 @@ Agent/NHR set limit_boundhole_hop_ 150
 Agent/NHR set energy_checkpoint_ 995
 Agent/NHR set hello_period_ 0
 Agent/NHR set range_ 40
-Agent/NHR set r_ 50
 
 Agent/UDP set fid_ 2
 
@@ -67,8 +66,8 @@ Agent/CBR set type_ CBR
 Agent/CBR set dport_ 0
 Agent/CBR set rate_ 0.1Mb
 Agent/CBR set sport_ 0
-Agent/CBR set interval_1_ 50.0
-Agent/CBR set interval_ 3.0
+Agent/CBR set interval_1_ 100.0
+Agent/CBR set interval_ 100.0
 
 # ======================================================================
 
