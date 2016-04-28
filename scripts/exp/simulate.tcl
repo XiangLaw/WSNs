@@ -1,4 +1,4 @@
-# Script for WisSim simulator. Last edit 4/26/2016 3:29:45 PM
+# Script for WisSim simulator. Last edit 4/26/2016 5:24:53 PM
 
 set opt(x)	1000	;# X dimension of the topography
 set opt(y)	1000	;# Y dimension of the topography

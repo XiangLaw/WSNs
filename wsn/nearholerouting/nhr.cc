@@ -488,7 +488,6 @@ void NHRAgent::sendData(Packet *p) {
 
     edh->daddr_ = iph->daddr();
     edh->ap_index = 0;
-    edh->anchor_points[1] = endpoint_;
     edh->type = NHR_CBR_GPSR;
     edh->dest_level = 0;
     edh->anchor_points[0] = *dest;
@@ -515,6 +514,7 @@ void NHRAgent::recvData(Packet *p) {
             if (!hole_.empty()) {
                 edh->type = NHR_CBR_AWARE_SOURCE_ESCAPE;
                 edh->ap_index = 1;
+                edh->anchor_points[edh->ap_index] = endpoint_;
             }
             break;
         case NHR_CBR_AWARE_SOURCE_ESCAPE:
@@ -544,7 +544,7 @@ void NHRAgent::recvData(Packet *p) {
                     edh->ap_index = 0;
                     edh->type = NHR_CBR_AWARE_DESTINATION;
                 } else {
-                    while(edh->ap_index != 2 && nexthop == NULL) {
+                    while (edh->ap_index != 2 && nexthop == NULL) {
                         nexthop = getNeighborByGreedy(edh->anchor_points[edh->ap_index]);
                         --edh->ap_index;
                     }
