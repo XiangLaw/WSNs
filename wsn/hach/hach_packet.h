@@ -12,7 +12,7 @@ struct hdr_hach {
 
 
     inline int size() {
-        return sizeof(Point) + sizeof(uint8_t) + sizeof(nsaddr_t));
+        return sizeof(Point) + sizeof(uint8_t) + sizeof(nsaddr_t);
     }
 
     static int offset_;
