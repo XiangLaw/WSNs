@@ -123,11 +123,13 @@ void NHRGraph::constructGraph() {
         p2.y_ = (*it)->edge().endPoint().y();
         bool b1 = diagram->vertices().find((*it)->edge().startPoint()) != diagram->vertices().end();
         bool b2 = diagram->vertices().find((*it)->edge().endPoint()) != diagram->vertices().end();
-        if (b1 && b2) {
-            if ((*it)->leftSite().id() == site_contains_node || (*it)->rightSite().id() == site_contains_node) {
+        if ((*it)->leftSite().id() == site_contains_node || (*it)->rightSite().id() == site_contains_node) {
+            if (b1)
                 endpoints.insert(p1);
+            if (b2)
                 endpoints.insert(p2);
-            }
+        }
+        if (b1 && b2) {
             addVertexToGraph(graph, p1, p2);
         } else if (b1 || b2) { // determine gate point
             Line pp = G::line(p1, p2);
