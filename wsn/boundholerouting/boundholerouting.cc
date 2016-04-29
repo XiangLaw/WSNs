@@ -144,6 +144,9 @@ void BOUNDHOLEROUTINGAgent::recvData(Packet *p) {
 }
 
 node *BOUNDHOLEROUTINGAgent::getNextHopByBoundHole(Point p) {
+    if(p == *hole_list_->node_list_) {
+        return hole_list_->node_list_->next_;
+    }
     for (struct node *ntemp = hole_list_->node_list_->next_; ntemp != hole_list_->node_list_; ntemp = ntemp->next_) {
         if (p == *ntemp) {
             return ntemp->next_;
