@@ -13,6 +13,8 @@ public:
 
     Point endpoint() { return endpoint_; }
 
+    void endpoint(Point &);
+
     Point gatePoint(int &);
 
     bool isPivot() { return isPivot_; }

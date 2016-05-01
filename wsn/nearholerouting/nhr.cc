@@ -341,6 +341,9 @@ void NHRAgent::broadcastHCI() {
     NHRGraph *graph = new NHRGraph(agent, hole_);
     endpoint_ = graph->endpoint();
     isPivot_ = graph->isPivot();
+    while (!isPivot_ && getNeighborByGreedy(endpoint_) == NULL) {
+        graph->endpoint(endpoint_);
+    }
     delete graph;
 
     send(p, 0);
@@ -392,6 +395,9 @@ void NHRAgent::recvHCI(Packet *p) {
     NHRGraph *graph = new NHRGraph(agent, hole_);
     endpoint_ = graph->endpoint();
     isPivot_ = graph->isPivot();
+    while (!isPivot_ && getNeighborByGreedy(endpoint_) == NULL) {
+        graph->endpoint(endpoint_);
+    }
     delete graph;
 
     dumpBroadcastRegion();

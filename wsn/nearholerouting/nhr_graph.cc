@@ -235,6 +235,10 @@ bool NHRGraph::perpendicularLinePolygonIntersect(Point p, vector<BoundaryNode> c
     return true;
 }
 
+void NHRGraph::endpoint(Point &p) {
+    p = trace_.find(p)->second;
+}
+
 Point NHRGraph::gatePoint(int &gate_level) {
     // calculate gate point
     Point point_tmp = endpoint_;
