@@ -540,14 +540,13 @@ void NHRAgent::recvData(Packet *p) {
                 }
                 break;
             case NHR_CBR_AWARE_OCTAGON:
+                while (edh->ap_index > 2 && nexthop == NULL) {
+                    --edh->ap_index;
+                    nexthop = getNeighborByGreedy(edh->anchor_points[edh->ap_index]);
+                }
                 if (edh->ap_index == 2) {
                     edh->ap_index = 0;
                     edh->type = NHR_CBR_AWARE_DESTINATION;
-                } else {
-                    while (edh->ap_index != 2 && nexthop == NULL) {
-                        nexthop = getNeighborByGreedy(edh->anchor_points[edh->ap_index]);
-                        --edh->ap_index;
-                    }
                 }
                 break;
             case NHR_CBR_AWARE_DESTINATION:
@@ -681,15 +680,25 @@ void NHRAgent::bypassHole(Packet *p, Point source, Point dest, vector<BoundaryNo
     findLimitAnchorPoint(source, dest, scaleOctagon, si1, si2, SI1, SI2);
     findLimitAnchorPoint(dest, source, scaleOctagon, di1, di2, DI1, DI2);
 
-    if (G::position(scaleOctagon[si1], sd) * G::position(scaleOctagon[di1], sd) < 0) {
+    if (G::orientation(source, scaleOctagon[si1], dest) != 2) {
         int tmp = si2;
         si2 = si1;
         si1 = tmp;
     }
-    if (G::position(SI1, sd) * G::position(DI1, sd) < 0) {
+    if (G::orientation(source, scaleOctagon[di1], dest) != 2) {
+        int tmp = di2;
+        di2 = di1;
+        di1 = tmp;
+    }
+    if (G::orientation(source, SI1, dest) != 2) {
         Point tmp = SI2;
         SI2 = SI1;
         SI1 = tmp;
+    }
+    if (G::orientation(source, DI1, dest) != 2) {
+        Point tmp = DI2;
+        DI2 = DI1;
+        DI1 = tmp;
     }
 
     // octagon order: counter clockwise
