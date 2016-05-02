@@ -119,6 +119,9 @@ enum AppDataType {
 	CORBAL_DATA,
 	// HACH
 	HACH_DATA,
+
+	// Near hole routing
+	NHR_DATA
 };
 
 // Interface for generic application-level data unit. It should know its 

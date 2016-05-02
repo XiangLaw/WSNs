@@ -102,6 +102,7 @@ protected:
 
 	polygonHole* createPolygonHole(Packet*);
 	virtual void createHole(Packet*) = 0;
+	virtual void broadcastHCI() {};
 
 	virtual void sendData(Packet*) = 0;
 	virtual void recvData(Packet*) = 0;

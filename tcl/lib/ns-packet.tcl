@@ -203,6 +203,7 @@ set protolist {
 	TAAGENT
 	CORBAL
 	HACH
+	NHR
 # WSN-EXT
 	GREEDY
 # Other:

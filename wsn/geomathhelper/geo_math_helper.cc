@@ -707,10 +707,11 @@ bool G::lineSegmentIntersection(Point *a, Point *b, Line l, Point &intersection)
     intersection.y_ = -1;
     Line edge = G::line(a, b);
 
-    if (G::intersection(edge, l, &intersection) && (intersection.x_ >= 0 && intersection.y_ >= 0)) {
-        if(
-                (intersection.y_ - a->y_) * (intersection.y_ - b->y_) <= 0)
-            return true;
+//    if (G::intersection(edge, l, &intersection) && (intersection.x_ >= 0 && intersection.y_ >= 0)) {
+	if (G::intersection(edge, l, &intersection)) {
+		return onSegment(a, &intersection, b);
+//		if((intersection.y_ - a->y_) * (intersection.y_ - b->y_) <= 0)
+//            return true;
     }
     return false;
 }
@@ -873,26 +874,26 @@ Angle G::angle_x_axis(Point *a, Point *p) {
 // point q lies on line segment 'pr'
 bool G::onSegment(Point p, Point q, Point r)
 {
-	return q.x_ <= g_max(p.x_, r.x_) && q.x_ >= g_min(p.x_, r.x_) &&
-    q.y_ <= g_max(p.y_, r.y_) && q.y_ >= g_min(p.y_, r.y_);
-
+//	return q.x_ <= g_max(p.x_, r.x_) && q.x_ >= g_min(p.x_, r.x_) &&
+//    q.y_ <= g_max(p.y_, r.y_) && q.y_ >= g_min(p.y_, r.y_);
+	return ((q.x_ < p.x_) != (q.x_ < r.x_)) || ((q.y_ < p.y_) != (q.y_ < r.y_));
 }
 
-// To find orientation of ordered triplet (p, q, r).
+// To find orientation of ordered triplet (a, b, c).
 // The function returns following values
-// 0 --> p, q and r are colinear
+// 0 --> collinear
 // 1 --> Clockwise
 // 2 --> Counterclockwise
-int G::orientation(Point p, Point q, Point r)
-{
-	// See 10th slides from following link for derivation of the formula
-	// http://www.dcs.gla.ac.uk/~pat/52233/slides/Geometry1x1.pdf
-	double val = (q.y_ - p.y_) * (r.x_ - q.x_) -
-			  (q.x_ - p.x_) * (r.y_ - q.y_);
+int G::orientation(Point a, Point b, Point c) {
+    /* old implement based on http://www.dcs.gla.ac.uk/~pat/52233/slides/Geometry1x1.pdf - page 10
+    double val = (b.y_ - a.y_) * (c.x_ - b.x_) - (b.x_ - a.x_) * (c.y_ - b.y_);
+    if (val == 0) return 0; // colinear
+    return (val > 0)? 1: 2; // clock or counterclock wise
+    */
 
-	if (val == 0) return 0; // colinear
-
-	return (val > 0)? 1: 2; // clock or counterclock wise
+    // https://www.cs.princeton.edu/~rs/AlgsDS07/16Geometric.pdf - page 9
+    double area = (b.x_ - a.x_) * (c.y_ - a.y_) - (b.y_ - a.y_) * (c.x_ - a.x_);
+    return area == 0 ? 0 : (area > 0 ? 2 : 1);
 }
 
 // The main function that returns true if line segment 'p1q1'
@@ -941,16 +942,9 @@ bool G::isPointInsidePolygon(Point *d, node *node_list) {
                     return true;
                 }
             }
-            if (((tmp->y_ < d->y_ && tmp->next_->y_ >= d->y_) ||
-                 (tmp->next_->y_ < d->y_ && tmp->y_ >= d->y_)) &&
-                (tmp->x_ <= d->x_ && tmp->next_->x_ <= d->x_)) {
-                double denominator = (tmp->next_->y_ - tmp->y_) * (tmp->next_->x_ - tmp->x_);
-                if(denominator != 0) {
-                    if(tmp->x_ + (d->y_ - tmp->y_) / denominator < d->x_) {
-                        odd = !odd;
-                    }
-                }
-            }
+            if((tmp->y_ > d->y_) != (tmp->next_->y_ > d->y_) &&
+					(d->x_ < (tmp->next_->x_ - tmp->x_) * (d->y_ - tmp->y_)/(tmp->next_->y_ - tmp->y_) + tmp->x_))
+				odd = !odd;
         }
         else { // end-point & start-point
             if (G::is_in_line(tmp, node_list, d)) {
@@ -958,16 +952,9 @@ bool G::isPointInsidePolygon(Point *d, node *node_list) {
                     return true;
                 }
             }
-            if (((tmp->y_ < d->y_ && node_list->y_ >= d->y_) ||
-                 (node_list->y_ < d->y_ && tmp->y_ >= d->y_)) &&
-                (tmp->x_ <= d->x_ && node_list->x_ <= d->x_)) {
-                double denominator = (node_list->y_ - tmp->y_) * (node_list->x_ - tmp->x_);
-                if(denominator != 0) {
-                    if(tmp->x_ + (d->y_ - tmp->y_) / denominator < d->x_) {
-                        odd = !odd;
-                    }
-                }
-            }
+            if((tmp->y_ > d->y_) != (node_list->y_ > d->y_) &&
+               (d->x_ < (node_list->x_ - tmp->x_) * (d->y_ - tmp->y_)/(node_list->y_ - tmp->y_) + tmp->x_))
+                odd = !odd;
         }
     }
 
@@ -1000,16 +987,9 @@ bool G::isPointReallyInsidePolygon(Point *d, node *node_list) {
                     return false;
                 }
             }
-            if (((tmp->y_ < d->y_ && tmp->next_->y_ >= d->y_) ||
-                 (tmp->next_->y_ < d->y_ && tmp->y_ >= d->y_)) &&
-                (tmp->x_ <= d->x_ && tmp->next_->x_ <= d->x_)) {
-                double denominator = (tmp->next_->y_ - tmp->y_) * (tmp->next_->x_ - tmp->x_);
-                if(denominator != 0) {
-                    if(tmp->x_ + (d->y_ - tmp->y_) / denominator < d->x_) {
-                        odd = !odd;
-                    }
-                }
-            }
+            if((tmp->y_ > d->y_) != (tmp->next_->y_ > d->y_) &&
+               (d->x_ < (tmp->next_->x_ - tmp->x_) * (d->y_ - tmp->y_)/(tmp->next_->y_ - tmp->y_) + tmp->x_))
+                odd = !odd;
         }
         else { // end-point & start-point
             if (G::is_in_line(tmp, node_list, d)) {
@@ -1017,16 +997,9 @@ bool G::isPointReallyInsidePolygon(Point *d, node *node_list) {
                     return false;
                 }
             }
-            if (((tmp->y_ < d->y_ && node_list->y_ >= d->y_) ||
-                 (node_list->y_ < d->y_ && tmp->y_ >= d->y_)) &&
-                (tmp->x_ <= d->x_ && node_list->x_ <= d->x_)) {
-                double denominator = (node_list->y_ - tmp->y_) * (node_list->x_ - tmp->x_);
-                if(denominator != 0) {
-                    if(tmp->x_ + (d->y_ - tmp->y_) / denominator < d->x_) {
-                        odd = !odd;
-                    }
-                }
-            }
+            if((tmp->y_ > d->y_) != (node_list->y_ > d->y_) &&
+               (d->x_ < (node_list->x_ - tmp->x_) * (d->y_ - tmp->y_)/(node_list->y_ - tmp->y_) + tmp->x_))
+                odd = !odd;
         }
     }
 

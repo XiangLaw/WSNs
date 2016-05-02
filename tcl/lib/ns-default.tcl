@@ -1733,3 +1733,9 @@ Agent/CORBAL set range_ 40
 Agent/CORBAL set n_ 8
 Agent/CORBAL set min_boundhole_hop_ 10
 Agent/CORBAL set s_ 3.1
+
+Agent/NHR set limit_boundhole_hop_ 100
+Agent/NHR set hello_period_ 0
+Agent/NHR set range_ 40
+Agent/NHR set storage_opt_ 1
+Agent/NHR set delta_ 2.1

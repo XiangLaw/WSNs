@@ -1,9 +1,9 @@
-# Script for WisSim simulator. Last edit 12/1/2015 9:31:56 AM
+# Script for WisSim simulator. Last edit 4/26/2016 5:24:53 PM
 
-set opt(x)	600	;# X dimension of the topography
-set opt(y)	600	;# Y dimension of the topography
+set opt(x)	1000	;# X dimension of the topography
+set opt(y)	1000	;# Y dimension of the topography
 set opt(stop)	500	;# simulation time
-set opt(nn)	702	;# number of nodes
+set opt(nn)	1440	;# number of nodes
 set opt(tr)	Trace.tr	;# trace file
 set opt(nam)	nam.out.tr
 
@@ -15,7 +15,7 @@ set opt(mac)	Mac/802_11
 set opt(ifq)	Queue/DropTail/PriQueue
 set opt(ll)	LL
 set opt(ant)	Antenna/OmniAntenna
-set opt(rp)	HACH
+set opt(rp)	NHR
 set opt(trans)	UDP
 set opt(apps)	CBR
 
@@ -54,6 +54,11 @@ Antenna/OmniAntenna set Z_ 1.5
 Antenna/OmniAntenna set Gt_ 1
 Antenna/OmniAntenna set Gr_ 1
 
+Agent/NHR set limit_boundhole_hop_ 150
+Agent/NHR set energy_checkpoint_ 995
+Agent/NHR set hello_period_ 0
+Agent/NHR set range_ 40
+
 Agent/UDP set fid_ 2
 
 Agent/CBR set packetSize_ 50
@@ -61,7 +66,8 @@ Agent/CBR set type_ CBR
 Agent/CBR set dport_ 0
 Agent/CBR set rate_ 0.1Mb
 Agent/CBR set sport_ 0
-Agent/CBR set interval_ 1
+Agent/CBR set interval_1_ 100.0
+Agent/CBR set interval_ 100.0
 
 # ======================================================================
 
@@ -103,7 +109,7 @@ $ns_ node-config -adhocRouting $opt(rp) \
 		 -topoInstance $topo \
 		 -agentTrace ON \
 		 -routerTrace ON \
-		 -macTrace ON \
+		 -macTrace OFF \
 		 -movementTrace OFF \
 		 -energyModel $opt(energymodel) \
 		 -idlePower $opt(idlePower) \
@@ -138,6 +144,8 @@ for {set i 0} {$i < $opt(nn)} {incr i} {
 source ./cbr.tcl
 
 source ./nodeoff.tcl
+
+source ./nodesink.tcl
 
 # ending nam and the simulation
 #$ns_ at $opt(stop) "$ns_ nam-end-wireless $opt(stop)" 
