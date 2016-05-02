@@ -515,28 +515,22 @@ void NHRAgent::recvData(Packet *p) {
         return;
     }
 
-    switch (edh->type) {
-        case NHR_CBR_GPSR:
-            if (!hole_.empty()) {
-                edh->type = NHR_CBR_AWARE_SOURCE_ESCAPE;
-                edh->ap_index = 1;
-                edh->anchor_points[edh->ap_index] = endpoint_;
-            }
-            break;
-        case NHR_CBR_AWARE_SOURCE_ESCAPE:
-            edh->anchor_points[1] = endpoint_;
-            if (isPivot_) {
-                edh->type = NHR_CBR_AWARE_SOURCE_PIVOT;
-            }
-            break;
-        default:
-            break;
+    if (edh->type == NHR_CBR_GPSR && !hole_.empty()) {
+        edh->type = NHR_CBR_AWARE_SOURCE_ESCAPE;
+        edh->ap_index = 1;
+        edh->anchor_points[edh->ap_index] = endpoint_;
     }
 
     nexthop = getNeighborByGreedy(edh->anchor_points[edh->ap_index]);
     if (nexthop == NULL) {
         switch (edh->type) {
             case NHR_CBR_AWARE_SOURCE_ESCAPE:
+                edh->anchor_points[1] = endpoint_;
+                if (isPivot_) {
+                    edh->type = NHR_CBR_AWARE_SOURCE_PIVOT;
+                }
+                nexthop = getNeighborByGreedy(edh->anchor_points[edh->ap_index]);
+                if (nexthop != NULL) break;
             case NHR_CBR_AWARE_SOURCE_PIVOT:
                 if (determineOctagonAnchorPoints(p)) {
                     edh->type = NHR_CBR_AWARE_OCTAGON;
@@ -544,7 +538,8 @@ void NHRAgent::recvData(Packet *p) {
                     edh->ap_index = 0;
                     edh->type = NHR_CBR_AWARE_DESTINATION;
                 }
-                break;
+                nexthop = getNeighborByGreedy(edh->anchor_points[edh->ap_index]);
+                if (nexthop != NULL) break;
             case NHR_CBR_AWARE_OCTAGON:
                 while (edh->ap_index > 2 && nexthop == NULL) {
                     --edh->ap_index;
@@ -554,9 +549,11 @@ void NHRAgent::recvData(Packet *p) {
                     edh->ap_index = 0;
                     edh->type = NHR_CBR_AWARE_DESTINATION;
                 }
-                break;
+                nexthop = getNeighborByGreedy(edh->anchor_points[edh->ap_index]);
+                if (nexthop != NULL) break;
             case NHR_CBR_AWARE_DESTINATION:
                 routeToDest(p);
+                nexthop = getNeighborByGreedy(edh->anchor_points[edh->ap_index]);
                 break;
             default:
                 drop(p, DROP_RTR_NO_ROUTE);
@@ -564,7 +561,6 @@ void NHRAgent::recvData(Packet *p) {
         }
     }
 
-    nexthop = getNeighborByGreedy(edh->anchor_points[edh->ap_index]);
     if (nexthop == NULL) {
         drop(p, DROP_RTR_NO_ROUTE);
         return;
@@ -677,7 +673,6 @@ void NHRAgent::bypassHole(Packet *p, Point source, Point dest, vector<BoundaryNo
     struct hdr_nhr *edh = HDR_NHR(p);
 
     int si1, si2, di1, di2;
-    Line sd = G::line(source, dest);
     vector<Point> aps;
 
     Point SI1, SI2;
