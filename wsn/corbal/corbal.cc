@@ -63,7 +63,8 @@ CorbalAgent::command(int argc, const char *const *argv) {
             startUp();
         }
         if (strcasecmp(argv[1], "boundhole") == 0) {
-            boundhole_timer_.resched(randSend_.uniform(0.0, 5));
+            boundhole_timer_.resched(0.02 * my_id_);
+//            boundhole_timer_.resched(randSend_.uniform(0.0, 5));
             return TCL_OK;
         }
     }
