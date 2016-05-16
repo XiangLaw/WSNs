@@ -65,7 +65,7 @@ private:
     int n_;
     int kn;
     double theta_n;
-    double s_;
+    double epsilon_;
     polygonHole *hole_;
     corePolygon *core_polygon_set;
     corePolygon *my_core_polygon;

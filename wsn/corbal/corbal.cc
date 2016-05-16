@@ -41,7 +41,7 @@ CorbalAgent::CorbalAgent() : GPSRAgent(),
     core_polygon_set = NULL;
     hole_ = NULL;
     my_core_polygon = NULL;
-    s_ = 1.1;
+    epsilon_ = 0.5;
     scale_factor_ = 0;
     p_c_ = 0;
 
@@ -49,7 +49,7 @@ CorbalAgent::CorbalAgent() : GPSRAgent(),
     bind("limit_boundhole_hop_", &limit_max_hop_);
     bind("min_boundhole_hop_", &limit_min_hop_);
     bind("n_", &n_);
-    bind("s_", &s_);
+    bind("s_", &epsilon_);
 
     // theta_n = 2 * M_PI / ((n_ + 1) * floor(12 / (n_ + 1)));
     theta_n = 2 * M_PI * 1 / 9;
@@ -675,13 +675,13 @@ bool CorbalAgent::canBroadcast() {
         i = j;
     } while (i != my_core_polygon->node_);
 
-    //double left_side = cos(alpha_ / 2);
-    //double right_side = 1 / s_ + p_c_ * (1 - sin((n_ - 2) * M_PI / (2 * n_))) / l_c_n_;
+    double left_side = cos(alpha_ / 2);
+    double right_side = 1 / (1 + epsilon_) + p_c_ * (1 - sin((n_ - 2) * M_PI / (2 * n_))) / l_c_n_;
 
-    double left_side = p_c_ / l_c_n_ * (0.3 / cos(alpha_ / 2) + 1) + 1 / cos(alpha_ / 2);
-    double right_side = s_;
+    //double left_side = p_c_ / l_c_n_ * (0.3 / cos(alpha_ / 2) + 1) + 1 / cos(alpha_ / 2);
+    //double right_side = s_;
 
-    return left_side > right_side;
+    return left_side <= right_side;
 }
 
 void CorbalAgent::updatePayload(Packet *p) {
@@ -875,10 +875,11 @@ void CorbalAgent::calculateScaleFactor(Packet *p) {
     double l_c_xd = euclidLengthOfBRSP(&(hdc->source), &(hdc->dest), my_core_polygon);
 
     if (*this == hdc->source) { // S is source node
-        double delta = (s_ - 1) * l_c_sd / p_c_ -
-                       s_ * (1 - sin((n_ - 2) * M_PI / (2 * n_)));
+//        double delta = (s_ - 1) * l_c_sd / p_c_ -
+//                       s_ * (1 - sin((n_ - 2) * M_PI / (2 * n_)));
+        double delta = epsilon_ * l_c_sd - (1 + epsilon_) * (1 - sin((n_ - 2) * M_PI / (2 * n_))) * p_c_;
         if (delta > 0) {
-            scale_factor_ = 1 + delta;
+            scale_factor_ = 1 + delta / p_c_;
         } else {
             scale_factor_ = 1;
         }
@@ -886,10 +887,11 @@ void CorbalAgent::calculateScaleFactor(Packet *p) {
     else { // S is sub-source node
         //double delta = (s_ * l_c_xd - l_c_sd - G::distance(this, &(hdc->source))) / p_c_ -
         //               s_ * (1 - sin((n_ - 2) * M_PI / (2 * n_)));
-        double delta = (s_ - 1 / cos(alpha_ / 2)) * l_c_n_ / p_c_ - 0.3 / cos(alpha_ / 2);
-
+//        double delta = (s_ - 1 / cos(alpha_ / 2)) * l_c_n_ / p_c_ - 0.3 / cos(alpha_ / 2);
+        double delta = (1 + epsilon_) * (l_c_xd) - l_c_sd - G::distance(this, &(hdc->source)) -
+                       (1 + epsilon_) * (1 - sin((n_ - 2) * M_PI / (2 * n_))) * p_c_;
         if (delta > 0) {
-            scale_factor_ = 1 + delta;
+            scale_factor_ = 1 + delta / p_c_;
         } else {
             scale_factor_ = 1;
         }
