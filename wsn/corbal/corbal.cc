@@ -523,6 +523,32 @@ void CorbalAgent::isNodeStayOnBoundaryOfCorePolygon(Packet *p) {
             data->update_next_index_of_Bi(off, next_index);
             dump(angle, i, next_index, l_n);
             printf("i = %d j = %d nodeid = %d\n", i, next_index, my_id_);
+
+            // check if next_index = 1 is valid
+            if (next_index == 8) {
+                flag = false;
+                angle = i * theta_n + 2 * M_PI / n_;
+                // draw line goes through this node and make with x-axis angle: mx + n = y
+                l_n = G::line(this, angle);
+
+                tmp1 = data->get_data(1).id_ == my_id_ ? data->get_data(2) : data->get_data(1);
+                for (index = 1; index < data_size; index++) {
+                    tmp2 = data->get_data(index);
+                    if (tmp2.id_ == my_id_) continue;
+                    if (G::position(&tmp1, &tmp2, &l_n) < 0) {
+                        flag = true;
+                        break;
+                    }
+                }
+
+                if (!flag) {
+                    // add N to set B(i, j) but dont update next_index
+                    off = (i - 1) * (n_ + 1) + 1 + data_size;
+                    data->addBiNode(off, my_id_, x_, y_);
+                    dump(angle, i, 1, l_n);
+                    printf("i = %d j = %d nodeid = %d\n", i, 1, my_id_);
+                }
+            }
         }
     }
 }
