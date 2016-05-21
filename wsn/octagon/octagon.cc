@@ -466,17 +466,17 @@ void OctagonAgent::dynamicRouting(Packet *p, OCTAGON_REGION region) {
     odh->vertex_num_ = 1;
 
     // check if SD is intersection with hole => need to routing to avoid this hole
-//    int numIntersect = 0;
+    int numIntersect = 0;
     node *n = h->node_list_;
-//    do {
-//        if (G::is_in_line(n, this, &D) && G::is_in_line(n->next_, this, &D)) break;
-//        if (G::is_intersect(n, n->next_, this, &D)) numIntersect++;
-//        n = n->next_;
-//    }
-//    while (n != h->node_list_);
+    do {
+        if (G::is_in_line(n, this, &D) && G::is_in_line(n->next_, this, &D)) break;
+        if (G::is_intersect(n, n->next_, this, &D)) numIntersect++;
+        n = n->next_;
+    }
+    while (n != h->node_list_);
 
     // Add sub destination to routing table
-//    if (numIntersect > 1) {
+    if (numIntersect > 1) {
         double l = G::distance(&S, &D);
 
         // --------- scale hole
@@ -555,7 +555,7 @@ void OctagonAgent::dynamicRouting(Packet *p, OCTAGON_REGION region) {
         } while (n != scaleHole->node_list_);
 
         free(scaleHole);
-//    }
+    }
 }
 
 void OctagonAgent::bypassingHole(octagonHole *h, Point *D, Point *routingTable, int &routingCount) {
