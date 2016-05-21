@@ -85,17 +85,16 @@ class OctagonAgent : public BoundHoleAgent
 private:
 	AgentBroadcastTimer broadcast_timer_;
 
-	double broadcast_rate_;
+	double stretch_;
+	double scale_factor_;
+	double ln_;
+	double alpha_;
 
 	octagonHole* octagonHole_list_;
 
-	int  	routing_num_;
-	Point	routing_table[8];
-
 	OCTAGON_REGION region_;
 
-	void dynamicRouting(Packet* p);
-	void staticRouting();
+	void dynamicRouting(Packet* p, OCTAGON_REGION region);
 	void bypassingHole(octagonHole* h, Point* D, Point* routingTable, int& routingCount);
 
 	void addrouting(Point* p, Point* routingTable, int& routingCount);

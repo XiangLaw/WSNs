@@ -56,10 +56,12 @@ public:
 
 OctagonAgent::OctagonAgent() : BoundHoleAgent(), broadcast_timer_(this) {
     octagonHole_list_ = NULL;
-    routing_num_ = 0;
+    scale_factor_ = -1;
+    alpha_ = 0;
+    ln_ = 0;
     region_ = REGION_2;
 
-    bind("broadcast_rate_", &broadcast_rate_);
+    bind("broadcast_rate_", &stretch_);
 
     // clear trace file
     FILE *fp;
@@ -86,12 +88,6 @@ void OctagonAgent::recv(Packet *p, Handler *h) {
 }
 
 int OctagonAgent::command(int argc, const char *const *argv) {
-    if (argc == 2) {
-        if (strcasecmp(argv[1], "dump") == 0) {
-            dumpRoutingTable();
-        }
-    }
-
     return BoundHoleAgent::command(argc, argv);
 }
 
@@ -378,7 +374,6 @@ void OctagonAgent::sendBroadcast(octagonHole *h) {
 }
 
 void OctagonAgent::recvBroadcast(Packet *p) {
-    struct hdr_cmn *cmh = HDR_CMN(p);
     struct hdr_octagon_ha *edh = HDR_OCTAGON_HA(p);
     octagonHole *newHole;
 
@@ -413,25 +408,25 @@ void OctagonAgent::recvBroadcast(Packet *p) {
         temp->next_ = newHole->node_list_;
 
         // ----------- broadcast hole's information. Check if (1) is satisfy
-        double alpha = 0;
-        double ln = 0;
+        alpha_ = 0;
 
         node *i = newHole->node_list_;
+        ln_ = G::distance(this, i);
         do {
             for (node *j = i->next_; j != newHole->node_list_; j = j->next_) {
                 double angle = G::angle(this, i, j);
-                alpha = angle > alpha ? angle : alpha;
+                alpha_ = angle > alpha_ ? angle : alpha_;
             }
 
             double dist = G::distance(this, i);
-            ln = dist > ln ? dist : ln;
+            ln_ = dist < ln_ ? dist : ln_;
 
             i = i->next_;
         } while (i != newHole->node_list_);
 
         // check condition (1) to continues broadcast or not
-        if ((alpha == M_PI) ||
-            (newHole->pc_ / ln * (0.3 / cos(alpha / 2) + 1) + 1 / cos(alpha / 2)) > (fsin3pi8 + broadcast_rate_)) {
+        if ((alpha_ == M_PI) ||
+            (newHole->pc_ / ln_ * (0.3 / cos(alpha_ / 2) + 1) + 1 / cos(alpha_ / 2)) > (fsin3pi8 + stretch_)) {
             broadcast_timer_.setParameter(p);
             broadcast_timer_.resched(randSend_.uniform(0.0, 0.5));
         }
@@ -455,108 +450,13 @@ void OctagonAgent::forwardBroadcast(Packet *p) {
     cmh->last_hop_ = my_id_;
     send(p, 0);
 }
+
 // --------------------- Routing --------------------------------- //
-/*
- * S is source ( S belongs to region 2)
- */
-void OctagonAgent::staticRouting() {
-    // clear routing table
-    routing_num_ = 0;
-    if (my_id_ == 5) {
-        int a = 1;
-    }
-    if (dest->x_ || dest->y_) {
-        // Add destination to routing table
-        addrouting(dest, routing_table, routing_num_);
-
-        for (octagonHole *h = octagonHole_list_; h; h = h->next_) {
-            // check if SD is intersection with hole => need to routing to avoid this hole
-            /// TODO: this scope is wrong
-            int numIntersect = 0;
-            node *n = h->node_list_;
-            do {
-                if (G::is_in_line(n, this, dest) && G::is_in_line(n->next_, this, dest)) break;
-                if (G::is_intersect(n, n->next_, this, dest)) numIntersect++;
-                n = n->next_;
-            }
-            while (n != h->node_list_ && numIntersect < 2);
-
-            // Add sub destination to routing table
-            if (numIntersect > 1) {
-                double l = G::distance(this, dest);
-                if (l <= h->d_ + (h->pc_ / (2 * (fsin3pi8 - 1)))) // scale factor = 1
-                {
-                    bypassingHole(h, dest, routing_table, routing_num_);
-                }
-                else {
-                    // scale hole
-                    Point I;
-                    I.x_ = 0;
-                    I.y_ = 0;
-
-                    double fr = 0;
-                    n = h->node_list_;
-                    do {
-                        int ra = rand();
-                        I.x_ += n->x_ * ra;
-                        I.y_ += n->y_ * ra;
-                        fr += ra;
-
-                        n = n->next_;
-                    } while (n != h->node_list_);
-
-                    I.x_ = I.x_ / fr;
-                    I.y_ = I.y_ / fr;
-
-                    double i = 1 + (l / h->pc_) * (fsin3pi8 / (1 + h->pc_ / (2 * (l - h->d_))) - 1);
-
-                    octagonHole *scaleHole = new octagonHole();
-                    scaleHole->next_ = NULL;
-                    scaleHole->node_list_ = NULL;
-
-                    // add new node
-                    n = h->node_list_;
-                    do {
-                        node *newNode = new node();
-                        newNode->x_ = i * n->x_ + (1 - i) * I.x_;
-                        newNode->y_ = i * n->y_ + (1 - i) * I.y_;
-                        newNode->next_ = scaleHole->node_list_;
-                        scaleHole->node_list_ = newNode;
-
-                        n = n->next_;
-                    } while (n != h->node_list_);
-
-                    // circle node list
-                    n = scaleHole->node_list_;
-                    while (n->next_) n = n->next_;
-                    n->next_ = scaleHole->node_list_;
-
-                    // bypassing hole
-                    bypassingHole(h, dest, routing_table, routing_num_);
-
-                    // free
-                    n = scaleHole->node_list_;
-                    do {
-                        free(n);
-                        n = n->next_;
-                    } while (n != scaleHole->node_list_);
-
-                    free(scaleHole);
-                }
-            } // if SD intersects with hole polygon
-        } // for each hole
-    } // if (des->x_ || des->y_)
-
-    // Add source to routing table
-    addrouting(this, routing_table, routing_num_);
-    routing_num_--;            // go to myself, remove "this" from routing table
-}
-
-void OctagonAgent::dynamicRouting(Packet *p) {
+void OctagonAgent::dynamicRouting(Packet *p, OCTAGON_REGION region) {
     hdr_octagon_data *odh = HDR_OCTAGON_DATA(p);
 
+    Point S = odh->vertex[1];
     Point D = odh->vertex[0];
-    Point S = odh->vertex[2];
 
     Point I;
     octagonHole *scaleHole;
@@ -566,45 +466,25 @@ void OctagonAgent::dynamicRouting(Packet *p) {
     odh->vertex_num_ = 1;
 
     // check if SD is intersection with hole => need to routing to avoid this hole
-    int numIntersect = 0;
+//    int numIntersect = 0;
     node *n = h->node_list_;
-    do {
-        if (G::is_in_line(n, this, &D) && G::is_in_line(n->next_, this, &D)) break;
-        if (G::is_intersect(n, n->next_, this, &D)) numIntersect++;
-        n = n->next_;
-    }
-    while (n != h->node_list_);
+//    do {
+//        if (G::is_in_line(n, this, &D) && G::is_in_line(n->next_, this, &D)) break;
+//        if (G::is_intersect(n, n->next_, this, &D)) numIntersect++;
+//        n = n->next_;
+//    }
+//    while (n != h->node_list_);
 
     // Add sub destination to routing table
-    if (numIntersect > 1) {
+//    if (numIntersect > 1) {
         double l = G::distance(&S, &D);
-
-        double alpha = 0;
-        n = h->node_list_;
-        do {
-            for (node *m = n->next_; m != h->node_list_; m = m->next_) {
-                double angle = G::angle(this, n, m);
-                alpha = alpha > angle ? alpha : angle;
-            }
-            n = n->next_;
-        } while (n != h->node_list_);
 
         // --------- scale hole
         // choose I random
         I.x_ = 0;
         I.y_ = 0;
 
-        /*
-         * how to choose I randomly?
-         * cần tìm I nằm trong polygon, k mất tính tổng quát giả sử tọa độ X của các đỉnh của polygon là
-         * x1 <= x2 <= x3 <= x4 <= x5 <= x6 <= x7 <= x8
-         * khi đó I(x) = tích của (x(i) * r(i)) // r(i) = rand();
-         * => x1 <= I(x) <= x8
-         * tương tự cho I(y)
-         * // TODO: có chắc I nằm trong polygon
-         */
-        /* cần kiểm tra lại:
-         * define 8 lines for new approximate hole
+        /* define 8 lines for new approximate hole
          *
          * 	|	    ____[2]_________
          * 	|	[02]	 			[21]______
@@ -629,10 +509,14 @@ void OctagonAgent::dynamicRouting(Packet *p) {
         I.y_ = I.y_ / fr;
 
         // calculate i
-        double i = (fsin3pi8 + broadcast_rate_ - 1 / cos(alpha / 2)) * l / h->pc_ - 0.3 / cos(alpha / 2);
-
-        printf("(s, d) = (%d, %d) uid = %d I(%f, %f) i = %f\n", HDR_IP(p)->saddr(), HDR_IP(p)->daddr(),
-               HDR_CMN(p)->uid(), I.x_, I.y_, i);
+        if (scale_factor_ == -1) {
+            if (region == REGION_1) {
+                scale_factor_ = 1 + (l / h->pc_) * (fsin3pi8 / (1 + h->pc_ / (2 * (l - h->d_))) - 1);
+            } else if (region == REGION_2) {
+                scale_factor_ = (fsin3pi8 + stretch_ - 1 / cos(alpha_ / 2)) * ln_ / h->pc_ - 0.3 / cos(alpha_ / 2);
+            }
+            if (scale_factor_ < 1) scale_factor_ = 1;
+        }
 
         // scale hole by I and i
         scaleHole = new octagonHole();
@@ -643,8 +527,8 @@ void OctagonAgent::dynamicRouting(Packet *p) {
         n = h->node_list_;
         do {
             node *newNode = new node();
-            newNode->x_ = i * n->x_ + (1 - i) * I.x_;
-            newNode->y_ = i * n->y_ + (1 - i) * I.y_;
+            newNode->x_ = scale_factor_ * n->x_ + (1 - scale_factor_) * I.x_;
+            newNode->y_ = scale_factor_ * n->y_ + (1 - scale_factor_) * I.y_;
             newNode->next_ = scaleHole->node_list_;
             scaleHole->node_list_ = newNode;
 
@@ -657,11 +541,9 @@ void OctagonAgent::dynamicRouting(Packet *p) {
         n->next_ = scaleHole->node_list_;
 
         // bypassing hole
+        odh->vertex_num_ = 0;
+        addrouting(&D, odh->vertex, odh->vertex_num_);
         bypassingHole(scaleHole, &D, odh->vertex, odh->vertex_num_);
-
-        // Add this to routing table
-        addrouting(this, routing_table, routing_num_);
-        odh->vertex_num_--;
 
         dumpDynamicRouting(p, scaleHole);
 
@@ -673,7 +555,7 @@ void OctagonAgent::dynamicRouting(Packet *p) {
         } while (n != scaleHole->node_list_);
 
         free(scaleHole);
-    }
+//    }
 }
 
 void OctagonAgent::bypassingHole(octagonHole *h, Point *D, Point *routingTable, int &routingCount) {
@@ -806,12 +688,11 @@ void OctagonAgent::sendData(Packet *p) {
     cmh->size() += IP_HDR_LEN + edh->size();
     cmh->direction() = hdr_cmn::DOWN;
 
-    edh->type_ = (u_int8_t) (routing_num_ > 2 ? OCTAGON_DATA_ROUTING : OCTAGON_DATA_GREEDY);
+    edh->type_ = OCTAGON_DATA_GREEDY;
     edh->daddr_ = iph->daddr();
-    edh->vertex_num_ = routing_num_;
-    for (int i = 0; i <= routing_num_; i++) {
-        edh->vertex[i] = routing_table[i];
-    }
+    edh->vertex_num_ = 1;
+    edh->vertex[0] = *dest;
+    edh->vertex[1] = *this;
 
     iph->saddr() = my_id_;
     iph->daddr() = -1;
@@ -829,38 +710,37 @@ void OctagonAgent::recvData(Packet *p) {
         return;
     }
     else {
-        // meet region 1
-        // if routing mode (type_) is GREEDY then source node is in region 2
-        // else source node is in region 1 => using staticRouting
-        if (octagonHole_list_ && iph->saddr() != my_id_ && edh->type_ == OCTAGON_DATA_GREEDY) {
-            dynamicRouting(p);
+        if (region_ == REGION_1 && iph->saddr() != my_id_ && edh->type_ == OCTAGON_DATA_GREEDY) {
+            // source is in region 2, come to sub source => convert mode
+            dynamicRouting(p, REGION_2);
             edh->type_ = OCTAGON_DATA_ROUTING;
-        } else {
-            staticRouting();
+        } else if (region_ == REGION_1 && iph->saddr() == my_id_ && edh->type_ == OCTAGON_DATA_GREEDY) {
+            // source is in region 1 => convert mode
+            dynamicRouting(p, REGION_1);
+            edh->type_ = OCTAGON_DATA_ROUTING;
         }
+    }
 
-        // -------- forward by greedy
+    // -------- forward by greedy
+    node *nexthop = NULL;
+    while (nexthop == NULL && edh->vertex_num_ > 0) {
+        nexthop = getNeighborByGreedy(edh->vertex[edh->vertex_num_ - 1]);
+        if (nexthop == NULL) {
+            edh->vertex_num_--;
+        }
+    }
 
-        node *nexthop = NULL;
-        while (nexthop == NULL && edh->vertex_num_ > 0) {
-            nexthop = getNeighborByGreedy(edh->vertex[edh->vertex_num_ - 1]);
-            if (nexthop == NULL) {
-                edh->vertex_num_--;
-            }
-        }
-
-        if (nexthop == NULL)    // no neighbor close
-        {
-            drop(p, DROP_RTR_NO_ROUTE);
-            return;
-        }
-        else {
-            cmh->direction() = hdr_cmn::DOWN;
-            cmh->addr_type() = NS_AF_INET;
-            cmh->last_hop_ = my_id_;
-            cmh->next_hop_ = nexthop->id_;
-            send(p, 0);
-        }
+    if (nexthop == NULL)    // no neighbor close
+    {
+        drop(p, DROP_RTR_NO_ROUTE);
+        return;
+    }
+    else {
+        cmh->direction() = hdr_cmn::DOWN;
+        cmh->addr_type() = NS_AF_INET;
+        cmh->last_hop_ = my_id_;
+        cmh->next_hop_ = nexthop->id_;
+        send(p, 0);
     }
 }
 
@@ -878,16 +758,6 @@ void OctagonAgent::dumpApproximateHole() {
         fprintf(fp, "%f	%f\n", n->x_, n->y_);
         fprintf(fp, "\n");
     }
-    fclose(fp);
-}
-
-void OctagonAgent::dumpRoutingTable() {
-    FILE *fp = fopen("RoutingTable.tr", "a+");
-    for (int i = 0; i <= routing_num_; i++) {
-        fprintf(fp, "%d\t%f\t%f\n", my_id_, routing_table[i].x_, routing_table[i].y_);
-    }
-    fprintf(fp, "\n");
-
     fclose(fp);
 }
 
