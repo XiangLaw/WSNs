@@ -857,7 +857,10 @@ void CorbalAgent::recvData(Packet *p) {
 
     node *nexthop = NULL;
     while (nexthop == NULL && hdc->routing_index > 0) {
-        nexthop = recvGPSR(p, hdc->routing_table[hdc->routing_index - 1]);
+        if (hdc->routing_index == 1)
+            nexthop = recvGPSR(p, hdc->routing_table[hdc->routing_index - 1]);
+        else
+            nexthop = getNeighborByGreedy(hdc->routing_table[hdc->routing_index - 1]);
         if (nexthop == NULL) {
             hdc->routing_index--;
         }
@@ -865,6 +868,7 @@ void CorbalAgent::recvData(Packet *p) {
 
     if (nexthop == NULL)    // no neighbor close
     {
+        printf("dropped\n");
         drop(p, DROP_RTR_NO_ROUTE);
         return;
     }
@@ -890,7 +894,6 @@ node *CorbalAgent::recvGPSR(Packet *p, Point destionation) {
                 nb = getNeighborByPerimeter(destionation);
 
                 if (nb == NULL) {
-                    drop(p, DROP_RTR_NO_ROUTE);
                     return NULL;
                 }
                 else {
@@ -909,14 +912,12 @@ node *CorbalAgent::recvGPSR(Packet *p, Point destionation) {
             else {
                 nb = getNeighborByPerimeter(egh->prev_);
                 if (nb == NULL) {
-                    drop(p, DROP_RTR_NO_ROUTE);
                     return NULL;
                 }
             }
             break;
 
         default:
-            drop(p, "UnknowType");
             return NULL;
     }
 
