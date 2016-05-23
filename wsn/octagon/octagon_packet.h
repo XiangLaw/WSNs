@@ -22,7 +22,7 @@ struct hdr_octagon_data {
     u_int8_t type_;
     nsaddr_t daddr_;
     int vertex_num_;
-    Point vertex[5];
+    Point vertex[8];
 
     // gpsr header
     u_int8_t gprs_type_;
@@ -30,7 +30,7 @@ struct hdr_octagon_data {
     Point prev_;
 
     inline int size() {
-        return sizeof(nsaddr_t) + sizeof(int) + sizeof(u_int8_t) * 2 + 6 * sizeof(Point);
+        return sizeof(nsaddr_t) + sizeof(int) + sizeof(u_int8_t) * 2 + 10 * sizeof(Point);
     }
 };
 

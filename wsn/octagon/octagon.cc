@@ -693,6 +693,7 @@ void OctagonAgent::sendData(Packet *p) {
     edh->vertex_num_ = 1;
     edh->vertex[0] = *dest;
     edh->vertex[1] = *this;
+    edh->gprs_type_ = GPSR_GPSR;
 
     iph->saddr() = my_id_;
     iph->daddr() = -1;
