@@ -724,7 +724,10 @@ void OctagonAgent::recvData(Packet *p) {
     // -------- forward by greedy
     node *nexthop = NULL;
     while (nexthop == NULL && edh->vertex_num_ > 0) {
-        nexthop = recvGPSR(p, edh->vertex[edh->vertex_num_ - 1]);
+        if (edh->vertex_num_ == 1)
+            nexthop = recvGPSR(p, edh->vertex[edh->vertex_num_ - 1]);
+        else
+            nexthop = getNeighborByGreedy(edh->vertex[edh->vertex_num_ - 1]);
         if (nexthop == NULL) {
             edh->vertex_num_--;
         }
@@ -757,7 +760,6 @@ node *OctagonAgent::recvGPSR(Packet *p, Point destionation) {
                 nb = getNeighborByPerimeter(destionation);
 
                 if (nb == NULL) {
-                    drop(p, DROP_RTR_NO_ROUTE);
                     return NULL;
                 }
                 else {
@@ -776,14 +778,12 @@ node *OctagonAgent::recvGPSR(Packet *p, Point destionation) {
             else {
                 nb = getNeighborByPerimeter(egh->prev_);
                 if (nb == NULL) {
-                    drop(p, DROP_RTR_NO_ROUTE);
                     return NULL;
                 }
             }
             break;
 
         default:
-            drop(p, "UnknowType");
             return NULL;
     }
 
