@@ -107,6 +107,7 @@ private:
 
 	void sendData(Packet* p);
 	void recvData(Packet* p);
+	node *recvGPSR(Packet *p, Point destionation);
 
 	void dumpRoutingTable();
 	void dumpApproximateHole();

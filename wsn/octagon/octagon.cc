@@ -724,7 +724,7 @@ void OctagonAgent::recvData(Packet *p) {
     // -------- forward by greedy
     node *nexthop = NULL;
     while (nexthop == NULL && edh->vertex_num_ > 0) {
-        nexthop = getNeighborByGreedy(edh->vertex[edh->vertex_num_ - 1]);
+        nexthop = recvGPSR(p, edh->vertex[edh->vertex_num_ - 1]);
         if (nexthop == NULL) {
             edh->vertex_num_--;
         }
@@ -742,6 +742,54 @@ void OctagonAgent::recvData(Packet *p) {
         cmh->next_hop_ = nexthop->id_;
         send(p, 0);
     }
+}
+
+node *OctagonAgent::recvGPSR(Packet *p, Point destionation) {
+    struct hdr_octagon_data *egh = HDR_OCTAGON_DATA(p);
+
+    node *nb = NULL;
+
+    switch (egh->gprs_type_) {
+        case GPSR_GPSR:
+            nb = this->getNeighborByGreedy(destionation, *this);
+
+            if (nb == NULL) {
+                nb = getNeighborByPerimeter(destionation);
+
+                if (nb == NULL) {
+                    drop(p, DROP_RTR_NO_ROUTE);
+                    return NULL;
+                }
+                else {
+                    egh->gprs_type_ = GPSR_PERIME;
+                    egh->peri_ = *this;
+                }
+            }
+            break;
+
+        case GPSR_PERIME:
+            // try to get back to greedy mode
+            nb = this->getNeighborByGreedy(destionation, egh->peri_);
+            if (nb) {
+                egh->gprs_type_ = GPSR_GPSR;
+            }
+            else {
+                nb = getNeighborByPerimeter(egh->prev_);
+                if (nb == NULL) {
+                    drop(p, DROP_RTR_NO_ROUTE);
+                    return NULL;
+                }
+            }
+            break;
+
+        default:
+            drop(p, "UnknowType");
+            return NULL;
+    }
+
+    egh->prev_ = *this;
+
+    return nb;
 }
 
 // --------------------- Dump ------------------------------------- //
