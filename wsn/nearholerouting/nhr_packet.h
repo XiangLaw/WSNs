@@ -20,10 +20,9 @@ struct hdr_nhr {
     // 2 -> 7. octagon vertices
     uint8_t ap_index;
     uint8_t type;
-    int dest_level;
 
     inline int size() {
-        return 11 * sizeof(Point) + 2 * sizeof(uint8_t) + sizeof(nsaddr_t) + sizeof(int);
+        return 11 * sizeof(Point) + 2 * sizeof(uint8_t) + sizeof(nsaddr_t);
     }
 
     static int offset_;

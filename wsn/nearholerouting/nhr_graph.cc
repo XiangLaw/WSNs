@@ -143,6 +143,7 @@ void NHRGraph::constructGraph() {
         }
     }
     delete diagram;
+    gatepoint_ = gate_endpoint;
     endpoint_ = findShortestPath(graph, gate_endpoint, endpoints);
 }
 
@@ -185,13 +186,15 @@ void NHRGraph::addVertexToGraph(std::map<Point, vector<Point> > &graph, Point v1
 }
 
 Point NHRGraph::findShortestPath(std::map<Point, vector<Point> > &graph, Point gate, set<Point> endpoints) {
+    map<Point, Point> trace;
     std::queue<Point> queue;
+    map<Point, int> level;
     int n_level = 0;
     std::map<Point, vector<Point> >::iterator root;
     root = graph.find(gate);
     queue.push(root->first);
-    trace_.insert(std::pair<Point, Point>(root->first, root->first));
-    level_.insert(std::pair<Point, int>(root->first, n_level));
+    trace.insert(std::pair<Point, Point>(root->first, root->first));
+    level.insert(std::pair<Point, int>(root->first, n_level));
 
     while (!queue.empty()) {
         n_level++;
@@ -199,9 +202,9 @@ Point NHRGraph::findShortestPath(std::map<Point, vector<Point> > &graph, Point g
         queue.pop();
         std::vector<Point> tmp = graph.find(p)->second;
         for (std::vector<Point>::iterator it = tmp.begin(); it != tmp.end(); ++it) {
-            if (trace_.find((*it)) == trace_.end()) {
-                trace_.insert(std::pair<Point, Point>((*it), p));
-                level_.insert(std::pair<Point, int>((*it), n_level));
+            if (trace.find((*it)) == trace.end()) {
+                trace.insert(std::pair<Point, Point>((*it), p));
+                level.insert(std::pair<Point, int>((*it), n_level));
                 queue.push((*it));
             }
         }
@@ -210,12 +213,19 @@ Point NHRGraph::findShortestPath(std::map<Point, vector<Point> > &graph, Point g
     Point closet_endpoint;
     int closet_level = INT_MAX;
     for (std::set<Point>::iterator it = endpoints.begin(); it != endpoints.end(); ++it) {
-        int level_tmp = level_.find(*it)->second;
+        int level_tmp = level.find(*it)->second;
         if (level_tmp < closet_level) {
             closet_level = level_tmp;
             closet_endpoint.x_ = (*it).x_;
             closet_endpoint.y_ = (*it).y_;
         }
+    }
+
+    Point tmp = closet_endpoint;
+    while (tmp != gate) {
+        std::map<Point, Point>::iterator it = trace.find(tmp);
+        trace_.insert(std::pair<Point, Point>(it->first, it->second));
+        tmp = it->second;
     }
 
     return closet_endpoint;
@@ -226,6 +236,7 @@ bool NHRGraph::perpendicularLinePolygonIntersect(Point p, vector<BoundaryNode> c
     Line perpendicular_line = G::perpendicular_line(p, gate_line);
     G::intersection(gate_line, perpendicular_line, &perpendicular_point);
     for (int i = 0; i < cave.size() - 2; i++) {
+        if (cave[i] == p || cave[i + 1] == p) continue;
         Point ins;
         if (G::lineSegmentIntersection(&cave[i], &cave[i + 1], perpendicular_line, ins) &&
             G::onSegment(&p, &ins, &perpendicular_point)) {
@@ -239,38 +250,21 @@ void NHRGraph::endpoint(Point &p) {
     p = trace_.find(p)->second;
 }
 
-Point NHRGraph::gatePoint(int &gate_level) {
-    // calculate gate point
-    Point point_tmp = endpoint_;
-    Point pp;
-    while ((gate_level = level_.find(point_tmp)->second)) {
-        point_tmp = trace_.find(point_tmp)->second;
-        if (perpendicularLinePolygonIntersect(point_tmp, cave_, pp)) {
-            break;
+Point NHRGraph::traceBack(Point &current_vertex) {
+    map<Point, Point>::iterator it = trace_.find(current_vertex);
+    if (it == trace_.end())
+        return agent_;
+
+    for (it = trace_.begin(); it != trace_.end(); it++) {
+        if (it->second.operator==(it->first)) {
+            continue;
+        }
+        if (it->second == current_vertex) {
+            current_vertex = it->first;
+            return it->first;
         }
     }
-
-    return pp;
-}
-
-Point NHRGraph::traceBack(int &dest_level) {
-    Point point_tmp = endpoint_;
-    Point prev_point;
-    int prev;
-    map<Point, int>::iterator it = level_.find(point_tmp);
-    if (it == level_.end() || it->second == dest_level)
-        return agent_;
-    prev = it->second;
-    do {
-        prev_point = point_tmp;
-        point_tmp = trace_.find(point_tmp)->second;
-        if (level_.find(point_tmp)->second == dest_level) {
-            dest_level = prev;
-            break;
-        }
-    } while ((prev = level_.find(point_tmp)->second) != 0);
-
-    return prev_point;
+    return agent_;
 }
 
 void NHRGraph::getGateNodeIds(int &gate1, int &gate2) {
@@ -278,4 +272,17 @@ void NHRGraph::getGateNodeIds(int &gate1, int &gate2) {
         return;
     gate1 = cave_[0].id_;
     gate2 = cave_[cave_.size() - 1].id_;
+}
+
+void NHRGraph::dumpVoronoi(vector<BoundaryNode> polygon, map<Point, vector<Point> > vertices) {
+    FILE *fp = fopen("Voronoi.tr", "a+");
+    for (std::vector<BoundaryNode>::iterator it = polygon.begin(); it != polygon.end(); ++it)
+        fprintf(fp, "%d\t%f\t%f\n", 1, (*it).x_, (*it).y_);
+    for (map<Point, vector<Point> >::iterator it = vertices.begin(); it != vertices.end(); ++it) {
+        for (vector<Point>::iterator it2 = it->second.begin(); it2 != it->second.end(); ++it2) {
+            fprintf(fp, "==%d\t%f\t%f\n", 1, (*it).first.x_, (*it).first.y_);
+            fprintf(fp, "==%d\t%f\t%f\n\n", 1, (*it2).x_, (*it2).y_);
+        }
+    }
+    fclose(fp);
 }

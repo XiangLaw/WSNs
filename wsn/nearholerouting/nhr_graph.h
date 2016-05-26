@@ -15,20 +15,23 @@ public:
 
     void endpoint(Point &);
 
-    Point gatePoint(int &);
+    Point gatePoint() { return gatepoint_; }
 
     bool isPivot() { return isPivot_; }
 
-    Point traceBack(int &);
+    Point traceBack(Point &);
 
     void getGateNodeIds(int &, int &);
+
+    void dumpVoronoi(vector<BoundaryNode> polygon, map<Point, vector<Point> > vertices);
+
 
 private:
     Point agent_;
     Point endpoint_;
+    Point gatepoint_;
     bool isPivot_;
     map<Point, Point> trace_;
-    map<Point, int> level_;
     vector<BoundaryNode> hole_;
     vector<BoundaryNode> cave_;
 

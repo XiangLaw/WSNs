@@ -70,7 +70,7 @@ private:
 
     void recvData(Packet *p);
 
-    Point calculateDestEndpoint(Point, int &, int &, int &);
+    Point calculateDestEndpoint(Point, int &, int &);
 
     bool determineOctagonAnchorPoints(Packet *);
 

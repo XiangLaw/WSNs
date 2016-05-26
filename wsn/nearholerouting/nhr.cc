@@ -495,7 +495,6 @@ void NHRAgent::sendData(Packet *p) {
     edh->daddr_ = iph->daddr();
     edh->ap_index = 0;
     edh->type = NHR_CBR_GPSR;
-    edh->dest_level = 0;
     edh->anchor_points[0] = *dest;
     edh->dest_ = *dest;
 
@@ -573,12 +572,12 @@ void NHRAgent::recvData(Packet *p) {
     }
 }
 
-Point NHRAgent::calculateDestEndpoint(Point dest, int &level, int &gate1, int &gate2) {
+Point NHRAgent::calculateDestEndpoint(Point dest, int &gate1, int &gate2) {
     // TODO: if dest, source in the same cave
     // return to routeToDest mode immediately
     Point gate_point;
     NHRGraph *graph = new NHRGraph(dest, hole_);
-    gate_point = graph->isPivot() ? graph->endpoint() : graph->gatePoint(level);
+    gate_point = graph->isPivot() ? graph->endpoint() : graph->gatePoint();
     graph->getGateNodeIds(gate1, gate2);
     delete graph;
     return gate_point;
@@ -591,7 +590,7 @@ bool NHRAgent::determineOctagonAnchorPoints(Packet *p) {
     // calculate dest endpoint
     int d_gate1, d_gate2;
     d_gate1 = d_gate2 = -1;
-    hdc->anchor_points[0] = calculateDestEndpoint(hdc->dest_, hdc->dest_level, d_gate1, d_gate2);
+    hdc->anchor_points[0] = calculateDestEndpoint(hdc->dest_, d_gate1, d_gate2);
 
     // if sd doesnt intersect with the hole -> go by GPSR (set hdc->ap_index = 0)
     if (!sdPolygonIntersect(p)) {
@@ -782,9 +781,9 @@ void NHRAgent::routeToDest(Packet *p) {
     struct hdr_nhr *edh = HDR_NHR(p);
     NHRGraph *graph = new NHRGraph(edh->dest_, hole_);
     node *nexthop = getNeighborByGreedy(edh->anchor_points[0]);
-    while (nexthop == NULL || edh->anchor_points[0] != edh->dest_) {
-        edh->anchor_points[0] = graph->traceBack(edh->dest_level);
-        if (edh->dest_level == 0) break;
+    while (nexthop == NULL) {
+        edh->anchor_points[0] = graph->traceBack(edh->anchor_points[0]);
+        if (edh->anchor_points[0] == graph->endpoint()) break;
         nexthop = getNeighborByGreedy(edh->anchor_points[0]);
     }
     delete graph;
