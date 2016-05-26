@@ -675,26 +675,20 @@ void NHRAgent::bypassHole(Packet *p, Point source, Point dest,
     findLimitAnchorPoint(source, scaleOctagon, center, si2, si1);
     findLimitAnchorPoint(dest, scaleOctagon, center, di1, di2);
 
-//    if (G::orientation(source, scaleOctagon[si1], dest) != 2) {
-//        int tmp = si2;
-//        si2 = si1;
-//        si1 = tmp;
-//    }
-//    if (G::orientation(source, scaleOctagon[di1], dest) != 2) {
-//        int tmp = di2;
-//        di2 = di1;
-//        di1 = tmp;
-//    }
-//    if (G::orientation(source, SI1, dest) != 2) {
-//        Point tmp = SI2;
-//        SI2 = SI1;
-//        SI1 = tmp;
-//    }
-//    if (G::orientation(source, DI1, dest) != 2) {
-//        Point tmp = DI2;
-//        DI2 = DI1;
-//        DI1 = tmp;
-//    }
+    Point ms = G::midpoint(scaleOctagon[si1], scaleOctagon[si2]);
+    Point md = G::midpoint(scaleOctagon[di1], scaleOctagon[di2]);
+    Line mm = G::line(ms, md);
+    if (G::position(scaleOctagon[si1], mm) > 0) {
+        int tmp = si2;
+        si2 = si1;
+        si1 = tmp;
+    }
+
+    if (G::position(scaleOctagon[di1], mm) > 0) {
+        int tmp = di2;
+        di2 = di1;
+        di1 = tmp;
+    }
 
     // octagon order: counter clockwise
     // si -> di: counter clockwise
