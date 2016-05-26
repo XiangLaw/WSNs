@@ -119,7 +119,7 @@ void NHRAgent::createHole(Packet *p) {
 }
 
 vector<BoundaryNode> NHRAgent::determineConvexHull() {
-    stack<BoundaryNode *> hull;
+    std::stack<BoundaryNode *> hull;
     vector<BoundaryNode> convex;
     vector<BoundaryNode *> clone_hole;
 
@@ -572,13 +572,12 @@ void NHRAgent::recvData(Packet *p) {
     }
 }
 
-Point NHRAgent::calculateDestEndpoint(Point dest, int &gate1, int &gate2) {
+Point NHRAgent::calculateDestEndpoint(Point dest) {
     // TODO: if dest, source in the same cave
     // return to routeToDest mode immediately
     Point gate_point;
     NHRGraph *graph = new NHRGraph(dest, hole_);
     gate_point = graph->isPivot() ? graph->endpoint() : graph->gatePoint();
-    graph->getGateNodeIds(gate1, gate2);
     delete graph;
     return gate_point;
 }
@@ -588,9 +587,7 @@ bool NHRAgent::determineOctagonAnchorPoints(Packet *p) {
     struct hdr_nhr *hdc = HDR_NHR(p);
 
     // calculate dest endpoint
-    int d_gate1, d_gate2;
-    d_gate1 = d_gate2 = -1;
-    hdc->anchor_points[0] = calculateDestEndpoint(hdc->dest_, d_gate1, d_gate2);
+    hdc->anchor_points[0] = calculateDestEndpoint(hdc->dest_);
 
     // if sd doesnt intersect with the hole -> go by GPSR (set hdc->ap_index = 0)
     if (!sdPolygonIntersect(p)) {

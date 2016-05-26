@@ -21,8 +21,6 @@ public:
 
     Point traceBack(Point &);
 
-    void getGateNodeIds(int &, int &);
-
     void dumpVoronoi(vector<BoundaryNode> polygon, map<Point, vector<Point> > vertices);
 
 

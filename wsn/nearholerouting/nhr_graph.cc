@@ -267,13 +267,6 @@ Point NHRGraph::traceBack(Point &current_vertex) {
     return agent_;
 }
 
-void NHRGraph::getGateNodeIds(int &gate1, int &gate2) {
-    if (cave_.empty())
-        return;
-    gate1 = cave_[0].id_;
-    gate2 = cave_[cave_.size() - 1].id_;
-}
-
 void NHRGraph::dumpVoronoi(vector<BoundaryNode> polygon, map<Point, vector<Point> > vertices) {
     FILE *fp = fopen("Voronoi.tr", "a+");
     for (std::vector<BoundaryNode>::iterator it = polygon.begin(); it != polygon.end(); ++it)
