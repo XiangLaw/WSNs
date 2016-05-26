@@ -541,11 +541,11 @@ void NHRAgent::recvData(Packet *p) {
                 nexthop = getNeighborByGreedy(edh->anchor_points[edh->ap_index]);
                 if (nexthop != NULL) break;
             case NHR_CBR_AWARE_OCTAGON:
-                while (edh->ap_index > 2 && nexthop == NULL) {
+                while (edh->ap_index > 1 && nexthop == NULL) {
                     --edh->ap_index;
                     nexthop = getNeighborByGreedy(edh->anchor_points[edh->ap_index]);
                 }
-                if (edh->ap_index == 2) {
+                if (edh->ap_index == 1) {
                     edh->ap_index = 0;
                     edh->type = NHR_CBR_AWARE_DESTINATION;
                 }
@@ -636,7 +636,7 @@ bool NHRAgent::determineOctagonAnchorPoints(Packet *p) {
     }
     dumpScalePolygon(scaleHole, I);
     // generate new anchor points
-    bypassHole(p, *this, hdc->anchor_points[0], scaleHole);
+    bypassHole(p, *this, hdc->anchor_points[0], scaleHole, I);
     return true;
 }
 
@@ -669,38 +669,36 @@ bool NHRAgent::isPointInsidePolygon(Point p, vector<BoundaryNode> polygon) {
     return odd;
 }
 
-void NHRAgent::bypassHole(Packet *p, Point source, Point dest, vector<BoundaryNode> scaleOctagon) {
+void NHRAgent::bypassHole(Packet *p, Point source, Point dest,
+                          vector<BoundaryNode> scaleOctagon, Point center) {
     struct hdr_nhr *edh = HDR_NHR(p);
 
     int si1, si2, di1, di2;
     vector<Point> aps;
 
-    Point SI1, SI2;
-    Point DI1, DI2;
+    findLimitAnchorPoint(source, scaleOctagon, center, si2, si1);
+    findLimitAnchorPoint(dest, scaleOctagon, center, di1, di2);
 
-    findLimitAnchorPoint(source, dest, scaleOctagon, si1, si2, SI1, SI2);
-    findLimitAnchorPoint(dest, source, scaleOctagon, di1, di2, DI1, DI2);
-
-    if (G::orientation(source, scaleOctagon[si1], dest) != 2) {
-        int tmp = si2;
-        si2 = si1;
-        si1 = tmp;
-    }
-    if (G::orientation(source, scaleOctagon[di1], dest) != 2) {
-        int tmp = di2;
-        di2 = di1;
-        di1 = tmp;
-    }
-    if (G::orientation(source, SI1, dest) != 2) {
-        Point tmp = SI2;
-        SI2 = SI1;
-        SI1 = tmp;
-    }
-    if (G::orientation(source, DI1, dest) != 2) {
-        Point tmp = DI2;
-        DI2 = DI1;
-        DI1 = tmp;
-    }
+//    if (G::orientation(source, scaleOctagon[si1], dest) != 2) {
+//        int tmp = si2;
+//        si2 = si1;
+//        si1 = tmp;
+//    }
+//    if (G::orientation(source, scaleOctagon[di1], dest) != 2) {
+//        int tmp = di2;
+//        di2 = di1;
+//        di1 = tmp;
+//    }
+//    if (G::orientation(source, SI1, dest) != 2) {
+//        Point tmp = SI2;
+//        SI2 = SI1;
+//        SI1 = tmp;
+//    }
+//    if (G::orientation(source, DI1, dest) != 2) {
+//        Point tmp = DI2;
+//        DI2 = DI1;
+//        DI1 = tmp;
+//    }
 
     // octagon order: counter clockwise
     // si -> di: counter clockwise
@@ -717,36 +715,28 @@ void NHRAgent::bypassHole(Packet *p, Point source, Point dest, vector<BoundaryNo
     }
 
     // s - si1 - di1 - d
-    dis = G::distance(source, SI1);
-    dis += G::distance(SI1, scaleOctagon[si1]);
+    dis = G::distance(source, scaleOctagon[si1]);
     for (int i = si1; i < di1; i++) {
         dis += G::distance(scaleOctagon[i], scaleOctagon[i + 1]);
     }
-    dis += G::distance(scaleOctagon[di1], DI1);
-    dis += G::distance(DI1, dest);
+    dis += G::distance(scaleOctagon[di1], dest);
     length = dis;
 
-    aps.push_back(DI1);
     for (int i = di1; i >= si1; --i) {
         aps.push_back(scaleOctagon[i]);
     }
-    aps.push_back(SI1);
 
     // s - sp - si2 - i2 - i4 - di2 - dp - d
-    dis = G::distance(source, SI2);
-    dis += G::distance(SI2, scaleOctagon[si2]);
+    dis = G::distance(source, scaleOctagon[si2]);
     for (int i = di2; i < si2; ++i) {
         dis += G::distance(scaleOctagon[i], scaleOctagon[i + 1]);
     }
-    dis += G::distance(scaleOctagon[di2], DI2);
-    dis += G::distance(DI2, dest);
+    dis += G::distance(scaleOctagon[di2], dest);
     if (dis < length) {
         vector<Point>().swap(aps);
-        aps.push_back(DI2);
         for (int i = di2; i <= si2; ++i) {
             aps.push_back(scaleOctagon[i]);
         }
-        aps.push_back(SI2);
     }
 
     // update routing table
@@ -755,23 +745,19 @@ void NHRAgent::bypassHole(Packet *p, Point source, Point dest, vector<BoundaryNo
     }
 }
 
-void NHRAgent::findLimitAnchorPoint(Point point, Point spoint, vector<BoundaryNode> scaleHole,
-                                    int &i1, int &i2, Point &I1, Point &I2) {
+void NHRAgent::findLimitAnchorPoint(Point point,
+                                    vector<BoundaryNode> scaleHole, Point center,
+                                    int &i1, int &i2) {
+    i1 = i2 = -1;
     if (!isPointInsidePolygon(point, scaleHole)) { // point is outside scaleHole
         findViewLimitVertices(point, scaleHole, i1, i2);
-        I1 = scaleHole[i1];
-        I2 = scaleHole[i2];
         return;
     } else {
-        Line sd = G::line(point, spoint);
         for (int i = 0; i < scaleHole.size(); i++) {
-            Point ins;
-            if (G::lineSegmentIntersection(&scaleHole[i % 8], &scaleHole[(i + 1) % 8], sd, ins) &&
-                G::onSegment(spoint, point, ins)) {
-                I1 = I2 = ins;
+            if (G::isPointLiesInTriangle(&point, &center, &scaleHole[i % 8], &scaleHole[(i + 1) % 8])) {
                 i1 = i;
                 i2 = (i + 1) % 8;
-                break;
+                return;
             }
         }
     }

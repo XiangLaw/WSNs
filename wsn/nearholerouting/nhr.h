@@ -76,9 +76,9 @@ private:
 
     bool sdPolygonIntersect(Packet *);
 
-    void bypassHole(Packet *, Point, Point, vector<BoundaryNode>);
+    void bypassHole(Packet *, Point, Point, vector<BoundaryNode>, Point);
 
-    void findLimitAnchorPoint(Point, Point, vector<BoundaryNode>, int &, int &, Point &, Point &);
+    void findLimitAnchorPoint(Point, vector<BoundaryNode>, Point, int &, int &);
 
     void findViewLimitVertices(Point, vector<BoundaryNode>, int &, int &);
 
