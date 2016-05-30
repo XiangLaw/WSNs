@@ -820,6 +820,10 @@ void CorbalAgent::recvData(Packet *p) {
                 double real_scale_factor = scale_factor_;
                 bool recalculate_scale_factor = false;
 
+                corePolygon *revereScaleHole = new corePolygon();
+                revereScaleHole->next_ = NULL;
+                revereScaleHole->node_ = NULL;
+
                 corePolygon *scaleHole = new corePolygon();
                 scaleHole->next_ = NULL;
                 scaleHole->node_ = NULL;
@@ -869,15 +873,34 @@ void CorbalAgent::recvData(Packet *p) {
                     real_scale_factor = 3 * real_scale_factor / 4;
                 }
 
+                tmp = my_core_polygon->node_;
                 do {
                     node *newNode = new node();
                     newNode->x_ = real_scale_factor * tmp->x_ + (1 - real_scale_factor) * I.x_;
                     newNode->y_ = real_scale_factor * tmp->y_ + (1 - real_scale_factor) * I.y_;
-                    newNode->next_ = scaleHole->node_;
-                    scaleHole->node_ = newNode;
+                    newNode->next_ = revereScaleHole->node_;
+                    revereScaleHole->node_ = newNode;
 
                     tmp = tmp->next_ == NULL ? my_core_polygon->node_ : tmp->next_;
                 } while (tmp != my_core_polygon->node_);
+
+                tmp = revereScaleHole->node_;
+                do {
+                    node *newNode = new node();
+                    newNode->x_ = tmp->x_;
+                    newNode->y_ = tmp->y_;
+                    newNode->next_ = scaleHole->node_;
+                    scaleHole->node_ = newNode;
+
+                    tmp = tmp->next_ == NULL ? revereScaleHole->node_ : tmp->next_;
+                } while (tmp != revereScaleHole->node_);
+
+                // free reverse scale hole
+                do {
+                    tmp = revereScaleHole->node_;
+                    revereScaleHole->node_ = revereScaleHole->node_->next_;
+                    delete tmp;
+                } while (revereScaleHole->node_);
 
                 // circle node list
                 tmp = scaleHole->node_;
@@ -887,7 +910,8 @@ void CorbalAgent::recvData(Packet *p) {
                 dumpScaleHole(p, scaleHole);
 
                 // generate routing table
-                bypassHole(this, &(hdc->dest), scaleHole, hdc->routing_table, hdc->routing_index);
+                bypassHole(this, &(hdc->dest), scaleHole, my_core_polygon,
+                           hdc->routing_table, hdc->routing_index);
 
                 // free
                 tmp = scaleHole->node_;
@@ -1075,10 +1099,44 @@ double CorbalAgent::euclidLengthOfBRSP(Point *s, Point *d, corePolygon *polygon)
 }
 
 
-void CorbalAgent::bypassHole(Point *S, Point *D, corePolygon *polygon, Point *routingTable, u_int8_t &routingCount) {
+void CorbalAgent::bypassHole(Point *S, Point *D, corePolygon *scalePolygon, corePolygon *corePolygon,
+                             Point *routingTable, u_int8_t &routingCount) {
     node *S1, *S2, *D1, *D2;
-    findViewLimitVertex(S, polygon, &S1, &S2); // s1 = right, s2 = left
-    findViewLimitVertex(D, polygon, &D2, &D1); // d1 = right, d2 = left
+
+    // uncircle node list
+    scalePolygon->unCircleNodeList();
+
+    if (G::isPointInsidePolygon(S, scalePolygon->node_)) {
+        node *s1, *s2;
+        findViewLimitVertex(S, corePolygon, &s1, &s2);
+        node *tmp1 = corePolygon->node_;
+        for (node *tmp = scalePolygon->node_; tmp != NULL; tmp = tmp->next_, tmp1 = tmp1->next_) {
+            if (tmp1 == s1) {
+                S1 = tmp;
+            } else if (tmp1 == s2) {
+                S2 = tmp;
+            }
+        }
+    } else {
+        findViewLimitVertex(S, scalePolygon, &S1, &S2); // s1 = right, s2 = left
+    }
+
+    if (G::isPointInsidePolygon(D, scalePolygon->node_)) {
+        node *d1, *d2;
+        findViewLimitVertex(D, corePolygon, &d1, &d2);
+        node *tmp1 = corePolygon->node_;
+        for (node *tmp = scalePolygon->node_; tmp != NULL; tmp = tmp->next_, tmp1 = tmp1->next_) {
+            if (tmp1 == d1) {
+                D1 = tmp;
+            } else if (tmp1 == d2) {
+                D2 = tmp;
+            }
+        }
+    } else {
+        findViewLimitVertex(D, scalePolygon, &D2, &D1); // d1 = right, d2 = left
+    }
+
+    scalePolygon->circleNodeList();
 
     double length = 0;
     double dis = 0;

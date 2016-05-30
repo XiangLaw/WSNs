@@ -77,7 +77,7 @@ private:
 
     void addrouting(Point *p, Point *routingTable, u_int8_t &routingCount);
 
-    void bypassHole(Point *, Point *, corePolygon *, Point *, u_int8_t &);
+    void bypassHole(Point *, Point *, corePolygon *, corePolygon *, Point *, u_int8_t &);
 
     node *recvGPSR(Packet *p, Point destionation);
 
