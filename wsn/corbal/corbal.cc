@@ -1102,6 +1102,7 @@ double CorbalAgent::euclidLengthOfBRSP(Point *s, Point *d, corePolygon *polygon)
 void CorbalAgent::bypassHole(Point *S, Point *D, corePolygon *scalePolygon, corePolygon *corePolygon,
                              Point *routingTable, u_int8_t &routingCount) {
     node *S1, *S2, *D1, *D2;
+    S1 = S2 = D1 = D2 = NULL;
 
     // uncircle node list
     scalePolygon->unCircleNodeList();
@@ -1142,6 +1143,9 @@ void CorbalAgent::bypassHole(Point *S, Point *D, corePolygon *scalePolygon, core
     double dis = 0;
     node *i = NULL;
 
+    Point *routingTable_tmp = new Point[n_ + 1];
+    u_int8_t routingCount_tmp;
+
     // ------------------------------------------------- S S1 D1 D
     dis = G::distance(this, S1);
     for (i = S1; i != D1; i = i->next_) {
@@ -1149,15 +1153,15 @@ void CorbalAgent::bypassHole(Point *S, Point *D, corePolygon *scalePolygon, core
     }
     dis += G::distance(D1, D);
     length = dis;
-    routingCount = 1;
+    routingCount_tmp = 1;
     for (i = S1; i != D1->next_; i = i->next_) {
-        addrouting(i, routingTable, routingCount);
+        addrouting(i, routingTable_tmp, routingCount_tmp);
     }
     // replace routing_table
-    for (int index = 1; index <= (routingCount - 1) / 2; index++) {
-        Point temp = routingTable[index];
-        routingTable[index] = routingTable[routingCount - index];
-        routingTable[routingCount - index] = temp;
+    for (int index = 1; index <= (routingCount_tmp - 1) / 2; index++) {
+        Point temp = routingTable_tmp[index];
+        routingTable_tmp[index] = routingTable_tmp[routingCount_tmp - index];
+        routingTable_tmp[routingCount_tmp - index] = temp;
     }
     // ------------------------------------------------- S S2 D2 D
     dis = G::distance(this, S2);
@@ -1167,15 +1171,15 @@ void CorbalAgent::bypassHole(Point *S, Point *D, corePolygon *scalePolygon, core
     dis += G::distance(D2, D);
     if (dis < length) {
         length = dis;
-        routingCount = 1;
+        routingCount_tmp = 1;
         for (i = S2; i != D2->next_; i = i->next_) {
-            addrouting(i, routingTable, routingCount);
+            addrouting(i, routingTable_tmp, routingCount_tmp);
         }
         // replace routing_table
-        for (int index = 1; index <= (routingCount - 1) / 2; index++) {
-            Point temp = routingTable[index];
-            routingTable[index] = routingTable[routingCount - index];
-            routingTable[routingCount - index] = temp;
+        for (int index = 1; index <= (routingCount_tmp - 1) / 2; index++) {
+            Point temp = routingTable_tmp[index];
+            routingTable_tmp[index] = routingTable_tmp[routingCount_tmp - index];
+            routingTable_tmp[routingCount_tmp - index] = temp;
         }
     }
     // ------------------------------------------------- S S1 D2 D
@@ -1184,16 +1188,18 @@ void CorbalAgent::bypassHole(Point *S, Point *D, corePolygon *scalePolygon, core
         dis += G::distance(i, i->next_);
     }
     dis += G::distance(D2, D);
-    length = dis;
-    routingCount = 1;
-    for (i = S1; i != D2->next_; i = i->next_) {
-        addrouting(i, routingTable, routingCount);
-    }
-    // replace routing_table
-    for (int index = 1; index <= (routingCount - 1) / 2; index++) {
-        Point temp = routingTable[index];
-        routingTable[index] = routingTable[routingCount - index];
-        routingTable[routingCount - index] = temp;
+    if (dis < length) {
+        length = dis;
+        routingCount_tmp = 1;
+        for (i = S1; i != D2->next_; i = i->next_) {
+            addrouting(i, routingTable_tmp, routingCount_tmp);
+        }
+        // replace routing_table
+        for (int index = 1; index <= (routingCount_tmp - 1) / 2; index++) {
+            Point temp = routingTable_tmp[index];
+            routingTable_tmp[index] = routingTable_tmp[routingCount_tmp - index];
+            routingTable_tmp[routingCount_tmp - index] = temp;
+        }
     }
     // ------------------------------------------------- S S2 D1 D
     dis = G::distance(this, S2);
@@ -1203,15 +1209,15 @@ void CorbalAgent::bypassHole(Point *S, Point *D, corePolygon *scalePolygon, core
     dis += G::distance(D1, D);
     if (dis < length) {
         length = dis;
-        routingCount = 1;
+        routingCount_tmp = 1;
         for (i = S2; i != D1->next_; i = i->next_) {
-            addrouting(i, routingTable, routingCount);
+            addrouting(i, routingTable_tmp, routingCount_tmp);
         }
         // replace routing_table
-        for (int index = 1; index <= (routingCount - 1) / 2; index++) {
-            Point temp = routingTable[index];
-            routingTable[index] = routingTable[routingCount - index];
-            routingTable[routingCount - index] = temp;
+        for (int index = 1; index <= (routingCount_tmp - 1) / 2; index++) {
+            Point temp = routingTable_tmp[index];
+            routingTable_tmp[index] = routingTable_tmp[routingCount_tmp - index];
+            routingTable_tmp[routingCount_tmp - index] = temp;
         }
     }
     // ------------------------------------------------- D D1 S1 S
@@ -1222,9 +1228,9 @@ void CorbalAgent::bypassHole(Point *S, Point *D, corePolygon *scalePolygon, core
     dis += G::distance(S1, this);
     if (dis < length) {
         length = dis;
-        routingCount = 1;
+        routingCount_tmp = 1;
         for (i = D1; i != S1->next_; i = i->next_) {
-            addrouting(i, routingTable, routingCount);
+            addrouting(i, routingTable_tmp, routingCount_tmp);
         }
     }
     // ------------------------------------------------- D D2 S2 S
@@ -1234,9 +1240,9 @@ void CorbalAgent::bypassHole(Point *S, Point *D, corePolygon *scalePolygon, core
     }
     dis += G::distance(S2, this);
     if (dis < length) {
-        routingCount = 1;
+        routingCount_tmp = 1;
         for (i = D2; i != S2->next_; i = i->next_) {
-            addrouting(i, routingTable, routingCount);
+            addrouting(i, routingTable_tmp, routingCount_tmp);
         }
     }
     // ------------------------------------------------- D D1 S2 S
@@ -1247,9 +1253,9 @@ void CorbalAgent::bypassHole(Point *S, Point *D, corePolygon *scalePolygon, core
     dis += G::distance(S2, this);
     if (dis < length) {
         length = dis;
-        routingCount = 1;
+        routingCount_tmp = 1;
         for (i = D1; i != S2->next_; i = i->next_) {
-            addrouting(i, routingTable, routingCount);
+            addrouting(i, routingTable_tmp, routingCount_tmp);
         }
     }
     // ------------------------------------------------- D D2 S1 S
@@ -1259,16 +1265,22 @@ void CorbalAgent::bypassHole(Point *S, Point *D, corePolygon *scalePolygon, core
     }
     dis += G::distance(S1, this);
     if (dis < length) {
-        routingCount = 1;
+        routingCount_tmp = 1;
         for (i = D2; i != S1->next_; i = i->next_) {
-            addrouting(i, routingTable, routingCount);
+            addrouting(i, routingTable_tmp, routingCount_tmp);
         }
     }
+
+    for (int j = 1; j <= routingCount_tmp; j++) {
+        routingTable[j] = routingTable_tmp[j];
+    }
+    routingCount = routingCount_tmp;
+    delete[] routingTable_tmp;
 }
 
 void CorbalAgent::addrouting(Point *p, Point *routingTable, u_int8_t &routingCount) {
     for (int i = 0; i < routingCount; i++) {
-        if (routingTable[i].x_ == p->x_ && routingTable[i].y_ == p->y_)
+        if ((routingTable[i].x_ == p->x_ && routingTable[i].y_ == p->y_))
             return;
     }
 

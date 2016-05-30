@@ -1,9 +1,9 @@
-# Script for WisSim simulator. Last edit 24/05/2016 19:58:36
+# Script for WisSim simulator. Last edit 30/05/2016 19:30:26
 
 set opt(x)	1000	;# X dimension of the topography
 set opt(y)	1000	;# Y dimension of the topography
 set opt(stop)	500	;# simulation time
-set opt(nn)	1519	;# number of nodes
+set opt(nn)	1546	;# number of nodes
 set opt(tr)	Trace.tr	;# trace file
 set opt(nam)	nam.out.tr
 
@@ -59,10 +59,10 @@ Agent/CORBAL set hello_period_ 0
 Agent/CORBAL set range_ 40
 Agent/CORBAL set limit_boundhole_hop_ 80
 Agent/CORBAL set min_boundhole_hop_ 5
-Agent/CORBAL set n_ 8
-Agent/CORBAL set epsilon_ 3.3
-Agent/CORBAL set net_height_ 1000
+Agent/CORBAL set n_ 14
+Agent/CORBAL set epsilon_ 1.5
 Agent/CORBAL set net_width_ 1000
+Agent/CORBAL set net_height_ 1000
 
 Agent/UDP set fid_ 2
 

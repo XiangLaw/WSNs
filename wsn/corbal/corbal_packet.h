@@ -18,7 +18,7 @@ struct hdr_corbal {
     Point dest;
     Point source;
     u_int8_t routing_index;
-    Point routing_table[8];
+    Point routing_table[10];
 
     // gpsr header
     u_int8_t gprs_type_;
