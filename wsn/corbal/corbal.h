@@ -88,6 +88,9 @@ private:
     int kn;
     double theta_n;
     double epsilon_;
+    double network_width_;
+    double network_height_;
+
     polygonHole *hole_;
     corePolygon *core_polygon_set;
     corePolygon *my_core_polygon;

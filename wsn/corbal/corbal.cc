@@ -49,7 +49,9 @@ CorbalAgent::CorbalAgent() : GPSRAgent(),
     bind("limit_boundhole_hop_", &limit_max_hop_);
     bind("min_boundhole_hop_", &limit_min_hop_);
     bind("n_", &n_);
-    bind("s_", &epsilon_);
+    bind("epsilon_", &epsilon_);
+    bind("net_width_", &network_width_);
+    bind("net_height_", &network_height_);
 
     // theta_n = 2 * M_PI / ((n_ + 1) * floor(12 / (n_ + 1)));
     theta_n = 2 * M_PI * 1 / 9;
@@ -815,6 +817,9 @@ void CorbalAgent::recvData(Packet *p) {
                 I.y_ = I.y_ / fr;
 
                 // scale hole by I and scale_factor_
+                double real_scale_factor = scale_factor_;
+                bool recalculate_scale_factor = false;
+
                 corePolygon *scaleHole = new corePolygon();
                 scaleHole->next_ = NULL;
                 scaleHole->node_ = NULL;
@@ -822,9 +827,52 @@ void CorbalAgent::recvData(Packet *p) {
                 // add new node
                 tmp = my_core_polygon->node_;
                 do {
+                    double tmp_x = scale_factor_ * tmp->x_ + (1 - scale_factor_) * I.x_;
+                    double tmp_y = scale_factor_ * tmp->y_ + (1 - scale_factor_) * I.y_;
+                    if (tmp_x < 0 || tmp_y < 0 || tmp_x > network_width_ || tmp_y > network_height_) {
+                        recalculate_scale_factor = true;
+                        break;
+                    }
+                    tmp = tmp->next_ == NULL ? my_core_polygon->node_ : tmp->next_;
+                } while (tmp != my_core_polygon->node_);
+
+                if (recalculate_scale_factor) {
+                    Point p_border[4] = {};
+                    p_border[0].x_ = 0;
+                    p_border[0].y_ = 0;
+                    p_border[1].x_ = network_width_;
+                    p_border[1].y_ = 0;
+                    p_border[2].x_ = network_width_;
+                    p_border[2].y_ = network_height_;
+                    p_border[3].x_ = 0;
+                    p_border[3].y_ = network_height_;
+
+                    tmp = my_core_polygon->node_;
+                    do {
+
+                        Line I_node = G::line(I, tmp);
+                        for (int i = 0; i < 4; i++) {
+                            Point intersect;
+                            if (G::lineSegmentIntersection(&p_border[i % 4], &p_border[(i + 1) % 4], I_node,
+                                                           intersect) &&
+                                G::onSegment(&I, tmp, &intersect)) {
+                                double d1 = G::distance(I, tmp);
+                                double d2 = G::distance(I, intersect);
+                                if (real_scale_factor > d2 / d1) {
+                                    real_scale_factor = d2 / d1;
+                                }
+                            }
+                        }
+                        tmp = tmp->next_ == NULL ? my_core_polygon->node_ : tmp->next_;
+                    } while (tmp != my_core_polygon->node_);
+
+                    real_scale_factor = 3 * real_scale_factor / 4;
+                }
+
+                do {
                     node *newNode = new node();
-                    newNode->x_ = scale_factor_ * tmp->x_ + (1 - scale_factor_) * I.x_;
-                    newNode->y_ = scale_factor_ * tmp->y_ + (1 - scale_factor_) * I.y_;
+                    newNode->x_ = real_scale_factor * tmp->x_ + (1 - real_scale_factor) * I.x_;
+                    newNode->y_ = real_scale_factor * tmp->y_ + (1 - real_scale_factor) * I.y_;
                     newNode->next_ = scaleHole->node_;
                     scaleHole->node_ = newNode;
 
