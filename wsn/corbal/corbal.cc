@@ -1178,6 +1178,42 @@ void CorbalAgent::bypassHole(Point *S, Point *D, corePolygon *scalePolygon, core
             routingTable[routingCount - index] = temp;
         }
     }
+    // ------------------------------------------------- S S1 D2 D
+    dis = G::distance(this, S1);
+    for (i = S1; i != D2; i = i->next_) {
+        dis += G::distance(i, i->next_);
+    }
+    dis += G::distance(D2, D);
+    length = dis;
+    routingCount = 1;
+    for (i = S1; i != D2->next_; i = i->next_) {
+        addrouting(i, routingTable, routingCount);
+    }
+    // replace routing_table
+    for (int index = 1; index <= (routingCount - 1) / 2; index++) {
+        Point temp = routingTable[index];
+        routingTable[index] = routingTable[routingCount - index];
+        routingTable[routingCount - index] = temp;
+    }
+    // ------------------------------------------------- S S2 D1 D
+    dis = G::distance(this, S2);
+    for (i = S2; i != D1; i = i->next_) {
+        dis += G::distance(i, i->next_);
+    }
+    dis += G::distance(D1, D);
+    if (dis < length) {
+        length = dis;
+        routingCount = 1;
+        for (i = S2; i != D1->next_; i = i->next_) {
+            addrouting(i, routingTable, routingCount);
+        }
+        // replace routing_table
+        for (int index = 1; index <= (routingCount - 1) / 2; index++) {
+            Point temp = routingTable[index];
+            routingTable[index] = routingTable[routingCount - index];
+            routingTable[routingCount - index] = temp;
+        }
+    }
     // ------------------------------------------------- D D1 S1 S
     dis = G::distance(D, D1);
     for (i = D1; i != S1; i = i->next_) {
@@ -1200,6 +1236,31 @@ void CorbalAgent::bypassHole(Point *S, Point *D, corePolygon *scalePolygon, core
     if (dis < length) {
         routingCount = 1;
         for (i = D2; i != S2->next_; i = i->next_) {
+            addrouting(i, routingTable, routingCount);
+        }
+    }
+    // ------------------------------------------------- D D1 S2 S
+    dis = G::distance(D, D1);
+    for (i = D1; i != S2; i = i->next_) {
+        dis += G::distance(i, i->next_);
+    }
+    dis += G::distance(S2, this);
+    if (dis < length) {
+        length = dis;
+        routingCount = 1;
+        for (i = D1; i != S2->next_; i = i->next_) {
+            addrouting(i, routingTable, routingCount);
+        }
+    }
+    // ------------------------------------------------- D D2 S1 S
+    dis = G::distance(D, D2);
+    for (i = D2; i != S1; i = i->next_) {
+        dis += G::distance(i, i->next_);
+    }
+    dis += G::distance(S1, this);
+    if (dis < length) {
+        routingCount = 1;
+        for (i = D2; i != S1->next_; i = i->next_) {
             addrouting(i, routingTable, routingCount);
         }
     }
