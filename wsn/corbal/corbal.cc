@@ -147,6 +147,8 @@ CorbalAgent::startUp() {
     fclose(fp);
     fp = fopen("DynamicScaleHole.tr", "w");
     fclose(fp);
+    fp = fopen("BroadcastEnergy.tr", "w");
+    fclose(fp);
 }
 
 /*
@@ -819,6 +821,30 @@ void CorbalAgent::recvData(Packet *p) {
 
                 I.x_ = I.x_ / fr;
                 I.y_ = I.y_ / fr;
+
+                double rand_angle = randSend_.uniform(0.0, 1.0) * 2 * M_PI;
+                rand_angle = rand_angle > M_PI ? rand_angle - 2 * M_PI : rand_angle;
+                Line rand_line = G::line(I, rand_angle);
+                tmp = my_core_polygon->node_;
+                Point rand_int;
+                do {
+                    node *tmp_next = tmp->next_ == NULL ? my_core_polygon->node_ : tmp->next_;
+                    if (G::lineSegmentIntersection(tmp, tmp_next, rand_line, rand_int)) {
+                        if (G::angle_x_axis(&I, &rand_int) * rand_angle >= 0) {
+                            break;
+                        }
+                    }
+                    tmp = tmp->next_ == NULL ? my_core_polygon->node_ : tmp->next_;
+                } while (tmp != my_core_polygon->node_);
+
+                double rand_distance = randSend_.uniform(0.0, 1.0) * G::distance(I, rand_int);
+                Point I1, I2;
+                G::circleLineIntersect(I, rand_distance, I, rand_int, &I1, &I2);
+                if (G::onSegment(I, I1, rand_int)) {
+                    I = I1;
+                } else {
+                    I = I2;
+                }
 
                 // scale hole by I and scale_factor_
                 double real_scale_factor = scale_factor_;
