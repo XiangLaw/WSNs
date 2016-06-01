@@ -72,6 +72,7 @@ CorbalAgent::command(int argc, const char *const *argv) {
         }
         if (strcasecmp(argv[1], "dumpEnergy") == 0) {
             dumpBroadcastEnergy();
+            return TCL_OK;
         }
     }
 
