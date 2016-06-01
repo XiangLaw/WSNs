@@ -534,7 +534,7 @@ void CorbalAgent::isNodeStayOnBoundaryOfCorePolygon(Packet *p) {
             printf("i = %d j = %d nodeid = %d\n", i, next_index, my_id_);
 
             // check if next_index = 1 is valid
-            if (next_index == 8) {
+            if (next_index == n_) {
                 flag = false;
                 angle = i * theta_n + 2 * M_PI / n_;
                 // draw line goes through this node and make with x-axis angle: mx + n = y
