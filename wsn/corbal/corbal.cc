@@ -423,6 +423,8 @@ void CorbalAgent::recvHBA(Packet *p) {
         send(p, 0);
     }
     else { // back to H0
+        isNodeStayOnBoundaryOfCorePolygon(p);
+        isNodeStayOnBoundaryOfCorePolygon(p);
         contructCorePolygonSet(p);
         drop(p, "BOUNDHOLE_HBA");
 
@@ -448,8 +450,8 @@ void CorbalAgent::contructCorePolygonSet(Packet *p) {
             off = data_size + (n_ + 1) * (i - 1) + j_1;
             node b_j_1 = data->get_Bi_data(off);
 
-            Angle b_j_angle = i * theta_n + j * 2 * M_PI / n_;
-            Angle b_j_1_angle = i * theta_n + j_1 * 2 * M_PI / n_;
+            Angle b_j_angle = (i - 1) * theta_n + (j - 1) * 2 * M_PI / n_;
+            Angle b_j_1_angle = (i - 1) * theta_n + (j_1 - 1) * 2 * M_PI / n_;
 
             Line l_i_j = G::line(b_j, b_j_angle);
             Line l_i_j_1 = G::line(b_j_1, b_j_1_angle);
@@ -505,7 +507,7 @@ void CorbalAgent::isNodeStayOnBoundaryOfCorePolygon(Packet *p) {
         while (true) {
             next_index--;
             bool flag = false;
-            double angle = i * theta_n + next_index * 2 * M_PI / n_;
+            double angle = (i - 1) * theta_n + (next_index - 1) * 2 * M_PI / n_;
             // draw line goes through this node and make with x-axis angle: mx + n = y
             Line l_n = G::line(this, angle);
 
@@ -533,33 +535,6 @@ void CorbalAgent::isNodeStayOnBoundaryOfCorePolygon(Packet *p) {
             off = data_size + (i - 1) * (n_ + 1);
             data->update_next_index_of_Bi(off, next_index);
             dump(angle, i, next_index, l_n);
-            printf("i = %d j = %d nodeid = %d\n", i, next_index, my_id_);
-
-            // check if next_index = 1 is valid
-            if (next_index == n_) {
-                flag = false;
-                angle = i * theta_n + 2 * M_PI / n_;
-                // draw line goes through this node and make with x-axis angle: mx + n = y
-                l_n = G::line(this, angle);
-
-                tmp1 = data->get_data(1).id_ == my_id_ ? data->get_data(2) : data->get_data(1);
-                for (index = 1; index < data_size; index++) {
-                    tmp2 = data->get_data(index);
-                    if (tmp2.id_ == my_id_) continue;
-                    if (G::position(&tmp1, &tmp2, &l_n) < 0) {
-                        flag = true;
-                        break;
-                    }
-                }
-
-                if (!flag) {
-                    // add N to set B(i, j) but dont update next_index
-                    off = (i - 1) * (n_ + 1) + 1 + data_size;
-                    data->addBiNode(off, my_id_, x_, y_);
-                    dump(angle, i, 1, l_n);
-                    printf("i = %d j = %d nodeid = %d\n", i, 1, my_id_);
-                }
-            }
         }
     }
 }
