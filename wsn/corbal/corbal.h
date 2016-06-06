@@ -85,7 +85,7 @@ private:
     int limit_max_hop_; // limit_boundhole_hop_
     int limit_min_hop_; // min_boundhole_hop_
     int n_;
-    int kn;
+    int k_n_;
     double theta_n;
     double epsilon_;
     double network_width_;

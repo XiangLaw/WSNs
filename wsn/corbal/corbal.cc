@@ -52,10 +52,11 @@ CorbalAgent::CorbalAgent() : GPSRAgent(),
     bind("epsilon_", &epsilon_);
     bind("net_width_", &network_width_);
     bind("net_height_", &network_height_);
+    bind("k_n_", &k_n_);
 
-    // theta_n = 2 * M_PI / ((n_ + 1) * floor(12 / (n_ + 1)));
-    theta_n = 2 * M_PI * 1 / 9;
-    kn = (int) floor((n_ - 2) * M_PI / (n_ * theta_n));
+    theta_n = (2 * M_PI / n_ - 0.01) / (k_n_ - 1); // epsilon = 0.01
+//    theta_n = 2 * M_PI * 1 / 9;
+//    k_n_ = (int) floor((n_ - 2) * M_PI / (n_ * theta_n));
 }
 
 int
@@ -369,7 +370,7 @@ void CorbalAgent::sendHBA(Packet *p) {
 
     // update data payload - alloc memory for set of B(i) nodes
     data->add(my_id_, x_, y_); // add back H0 to end of array
-    data->addHBA(n_, kn);
+    data->addHBA(n_, k_n_);
     // TODO: refactor this scope. we need to call this function twice since there is a special case:
     // a node is belong to 2 edges of core polygon, i.e. this node is a vertex of core polygon
     isNodeStayOnBoundaryOfCorePolygon(p);
@@ -406,7 +407,7 @@ void CorbalAgent::recvHBA(Packet *p) {
     hole_ = createPolygonHole(p);
     int i = bhh->index_;
 
-    if (i < data->size() - (n_ + 1) * kn) {
+    if (i < data->size() - (n_ + 1) * k_n_) {
         isNodeStayOnBoundaryOfCorePolygon(p);
         isNodeStayOnBoundaryOfCorePolygon(p);
         nsaddr_t next_id = data->get_data(i + 1).id_;
@@ -432,10 +433,10 @@ void CorbalAgent::recvHBA(Packet *p) {
 
 void CorbalAgent::contructCorePolygonSet(Packet *p) {
     CorbalPacketData *data = (CorbalPacketData *) p->userdata();
-    int data_size = data->size() - (n_ + 1) * kn;
+    int data_size = data->size() - (n_ + 1) * k_n_;
     int off = 0;
 
-    for (int i = 1; i <= kn; i++) {
+    for (int i = 1; i <= k_n_; i++) {
         corePolygon *new_core = new corePolygon();
         new_core->id_ = i;
 
@@ -454,8 +455,9 @@ void CorbalAgent::contructCorePolygonSet(Packet *p) {
             Line l_i_j_1 = G::line(b_j_1, b_j_1_angle);
 
             Point intersection;
-            G::intersection(l_i_j, l_i_j_1, intersection);
-            addCorePolygonNode(intersection, new_core);
+            if (G::intersection(l_i_j, l_i_j_1, intersection)) {
+                addCorePolygonNode(intersection, new_core);
+            }
         }
 
         new_core->next_ = core_polygon_set;
@@ -481,11 +483,11 @@ void CorbalAgent::addCorePolygonNode(Point newPoint, corePolygon *corePolygon) {
 // if true then update the packet data payload for each (i,j) immediately
 void CorbalAgent::isNodeStayOnBoundaryOfCorePolygon(Packet *p) {
     CorbalPacketData *data = (CorbalPacketData *) p->userdata();
-    int data_size = data->size() - (n_ + 1) * kn;
+    int data_size = data->size() - (n_ + 1) * k_n_;
     int off = 0;
 
     int i;
-    for (i = 1; i <= kn; i++) {
+    for (i = 1; i <= k_n_; i++) {
         bool first_time = false;
         // get next index of this B(i)
 
@@ -671,7 +673,7 @@ void CorbalAgent::corePolygonSelection(Packet *p) {
     CorbalPacketData *data = (CorbalPacketData *) p->userdata();
     int offset = 0;
     RNG rand_;
-    int selection = rand_.uniform(kn);
+    int selection = rand_.uniform(k_n_);
     if (data->size() == n_) { // 1 core polygon only
         selection = 0;
     }
@@ -722,7 +724,7 @@ bool CorbalAgent::canBroadcast() {
 void CorbalAgent::updatePayload(Packet *p) {
     CorbalPacketData *data = (CorbalPacketData *) p->userdata();
 
-    for (int i = n_ * kn; i > 0; i--) {
+    for (int i = n_ * k_n_; i > 0; i--) {
         data->rmv_data(i);
     }
     for (node *node = my_core_polygon->node_; node != NULL; node = node->next_) {

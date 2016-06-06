@@ -1731,8 +1731,9 @@ Agent/CORBAL set energy_checkpoint_ 995
 Agent/CORBAL set hello_period_ 0
 Agent/CORBAL set range_ 40
 Agent/CORBAL set n_ 8
-Agent/CORBAL set min_boundhole_hop_ 10
-Agent/CORBAL set epsilon_ 3.1
+Agent/CORBAL set k_n_ 3
+Agent/CORBAL set min_boundhole_hop_ 5
+Agent/CORBAL set epsilon_ 1.0
 Agent/CORBAL set net_width_ 1000
 Agent/CORBAL set net_height_ 1000
 
