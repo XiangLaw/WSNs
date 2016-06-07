@@ -59,9 +59,9 @@ Agent/CORBAL set hello_period_ 0
 Agent/CORBAL set range_ 40
 Agent/CORBAL set limit_boundhole_hop_ 80
 Agent/CORBAL set min_boundhole_hop_ 5
-Agent/CORBAL set n_ 14
-Agent/CORBAL set k_n_ 3
-Agent/CORBAL set epsilon_ 1.5
+Agent/CORBAL set n_ 8
+Agent/CORBAL set k_n_ 5
+Agent/CORBAL set epsilon_ 0.6
 Agent/CORBAL set net_width_ 1000
 Agent/CORBAL set net_height_ 1000
 

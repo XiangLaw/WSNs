@@ -54,9 +54,9 @@ CorbalAgent::CorbalAgent() : GPSRAgent(),
     bind("net_height_", &network_height_);
     bind("k_n_", &k_n_);
 
-//    theta_n = (2 * M_PI / n_ - 0.01) / (k_n_ - 1); // epsilon = 0.01
-    theta_n = 2 * M_PI * 1 / 9;
-    k_n_ = (int) floor((n_ - 2) * M_PI / (n_ * theta_n));
+    theta_n = 2 * M_PI / (n_ * k_n_);
+//    theta_n = 2 * M_PI * 1 / 9;
+//    k_n_ = (int) floor((n_ - 2) * M_PI / (n_ * theta_n));
 }
 
 int
@@ -450,8 +450,8 @@ void CorbalAgent::contructCorePolygonSet(Packet *p) {
             off = data_size + (n_ + 1) * (i - 1) + j_1;
             node b_j_1 = data->get_Bi_data(off);
 
-            Angle b_j_angle = (i) * theta_n + (j) * 2 * M_PI / n_;
-            Angle b_j_1_angle = (i) * theta_n + (j_1) * 2 * M_PI / n_;
+            Angle b_j_angle = (i - 1) * theta_n + (j - 1) * 2 * M_PI / n_;
+            Angle b_j_1_angle = (i - 1) * theta_n + (j_1 - 1) * 2 * M_PI / n_;
 
             Line l_i_j = G::line(b_j, b_j_angle);
             Line l_i_j_1 = G::line(b_j_1, b_j_1_angle);
@@ -507,7 +507,7 @@ void CorbalAgent::isNodeStayOnBoundaryOfCorePolygon(Packet *p) {
         while (true) {
             next_index--;
             bool flag = false;
-            double angle = (i) * theta_n + (next_index) * 2 * M_PI / n_;
+            double angle = (i - 1) * theta_n + (next_index - 1) * 2 * M_PI / n_;
             // draw line goes through this node and make with x-axis angle: mx + n = y
             Line l_n = G::line(this, angle);
 
