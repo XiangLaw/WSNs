@@ -1,4 +1,4 @@
-# Script for WisSim simulator. Last edit 6/6/2016 5:12:02 PM
+# Script for WisSim simulator. Last edit 6/8/2016 1:54:08 AM
 
 set opt(x)	1000	;# X dimension of the topography
 set opt(y)	1000	;# Y dimension of the topography
@@ -57,11 +57,11 @@ Antenna/OmniAntenna set Gr_ 1
 Agent/CORBAL set energy_checkpoint_ 995
 Agent/CORBAL set hello_period_ 0
 Agent/CORBAL set range_ 40
-Agent/CORBAL set limit_boundhole_hop_ 80
+Agent/CORBAL set limit_boundhole_hop_ 100
 Agent/CORBAL set min_boundhole_hop_ 5
-Agent/CORBAL set n_ 8
-Agent/CORBAL set k_n_ 5
-Agent/CORBAL set epsilon_ 0.6
+Agent/CORBAL set n_ 10
+Agent/CORBAL set k_n_ 3
+Agent/CORBAL set epsilon_ 0.8
 Agent/CORBAL set net_width_ 1000
 Agent/CORBAL set net_height_ 1000
 
@@ -73,7 +73,7 @@ Agent/CBR set dport_ 0
 Agent/CBR set rate_ 0.1Mb
 Agent/CBR set sport_ 0
 Agent/CBR set interval_1_ 50.0
-Agent/CBR set interval_ 3.0
+Agent/CBR set interval_ 20.0
 
 # ======================================================================
 

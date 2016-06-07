@@ -1597,7 +1597,7 @@ Agent/GOAL set energy_checkpoint_ 995
 Agent/GOAL set range_ 40
 Agent/GOAL set broadcast_hop_ 10
 Agent/GOAL set storage_opt_ 1
-Agent/GOAL set limit_boundhole_hop_ 80
+Agent/GOAL set limit_boundhole_hop_ 100
 Agent/GOAL set limit_ 0
 
 Agent/SCALEGOAL set hello_period_ 0
@@ -1629,14 +1629,14 @@ Agent/BEHDS set hello_period_ 0
 Agent/BEHDS set energy_checkpoint_ 995
 Agent/BEHDS set range_ 40
 Agent/BEHDS set storage_opt_ 0
-Agent/BEHDS set limit_boundhole_hop_ 80
+Agent/BEHDS set limit_boundhole_hop_ 100
 
 Agent/ELLIPSE set hello_period_ 0
 Agent/ELLIPSE set energy_checkpoint_ 995
 Agent/ELLIPSE set range_ 40
 Agent/ELLIPSE set alpha_ 0.8
 Agent/ELLIPSE set storage_opt_ 0
-Agent/ELLIPSE set limit_boundhole_hop_ 150
+Agent/ELLIPSE set limit_boundhole_hop_ 100
 
 Agent/GRIDOFFLINE set hello_period_ 0
 Agent/GRIDOFFLINE set energy_checkpoint_ 995
@@ -1695,7 +1695,7 @@ Agent/OCTAGON set hello_period_ 0
 Agent/OCTAGON set limit_ 0
 Agent/OCTAGON set range_ 40
 Agent/OCTAGON set storage_opt_ 1
-Agent/OCTAGON set broadcast_rate_ 1
+Agent/OCTAGON set broadcast_rate_ 1.8
 
 Agent/COVERAGE set hello_period_ 0
 Agent/COVERAGE set energy_checkpoint_ 995
@@ -1726,14 +1726,14 @@ Agent/MBC set limit_boundhole_hop_ 50
 
 Agent/TAAGENT set range_ 40
 
-Agent/CORBAL set limit_boundhole_hop_ 80
+Agent/CORBAL set limit_boundhole_hop_ 100
 Agent/CORBAL set energy_checkpoint_ 995
 Agent/CORBAL set hello_period_ 0
 Agent/CORBAL set range_ 40
-Agent/CORBAL set n_ 8
+Agent/CORBAL set n_ 10
 Agent/CORBAL set k_n_ 3
 Agent/CORBAL set min_boundhole_hop_ 5
-Agent/CORBAL set epsilon_ 1.0
+Agent/CORBAL set epsilon_ 0.8
 Agent/CORBAL set net_width_ 1000
 Agent/CORBAL set net_height_ 1000
 

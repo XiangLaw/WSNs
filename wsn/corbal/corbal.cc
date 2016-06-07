@@ -1015,10 +1015,12 @@ void CorbalAgent::calculateScaleFactor(Packet *p) {
     // check if SD intersect with core polygon
     int numIntersect = 0;
     node *n = my_core_polygon->node_;
+    Line sd = G::line(this, hdc->dest);
     do {
         node *next = n->next_ == NULL ? my_core_polygon->node_ : n->next_;
         if (G::is_in_line(n, this, hdc->dest) && G::is_in_line(next, this, hdc->dest)) break;
-        if (G::is_intersect(n, next, this, hdc->dest)) numIntersect++;
+        Point ins;
+        if (G::lineSegmentIntersection(n, next, sd, ins)) numIntersect++;
         n = next;
     } while (n != my_core_polygon->node_);
     if (numIntersect <= 1) {
