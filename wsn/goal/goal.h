@@ -38,7 +38,7 @@ class GoalAgent : public ConvexHullAgent
 {
 private:
 	int 	lastTTL_;
-	double	broadcast_hop_;
+	int	broadcast_hop_;
 	int		limit_;
 
 	void sendBCH(polygonHole*);

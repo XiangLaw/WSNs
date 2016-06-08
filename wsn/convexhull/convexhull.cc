@@ -35,7 +35,6 @@ ConvexHullAgent::ConvexHullAgent() : BoundHoleAgent()
 
 	fp = fopen("ApproximateHole.tr", "w");	fclose(fp);
 	fp = fopen("BroadcastRegion.tr", "w");	fclose(fp);
-	fp = fopen("RoutingTable.tr", "w");		fclose(fp);
 	fp = fopen("Time.tr", "w");				fclose(fp);
 	fp = fopen("Area.tr", "w");				fclose(fp);
 }
@@ -418,14 +417,9 @@ void ConvexHullAgent::routing(hdr_convexhull* edh)
 
 		edh->sub = *re;
 
-		// dump routingtable
-		FILE* fp = fopen("RoutingTable.tr", "a+");
-		fprintf(fp, "%d\t%f\n", edh->daddr_, min);
-
-		fclose(fp);
+		return;
 	}
 
-	//return *dest;
 	edh->sub = *dest;
 }
 
