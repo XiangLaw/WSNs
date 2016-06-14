@@ -66,13 +66,8 @@ CorbalAgent::command(int argc, const char *const *argv) {
             startUp();
         }
         if (strcasecmp(argv[1], "boundhole") == 0) {
-            dumpBroadcastEnergy();
             boundhole_timer_.resched(0.02 * my_id_);
 //            boundhole_timer_.resched(randSend_.uniform(0.0, 5));
-            return TCL_OK;
-        }
-        if (strcasecmp(argv[1], "dumpEnergy") == 0) {
-            dumpBroadcastEnergy();
             return TCL_OK;
         }
     }
@@ -1342,18 +1337,4 @@ void CorbalAgent::dumpScaleHole(Packet *p, corePolygon *hole) {
     fprintf(fp, "\n");
 
     fclose(fp);
-}
-
-void CorbalAgent::dumpBroadcastEnergy() {
-    if (node_->energy_model()) {
-        FILE *fp = fopen("BroadcastEnergy.tr", "a+");
-        fprintf(fp, "%f\t%d\t%f\t%f\t%f\t%f\t%f\t%f\t%f\n", NOW, my_id_, this->x_, this->y_,
-                node_->energy_model()->energy(),
-                node_->energy_model()->et(),
-                node_->energy_model()->er(),
-                node_->energy_model()->ei(),
-                node_->energy_model()->es()
-        );
-        fclose(fp);
-    }
 }

@@ -1163,7 +1163,6 @@ Simulator instproc create-ellipse-agent { node } {
 	$node set ragent_ $ragent	
 	$self at 0.0 "$ragent start"    ;# start updates	
 	$self at 30 "$ragent boundhole"
-	$self at 99 "$ragent bcenergy"
 	return $ragent
 }
 
@@ -1230,7 +1229,6 @@ Simulator instproc create-corbal-agent { node } {
 	$node set ragent_ $ragent
 	$self at 0.0 	"$ragent start"    ;# start updates
 	$self at 30.0 	"$ragent boundhole"
-	$self at 90.0   "$ragent dumpEnergy"
 	return $ragent
 }
 

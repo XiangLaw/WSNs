@@ -109,8 +109,6 @@ private:
 
     void dumpScaleHole(Packet *, corePolygon *);
 
-    void dumpBroadcastEnergy();
-
 public:
     CorbalAgent();
 

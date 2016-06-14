@@ -109,7 +109,6 @@ private:
 	void recvData(Packet* p);
 	node *recvGPSR(Packet *p, Point destionation);
 
-	void dumpRoutingTable();
 	void dumpApproximateHole();
 	void dumpDynamicRouting(Packet* p, octagonHole* hole);
 	void dumpBroadcast();

@@ -83,6 +83,10 @@ GPSRAgent::command(int argc, const char *const *argv) {
             startUp();
             return TCL_OK;
         }
+        if (strcasecmp(argv[1], "dumpEnergy") == 0) {
+            dumpEnergyByTime();
+            return TCL_OK;
+        }
         if (strcasecmp(argv[1], "dump") == 0) {
             dumpNeighbor();
             dumpEnergy();
@@ -179,6 +183,8 @@ GPSRAgent::startUp() {
 
     if (node_->energy_model()) {
         fp = fopen("Energy.tr", "w");
+        fclose(fp);
+        fp = fopen("EnergyByTime.tr", "w");
         fclose(fp);
     }
 }
@@ -436,3 +442,19 @@ GPSRAgent::dumpNeighbor() {
 
     fclose(fp);
 }
+
+void GPSRAgent::dumpEnergyByTime() {
+    if (node_->energy_model()) {
+        FILE *fp = fopen("EnergyByTime.tr", "a+");
+        fprintf(fp, "%f\t%d\t%f\t%f\t%f\t%f\t%f\t%f\t%f\n", NOW, my_id_, this->x_, this->y_,
+                node_->energy_model()->energy(),
+                node_->energy_model()->et(),
+                node_->energy_model()->er(),
+                node_->energy_model()->ei(),
+                node_->energy_model()->es()
+        );
+        fclose(fp);
+    }
+}
+
+

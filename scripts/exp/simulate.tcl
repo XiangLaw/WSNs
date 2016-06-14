@@ -15,7 +15,7 @@ set opt(mac)	Mac/802_11
 set opt(ifq)	Queue/DropTail/PriQueue
 set opt(ll)	LL
 set opt(ant)	Antenna/OmniAntenna
-set opt(rp)	CORBAL
+set opt(rp)	GPSR
 set opt(trans)	UDP
 set opt(apps)	CBR
 
@@ -59,7 +59,7 @@ Agent/CORBAL set hello_period_ 0
 Agent/CORBAL set range_ 40
 Agent/CORBAL set limit_boundhole_hop_ 100
 Agent/CORBAL set min_boundhole_hop_ 5
-Agent/CORBAL set n_ 10
+Agent/CORBAL set n_ 8
 Agent/CORBAL set k_n_ 3
 Agent/CORBAL set epsilon_ 0.8
 Agent/CORBAL set net_width_ 1000
@@ -94,10 +94,10 @@ set tracefd	[open $opt(tr) w]
 #set namtrace	[open $opt(nam) w]
 
 # run the simulator
-$ns_ trace-all $tracefd 
-#$ns_ namtrace-all-wireless $namtrace $opt(x) $opt(y) 
+$ns_ trace-all $tracefd
+#$ns_ namtrace-all-wireless $namtrace $opt(x) $opt(y)
 
-$topo load_flatgrid $opt(x) $opt(y) 
+$topo load_flatgrid $opt(x) $opt(y)
 $prop topography $topo
 
 set god_ [create-god $opt(nn)]
@@ -144,6 +144,7 @@ for {set i 0} {$i < $opt(nn)} { incr i } {
 for {set i 0} {$i < $opt(nn)} {incr i} {
 	$ns_ at [expr $opt(stop) - 0.000000001] "$mnode_($i) off"
 	$ns_ at $opt(stop) "[$mnode_($i) set ragent_] dump"
+	$ns_ at 450.0 "[$mnode_($i) set ragent_] dumpEnergy"
 	$ns_ at $opt(stop).000000001 "$mnode_($i) reset"
 }
 
@@ -154,8 +155,8 @@ source ./nodeoff.tcl
 source ./nodesink.tcl
 
 # ending nam and the simulation
-#$ns_ at $opt(stop) "$ns_ nam-end-wireless $opt(stop)" 
-$ns_ at $opt(stop) "stop" 
+#$ns_ at $opt(stop) "$ns_ nam-end-wireless $opt(stop)"
+$ns_ at $opt(stop) "stop"
 
 proc stop {} {
 	global ns_ tracefd startTime	;# namtrace

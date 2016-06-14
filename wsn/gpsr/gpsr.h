@@ -85,6 +85,7 @@ protected:
 	void dumpNeighbor();
 	void dumpEnergy(char * filename);
 	void dumpEnergy();
+	void dumpEnergyByTime();
 
 	double hello_period_;
 
