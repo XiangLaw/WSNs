@@ -86,6 +86,7 @@ protected:
 	void dumpEnergy(char * filename);
 	void dumpEnergy();
 	void dumpEnergyByTime();
+	void dumpRedundantNode(int);
 
 	double hello_period_;
 

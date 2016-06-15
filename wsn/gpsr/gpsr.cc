@@ -180,6 +180,8 @@ GPSRAgent::startUp() {
     FILE *fp;
     fp = fopen("Neighbors.tr", "w");
     fclose(fp);
+    fp = fopen("RedundantNode.tr", "w");
+    fclose(fp);
 
     if (node_->energy_model()) {
         fp = fopen("Energy.tr", "w");
@@ -457,4 +459,12 @@ void GPSRAgent::dumpEnergyByTime() {
     }
 }
 
-
+void GPSRAgent::dumpRedundantNode(int d) {
+    FILE *fp = fopen("RedundantNode.tr", "a+");
+    int num = 0;
+    for (node *temp = neighbor_list_; temp; temp = temp->next_) {
+        num++;
+    }
+    fprintf(fp, "%d\t%d\n", d, num - 1);
+    fclose(fp);
+}
