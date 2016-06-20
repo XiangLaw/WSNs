@@ -27,7 +27,7 @@ struct hdr_corbal {
     int index_; // broadcast use only
 
     inline int size() {
-        return sizeof(u_int8_t) * 3 + 4 * sizeof(Point) +  + 10 * sizeof(Point) + sizeof(int);
+        return sizeof(u_int8_t) * 3 + 4 * sizeof(Point) + 10 * sizeof(Point) + sizeof(int);
     }
 
     static int offset_;
