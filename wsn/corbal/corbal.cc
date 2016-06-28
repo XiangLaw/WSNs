@@ -746,7 +746,6 @@ void CorbalAgent::sendData(Packet *p) {
     cmh->direction_ = hdr_cmn::DOWN;
 
     hdc->type_ = CORBAL_CBR_GREEDY;
-    hdc->dest = *dest;
     hdc->source = *this;
     hdc->routing_table[0] = *dest;
     hdc->routing_index = 1;
@@ -913,7 +912,7 @@ void CorbalAgent::recvData(Packet *p) {
                 dumpScaleHole(p, scaleHole);
 
                 // generate routing table
-                bypassHole(this, &(hdc->dest), scaleHole, my_core_polygon,
+                bypassHole(this, &(hdc->routing_table[0]), scaleHole, my_core_polygon,
                            hdc->routing_table, hdc->routing_index);
 
                 // free
@@ -943,7 +942,7 @@ void CorbalAgent::recvData(Packet *p) {
 
     if (nexthop == NULL)    // no neighbor close
     {
-        printf("dropped\n");
+        printf("dropped: %f - %d\n", NOW, cmh->uid());
         drop(p, DROP_RTR_NO_ROUTE);
         return;
     }
@@ -1010,10 +1009,10 @@ void CorbalAgent::calculateScaleFactor(Packet *p) {
     // check if SD intersect with core polygon
     int numIntersect = 0;
     node *n = my_core_polygon->node_;
-    Line sd = G::line(this, hdc->dest);
+    Line sd = G::line(this, hdc->routing_table[0]);
     do {
         node *next = n->next_ == NULL ? my_core_polygon->node_ : n->next_;
-        if (G::is_in_line(n, this, hdc->dest) && G::is_in_line(next, this, hdc->dest)) break;
+        if (G::is_in_line(n, this, hdc->routing_table[0]) && G::is_in_line(next, this, hdc->routing_table[0])) break;
         Point ins;
         if (G::lineSegmentIntersection(n, next, sd, ins)) numIntersect++;
         n = next;
@@ -1024,8 +1023,8 @@ void CorbalAgent::calculateScaleFactor(Packet *p) {
     }
 
     // calculate l_C(S,D)
-    double l_c_sd = euclidLengthOfBRSP(this, &(hdc->dest), my_core_polygon);
-    double l_c_xd = euclidLengthOfBRSP(&(hdc->source), &(hdc->dest), my_core_polygon);
+    double l_c_sd = euclidLengthOfBRSP(this, &(hdc->routing_table[0]), my_core_polygon);
+    double l_c_xd = euclidLengthOfBRSP(&(hdc->source), &(hdc->routing_table[0]), my_core_polygon);
 
     if (*this == hdc->source) { // S is source node
 //        double delta = (s_ - 1) * l_c_sd / p_c_ -

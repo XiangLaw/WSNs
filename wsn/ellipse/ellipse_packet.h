@@ -30,8 +30,8 @@ struct hdr_ellipse_data {
 	Point sou_;			// geometric location of source - only for dump
 	Point des_;			// geometric location of destination
 	Point sub_;			// location of sub-destination node
-
-	inline int size() { return sizeof(nsaddr_t) + 3 * sizeof(Point); }
+	Point routing_table_[3];
+	inline int size() { return sizeof(nsaddr_t) + 6 * sizeof(Point); }
 };
 
 struct hdr_ellipse {

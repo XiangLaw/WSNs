@@ -24,10 +24,11 @@ struct hdr_behds_data
     Point vertex[3];
     nsaddr_t saddr;
     nsaddr_t daddr;
+    Point routing_table_[3];
 
     inline int size()
     {
-        return 3 * sizeof(nsaddr_t) + 2 * sizeof(u_int8_t) + 3 * sizeof(Point);
+        return 3 * sizeof(nsaddr_t) + 2 * sizeof(u_int8_t) + 6 * sizeof(Point);
     }
 };
 

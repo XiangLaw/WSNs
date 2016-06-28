@@ -38,10 +38,11 @@ struct hdr_gpsr
 	Point peri_;		// location enter perimeter node
 	Point dest_;		// destination location
 	Point prev_;		// position of previous node
+	Point routing_table_[3];
 
 	inline int size()
 	{
-		return sizeof(u_int8_t) + sizeof(nsaddr_t) + 3 * sizeof(Point);
+		return sizeof(u_int8_t) + sizeof(nsaddr_t) + 6 * sizeof(Point);
 	}
 
 	static int offset_;

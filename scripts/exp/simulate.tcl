@@ -1,4 +1,4 @@
-# Script for WisSim simulator. Last edit 2/10/2016 1:59:07 PM
+# Script for WisSim simulator. Last edit 6/27/2016 9:46:16 PM
 
 set opt(x)	1000	;# X dimension of the topography
 set opt(y)	1000	;# Y dimension of the topography
@@ -15,7 +15,7 @@ set opt(mac)	Mac/802_11
 set opt(ifq)	Queue/DropTail/PriQueue
 set opt(ll)	LL
 set opt(ant)	Antenna/OmniAntenna
-set opt(rp)	CORBAL
+set opt(rp)	GPSR
 set opt(trans)	UDP
 set opt(apps)	CBR
 
@@ -61,7 +61,6 @@ Agent/CORBAL set limit_boundhole_hop_ 100
 Agent/CORBAL set min_boundhole_hop_ 5
 Agent/CORBAL set n_ 8
 Agent/CORBAL set k_n_ 3
-Agent/CORBAL set epsilon_ 0.8
 Agent/CORBAL set net_width_ 1000
 Agent/CORBAL set net_height_ 1000
 
