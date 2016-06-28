@@ -1244,6 +1244,7 @@ void CorbalAgent::bypassHole(Point *S, Point *D, corePolygon *scalePolygon, core
     }
     dis += G::distance(S2, this);
     if (dis < length) {
+        length = dis;
         routingCount_tmp = 1;
         for (i = D2; i != S2->next_; i = i->next_) {
             addrouting(i, routingTable_tmp, routingCount_tmp);
@@ -1269,13 +1270,14 @@ void CorbalAgent::bypassHole(Point *S, Point *D, corePolygon *scalePolygon, core
     }
     dis += G::distance(S1, this);
     if (dis < length) {
+        length = dis;
         routingCount_tmp = 1;
         for (i = D2; i != S1->next_; i = i->next_) {
             addrouting(i, routingTable_tmp, routingCount_tmp);
         }
     }
 
-    for (int j = 1; j <= routingCount_tmp; j++) {
+    for (int j = 1; j < routingCount_tmp; j++) {
         routingTable[j] = routingTable_tmp[j];
     }
     routingCount = routingCount_tmp;
