@@ -419,7 +419,7 @@ void OctagonAgent::recvBroadcast(Packet *p) {
             }
 
             double dist = G::distance(this, i);
-            ln_ = dist < ln_ ? dist : ln_;
+            ln_ = dist > ln_ ? dist : ln_;
 
             i = i->next_;
         } while (i != newHole->node_list_);
@@ -513,7 +513,7 @@ void OctagonAgent::dynamicRouting(Packet *p, OCTAGON_REGION region) {
             if (region == REGION_1) {
                 scale_factor_ = 1 + (l / h->pc_) * (fsin3pi8 / (1 + h->pc_ / (2 * (l - h->d_))) - 1);
             } else if (region == REGION_2) {
-                scale_factor_ = (fsin3pi8 + stretch_ - 1 / cos(alpha_ / 2)) * ln_ / h->pc_ - 0.3 / cos(alpha_ / 2);
+                scale_factor_ = (fsin3pi8 + stretch_ - 1 / cos(alpha_ / 2)) * l / h->pc_ - 0.3 / cos(alpha_ / 2);
             }
             if (scale_factor_ < 1) scale_factor_ = 1;
         }
