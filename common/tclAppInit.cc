@@ -207,8 +207,9 @@ setup_floating_point_environment()
 //#ifdef FE_UNDERFLOW
 //	trap_exceptions |= FE_UNDERFLOW;
 //#endif
-	
+#ifndef __APPLE__
 	feenableexcept(trap_exceptions);
+#endif
 #endif /* HAVE_FEENABLEEXCEPT */
 #endif /* !HAVE_NS_SETUP_FPU */
 }
