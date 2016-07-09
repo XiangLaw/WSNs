@@ -123,7 +123,7 @@ BoundHoleAgent::recv(Packet *p, Handler *h)
 void
 BoundHoleAgent::startUp()
 {
-	findStuck_timer_.resched(20);
+	findStuck_timer_.resched(50);
 
 	// clear trace file
 	FILE *fp;

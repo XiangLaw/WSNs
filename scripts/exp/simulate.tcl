@@ -1,9 +1,9 @@
-# Script for WisSim simulator. Last edit 6/27/2016 9:46:16 PM
+# Script for WisSim simulator. Last edit 09/07/2016 20:11:06
 
 set opt(x)	1000	;# X dimension of the topography
 set opt(y)	1000	;# Y dimension of the topography
-set opt(stop)	1000	;# simulation time
-set opt(nn)	1500	;# number of nodes
+set opt(stop)	500	;# simulation time
+set opt(nn)	1702	;# number of nodes
 set opt(tr)	Trace.tr	;# trace file
 set opt(nam)	nam.out.tr
 
@@ -15,7 +15,7 @@ set opt(mac)	Mac/802_11
 set opt(ifq)	Queue/DropTail/PriQueue
 set opt(ll)	LL
 set opt(ant)	Antenna/OmniAntenna
-set opt(rp) CORBAL
+set opt(rp)	CORBAL
 set opt(trans)	UDP
 set opt(apps)	CBR
 
@@ -57,10 +57,11 @@ Antenna/OmniAntenna set Gr_ 1
 Agent/CORBAL set energy_checkpoint_ 995
 Agent/CORBAL set hello_period_ 0
 Agent/CORBAL set range_ 40
-Agent/CORBAL set limit_boundhole_hop_ 100
+Agent/CORBAL set limit_boundhole_hop_ 80
 Agent/CORBAL set min_boundhole_hop_ 5
 Agent/CORBAL set n_ 8
 Agent/CORBAL set k_n_ 3
+Agent/CORBAL set epsilon_ 1.2
 Agent/CORBAL set net_width_ 1000
 Agent/CORBAL set net_height_ 1000
 
@@ -71,7 +72,8 @@ Agent/CBR set type_ CBR
 Agent/CBR set dport_ 0
 Agent/CBR set rate_ 0.1Mb
 Agent/CBR set sport_ 0
-Agent/CBR set interval_ 1
+Agent/CBR set interval_1_ 50.0
+Agent/CBR set interval_ 5.0
 
 # ======================================================================
 
@@ -92,10 +94,10 @@ set tracefd	[open $opt(tr) w]
 #set namtrace	[open $opt(nam) w]
 
 # run the simulator
-$ns_ trace-all $tracefd
-#$ns_ namtrace-all-wireless $namtrace $opt(x) $opt(y)
+$ns_ trace-all $tracefd 
+#$ns_ namtrace-all-wireless $namtrace $opt(x) $opt(y) 
 
-$topo load_flatgrid $opt(x) $opt(y)
+$topo load_flatgrid $opt(x) $opt(y) 
 $prop topography $topo
 
 set god_ [create-god $opt(nn)]
@@ -130,6 +132,7 @@ puts "Routing Protocol: $opt(rp)"
 for {set i 0} {$i < $opt(nn)} {incr i} {
 	set mnode_($i) [$ns_ node]
 }
+$defaultRNG seed 0
 
 # set up node position
 source ./topo_data.tcl
@@ -152,8 +155,8 @@ source ./nodeoff.tcl
 source ./nodesink.tcl
 
 # ending nam and the simulation
-#$ns_ at $opt(stop) "$ns_ nam-end-wireless $opt(stop)"
-$ns_ at $opt(stop) "stop"
+#$ns_ at $opt(stop) "$ns_ nam-end-wireless $opt(stop)" 
+$ns_ at $opt(stop) "stop" 
 
 proc stop {} {
 	global ns_ tracefd startTime	;# namtrace

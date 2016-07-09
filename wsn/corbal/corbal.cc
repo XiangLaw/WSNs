@@ -128,7 +128,7 @@ CorbalAgent::recv(Packet *p, Handler *h) {
 
 void
 CorbalAgent::startUp() {
-    findStuck_timer_.resched(20);
+    findStuck_timer_.resched(50);
 
     // clear trace file
     FILE *fp;
@@ -479,6 +479,9 @@ void CorbalAgent::addCorePolygonNode(Point newPoint, corePolygon *corePolygon) {
 // check if this node is on boundary of a core polygon
 // if true then update the packet data payload for each (i,j) immediately
 void CorbalAgent::isNodeStayOnBoundaryOfCorePolygon(Packet *p) {
+    if(my_id_ == 1668) {
+        int a = 1;
+    }
     CorbalPacketData *data = (CorbalPacketData *) p->userdata();
     int data_size = data->size() - (n_ + 1) * k_n_;
     int off = 0;
@@ -510,7 +513,7 @@ void CorbalAgent::isNodeStayOnBoundaryOfCorePolygon(Packet *p) {
             int index;
 
             tmp1 = data->get_data(1).id_ == my_id_ ? data->get_data(2) : data->get_data(1);
-            for (index = 1; index < data_size; index++) {
+            for (index = 1; index <= data_size; index++) {
                 tmp2 = data->get_data(index);
                 if (tmp2.id_ == my_id_) continue;
                 if (G::position(&tmp1, &tmp2, &l_n) < 0) {
@@ -530,6 +533,31 @@ void CorbalAgent::isNodeStayOnBoundaryOfCorePolygon(Packet *p) {
             off = data_size + (i - 1) * (n_ + 1);
             data->update_next_index_of_Bi(off, next_index);
             dump(angle, i, next_index, l_n);
+
+            // check if next_index = 1 is valid
+            if (next_index == n_) {
+                flag = false;
+                angle = (i - 1) * theta_n;
+                // draw line goes through this node and make with x-axis angle: mx + n = y
+                l_n = G::line(this, angle);
+
+                tmp1 = data->get_data(1).id_ == my_id_ ? data->get_data(2) : data->get_data(1);
+                for (index = 1; index <= data_size; index++) {
+                    tmp2 = data->get_data(index);
+                    if (tmp2.id_ == my_id_) continue;
+                    if (G::position(&tmp1, &tmp2, &l_n) < 0) {
+                        flag = true;
+                        break;
+                    }
+                }
+
+                if (!flag) {
+                    // add N to set B(i, j) but dont update next_index
+                    off = (i - 1) * (n_ + 1) + 1 + data_size;
+                    data->addBiNode(off, my_id_, x_, y_);
+                    dump(angle, i, 1, l_n);
+                }
+            }
         }
     }
 }

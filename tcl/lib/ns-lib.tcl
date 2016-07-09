@@ -1076,7 +1076,7 @@ Simulator instproc create-ehds-agent { node } {
 	$node addr $addr
 	$node set ragent_ $ragent
 	$self at 0.0 	"$ragent start"    ;# start updates
-	$self at 30	"$ragent boundhole"
+	$self at 60	"$ragent boundhole"
 	$self at 90	"$ragent routing"
 	$self at 99	"$ragent bcenergy"
 	return $ragent
@@ -1094,7 +1094,7 @@ Simulator instproc create-behds-agent { node } {
 	$node addr $addr
 	$node set ragent_ $ragent
 	$self at 0.0 	"$ragent start"    ;# start updates
-	$self at 30	"$ragent boundhole"
+	$self at 60	"$ragent boundhole"
 	$self at 50	"$ragent routing"
 	$self at 99	"$ragent bcenergy"
 	return $ragent
@@ -1128,7 +1128,7 @@ Simulator instproc create-goal-agent { node } {
 	$node addr $addr
 	$node set ragent_ $ragent	
 	$self at 0.0	"$ragent start"    ;# start updates
-	$self at 30	"$ragent boundhole"
+	$self at 60	"$ragent boundhole"
 	$self at 99	"$ragent bcenergy"
 	return $ragent
 }
@@ -1162,7 +1162,7 @@ Simulator instproc create-ellipse-agent { node } {
 	$node addr $addr
 	$node set ragent_ $ragent	
 	$self at 0.0 "$ragent start"    ;# start updates	
-	$self at 30 "$ragent boundhole"
+	$self at 60 "$ragent boundhole"
 	return $ragent
 }
 
@@ -1212,7 +1212,7 @@ Simulator instproc create-octagon-agent { node } {
 	$node addr $addr
 	$node set ragent_ $ragent
 	$self at 0.0 	"$ragent start"    ;# start updates
-	$self at 30 	"$ragent boundhole"
+	$self at 60 	"$ragent boundhole"
 	return $ragent
 }
 
@@ -1228,7 +1228,7 @@ Simulator instproc create-corbal-agent { node } {
 	$node addr $addr
 	$node set ragent_ $ragent
 	$self at 0.0 	"$ragent start"    ;# start updates
-	$self at 30.0 	"$ragent boundhole"
+	$self at 60.0 	"$ragent boundhole"
 	return $ragent
 }
 
