@@ -2,12 +2,13 @@
 
 set opt(x)	1000	;# X dimension of the topography
 set opt(y)	1000	;# Y dimension of the topography
-set opt(stop)	200	;# simulation time
+set opt(stop)	1000	;# simulation time
 set opt(nn)	1745	;# number of nodes
 set opt(tr)	Trace.tr	;# trace file
 set opt(nam)	nam.out.tr
 
 set opt(ifqlen)	50	;# max packet in ifq
+set opt(dump_at) 90 ;# time to dump broadcast energy & broadcast region (CORBAL only)
 set opt(chan)	Channel/WirelessChannel
 set opt(prop)	Propagation/TwoRayGround
 set opt(netif)	Phy/WirelessPhy
@@ -143,6 +144,8 @@ for {set i 0} {$i < $opt(nn)} { incr i } {
 # telling nodes when the simulator ends
 for {set i 0} {$i < $opt(nn)} {incr i} {
 	$ns_ at [expr $opt(stop) - 0.000000001] "$mnode_($i) off"
+    $ns_ at $opt(dump_at) "[$mnode_($i) set ragent_] dumpEnergy"
+    $ns_ at $opt(dump_at) "[$mnode_($i) set ragent_] dumpBroadcast"
 	$ns_ at $opt(stop) "[$mnode_($i) set ragent_] dump"
 	$ns_ at $opt(stop).000000001 "$mnode_($i) reset"
 }

@@ -40,10 +40,7 @@ CorbalAgent::CorbalAgent() : GPSRAgent(),
     n_ = 8;
     core_polygon_set = NULL;
     hole_ = NULL;
-    my_core_polygon = NULL;
     epsilon_ = 0.5;
-    scale_factor_ = 0;
-    p_c_ = 0;
 
     bind("range_", &range_);
     bind("limit_boundhole_hop_", &limit_max_hop_);
@@ -68,6 +65,10 @@ CorbalAgent::command(int argc, const char *const *argv) {
         if (strcasecmp(argv[1], "boundhole") == 0) {
             boundhole_timer_.resched(0.02 * my_id_);
 //            boundhole_timer_.resched(randSend_.uniform(0.0, 5));
+            return TCL_OK;
+        }
+        if (strcasecmp(argv[1], "dumpBroadcast") == 0) {
+            dumpBroadcastRegion();
             return TCL_OK;
         }
     }
@@ -658,8 +659,6 @@ void CorbalAgent::recvHCI(Packet *p) {
         }
     }
     drop(p, "CorbalRegion_IsOutside");
-
-    dumpBroadcastRegion();
 }
 
 // core polygon selection & update payload data
@@ -676,7 +675,6 @@ bool CorbalAgent::storeCorePolygons(Packet *p) {
             addCorePolygonNode(newPoint, newCore);
         }
 
-        //TODO: debug check equal core polygon
         for (corePolygon *cg = core_polygon_set; cg; cg = cg->next_) {
             node *nn = cg->node_;
             bool flag = true;
@@ -745,18 +743,19 @@ bool CorbalAgent::canBroadcast(corePolygon * cg) {
     node *pi, *pj;
     findViewLimitVertex(this, cg, &pi, &pj);
 
-    alpha_ = fabs(G::directedAngle(pi, this, pj)); // get absolute angle
-    l_c_n_ = g_min(G::distance(pi, this), G::distance(pj, this));
+    double alpha = fabs(G::directedAngle(pi, this, pj)); // get absolute angle
+    double l_c_n = g_min(G::distance(pi, this), G::distance(pj, this));
     // double l_c_n_ = distanceToPolygon(this, my_core_polygon);
     node *i = cg->node_;
+    double p_c = 0;
     do {
         node *j = i->next_ == NULL ? cg->node_ : i->next_;
-        p_c_ += G::distance(i, j);
+        p_c += G::distance(i, j);
         i = j;
     } while (i != cg->node_);
 
-    double left_side = cos(alpha_ / 2);
-    double right_side = 1 / (1 + epsilon_) + p_c_ * (1 - sin((n_ - 2) * M_PI / (2 * n_))) / l_c_n_;
+    double left_side = cos(alpha / 2);
+    double right_side = 1 / (1 + epsilon_) + p_c * (1 - sin((n_ - 2) * M_PI / (2 * n_))) / l_c_n;
 
     //double left_side = p_c_ / l_c_n_ * (0.3 / cos(alpha_ / 2) + 1) + 1 / cos(alpha_ / 2);
     //double right_side = s_;
@@ -841,14 +840,14 @@ void CorbalAgent::recvData(Packet *p) {
         return;
     }
 
-    if (my_core_polygon) {
+    if (core_polygon_set) {
         if (hdc->type_ == CORBAL_CBR_GREEDY) {
             // change to routing mode
             hdc->type_ = CORBAL_CBR_ROUTING;
-
+            corePolygon *my_core_polygon = chooseRandomCorePolygon();
             // calculate scale factor and check if SD intersects with hole
-            calculateScaleFactor(p);
-            if (scale_factor_ > 0) {
+            double scale_factor = calculateScaleFactor(p, my_core_polygon);
+            if (scale_factor > 0) {
                 // routing using corbal
                 // random I
                 Point I;
@@ -892,7 +891,7 @@ void CorbalAgent::recvData(Packet *p) {
                 }
 
                 // scale hole by I and scale_factor_
-                double real_scale_factor = scale_factor_;
+                double real_scale_factor = scale_factor;
                 bool recalculate_scale_factor = false;
 
                 corePolygon *revereScaleHole = new corePolygon();
@@ -906,8 +905,8 @@ void CorbalAgent::recvData(Packet *p) {
                 // add new node
                 tmp = my_core_polygon->node_;
                 do {
-                    double tmp_x = scale_factor_ * tmp->x_ + (1 - scale_factor_) * I.x_;
-                    double tmp_y = scale_factor_ * tmp->y_ + (1 - scale_factor_) * I.y_;
+                    double tmp_x = scale_factor * tmp->x_ + (1 - scale_factor) * I.x_;
+                    double tmp_y = scale_factor * tmp->y_ + (1 - scale_factor) * I.y_;
                     if (tmp_x < 0 || tmp_y < 0 || tmp_x > network_width_ || tmp_y > network_height_) {
                         recalculate_scale_factor = true;
                         break;
@@ -1074,11 +1073,9 @@ node *CorbalAgent::recvGPSR(Packet *p, Point destionation) {
 }
 
 // scale_factor_ = -1 when SD not intersect with core polygon -> no need to routing
-void CorbalAgent::calculateScaleFactor(Packet *p) {
+double CorbalAgent::calculateScaleFactor(Packet *p, corePolygon *my_core_polygon) {
     struct hdr_corbal *hdc = HDR_CORBAL(p);
-
-    if (scale_factor_ > 0 || scale_factor_ == -1) return; // calculated in the last time
-
+    double scale_factor = 0;
     // check if SD intersect with core polygon
     int numIntersect = 0;
     node *n = my_core_polygon->node_;
@@ -1091,22 +1088,29 @@ void CorbalAgent::calculateScaleFactor(Packet *p) {
         n = next;
     } while (n != my_core_polygon->node_);
     if (numIntersect <= 1) {
-        scale_factor_ = -1;
-        return;
+        scale_factor = -1;
+        return scale_factor;
     }
 
     // calculate l_C(S,D)
     double l_c_sd = euclidLengthOfBRSP(this, &(hdc->routing_table[0]), my_core_polygon);
     double l_c_xd = euclidLengthOfBRSP(&(hdc->source), &(hdc->routing_table[0]), my_core_polygon);
 
+    node *i = my_core_polygon->node_;
+    double p_c = 0;
+    do {
+        node *j = i->next_ == NULL ? my_core_polygon->node_ : i->next_;
+        p_c += G::distance(i, j);
+        i = j;
+    } while (i != my_core_polygon->node_);
     if (*this == hdc->source) { // S is source node
 //        double delta = (s_ - 1) * l_c_sd / p_c_ -
 //                       s_ * (1 - sin((n_ - 2) * M_PI / (2 * n_)));
-        double delta = epsilon_ * l_c_sd - (1 + epsilon_) * (1 - sin((n_ - 2) * M_PI / (2 * n_))) * p_c_;
+        double delta = epsilon_ * l_c_sd - (1 + epsilon_) * (1 - sin((n_ - 2) * M_PI / (2 * n_))) * p_c;
         if (delta > 0) {
-            scale_factor_ = 1 + delta / p_c_;
+            scale_factor = 1 + delta / p_c;
         } else {
-            scale_factor_ = 1;
+            scale_factor = 1;
         }
     }
     else { // S is sub-source node
@@ -1114,13 +1118,14 @@ void CorbalAgent::calculateScaleFactor(Packet *p) {
         //               s_ * (1 - sin((n_ - 2) * M_PI / (2 * n_)));
 //        double delta = (s_ - 1 / cos(alpha_ / 2)) * l_c_n_ / p_c_ - 0.3 / cos(alpha_ / 2);
         double delta = (1 + epsilon_) * (l_c_xd) - l_c_sd - G::distance(this, &(hdc->source)) -
-                       (1 + epsilon_) * (1 - sin((n_ - 2) * M_PI / (2 * n_))) * p_c_;
+                       (1 + epsilon_) * (1 - sin((n_ - 2) * M_PI / (2 * n_))) * p_c;
         if (delta > 0) {
-            scale_factor_ = 1 + delta / p_c_;
+            scale_factor = 1 + delta / p_c;
         } else {
-            scale_factor_ = 1;
+            scale_factor = 1;
         }
     }
+    return scale_factor;
 }
 
 double CorbalAgent::euclidLengthOfBRSP(Point *s, Point *d, corePolygon *polygon) {
@@ -1128,7 +1133,6 @@ double CorbalAgent::euclidLengthOfBRSP(Point *s, Point *d, corePolygon *polygon)
     findViewLimitVertex(s, polygon, &S1, &S2); // s1 = right, s2 = left
     findViewLimitVertex(d, polygon, &D2, &D1); // d1 = right, d2 = left
 
-    // TODO: debug side of right, left
     // Line sd = G::line(s, d);
     //int s_side = G::position(S1, sd);
     //int d_side = G::position(D1, sd);
@@ -1390,14 +1394,13 @@ void CorbalAgent::dump(Angle a, int i, int j, Line ln) {
 }
 
 void CorbalAgent::dumpBroadcastRegion() {
-    int num = 0;
-    for (corePolygon *cg = core_polygon_set; cg; cg = cg->next_) {
-        num++;
-    }
-
     FILE *fp = fopen("BroadcastRegion.tr", "a+");
 
-    fprintf(fp, "%d\t%f\t%f\t%d\n", my_id_, x_, y_, num);
+    fprintf(fp, "%d\t%f\t%f\t", my_id_, x_, y_);
+    for (corePolygon *cg = core_polygon_set; cg; cg = cg->next_) {
+        fprintf(fp, "%f\t%f\t", cg->node_->x_, cg->node_->y_);
+    }
+    fprintf(fp, "\n");
     fclose(fp);
 }
 

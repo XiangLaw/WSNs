@@ -1,8 +1,8 @@
 # udp data
 
-set opt(tn) 0
+set opt(tn) 100
 set opt(interval_1) 50.0
-set opt(interval) 5.0
+set opt(interval) 20.0
 
 set s(0)	1253	;	set d(0)	557
 set s(1)	475	;	set d(1)	1293
@@ -109,6 +109,10 @@ set s(101)	467	;	set d(101)	1212
 set s(102)	1300	;	set d(102)	432
 set s(103)	387	;	set d(103)	1339
 
+set opt(cbr_start_1_) 100.0
+set opt(cbr_start_) 200.0
+
+
 for {set i 0} {$i < $opt(tn)} {incr i} {
     $mnode_($s($i)) setdest [$mnode_($d($i)) set X_] [$mnode_($d($i)) set Y_] 0
 
@@ -128,8 +132,8 @@ for {set i 0} {$i < $opt(tn)} {incr i} {
     $cbr_($i) set interval_ $opt(interval_1)
     #$cbr set random_ false
 
-    $ns_ at [expr 100 + [expr $i - 1] * $opt(interval_1) / $opt(tn)] "$cbr_($i) start"
-    $ns_ at 199 "$cbr_($i) stop"
+    $ns_ at [expr $opt(cbr_start_1_) + [expr $i - 1] * $opt(interval_1) / $opt(tn)] "$cbr_($i) start"
+    $ns_ at [expr $opt(cbr_start_1_) + 99] "$cbr_($i) stop"
 
     # Setup a CBR over UDP connection
     set cbr2_($i) [new Application/Traffic/CBR]
@@ -139,6 +143,6 @@ for {set i 0} {$i < $opt(tn)} {incr i} {
     $cbr2_($i) set rate_ 0.1Mb
     $cbr2_($i) set interval_ $opt(interval)
 
-    $ns_ at [expr 200 + [expr $i - 1] * $opt(interval) / $opt(tn)] "$cbr2_($i) start"
+    $ns_ at [expr $opt(cbr_start_) + [expr $i - 1] * $opt(interval) / $opt(tn)] "$cbr2_($i) start"
     $ns_ at [expr $opt(stop) - 5] "$cbr2_($i) stop"
 }

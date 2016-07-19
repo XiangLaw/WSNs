@@ -69,7 +69,7 @@ private:
 
     void recvData(Packet *);
 
-    void calculateScaleFactor(Packet *);
+    double calculateScaleFactor(Packet *, corePolygon*);
 
     void findViewLimitVertex(Point *N, corePolygon *, node **, node **);
 
@@ -95,13 +95,8 @@ private:
 
     polygonHole *hole_;
     corePolygon *core_polygon_set;
-    corePolygon *my_core_polygon;
     stuckangle *stuck_angle_;
-    Angle alpha_;
-    double l_c_n_;
 
-    double scale_factor_;
-    double p_c_;
 
     void dumpCorePolygon();
 

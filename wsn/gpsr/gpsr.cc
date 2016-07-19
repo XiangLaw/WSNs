@@ -87,6 +87,9 @@ GPSRAgent::command(int argc, const char *const *argv) {
             dumpEnergyByTime();
             return TCL_OK;
         }
+        if (strcasecmp(argv[1], "dumpBroadcast") == 0) {
+            return TCL_OK;
+        }
         if (strcasecmp(argv[1], "dump") == 0) {
             dumpNeighbor();
             dumpEnergy();
