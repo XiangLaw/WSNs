@@ -1,9 +1,9 @@
-# Script for WisSim simulator. Last edit 09/07/2016 20:11:06
+# Script for WisSim simulator. Last edit 14/07/2016 17:06:51
 
 set opt(x)	1000	;# X dimension of the topography
 set opt(y)	1000	;# Y dimension of the topography
-set opt(stop)	500	;# simulation time
-set opt(nn)	1702	;# number of nodes
+set opt(stop)	200	;# simulation time
+set opt(nn)	1745	;# number of nodes
 set opt(tr)	Trace.tr	;# trace file
 set opt(nam)	nam.out.tr
 
@@ -60,8 +60,8 @@ Agent/CORBAL set range_ 40
 Agent/CORBAL set limit_boundhole_hop_ 80
 Agent/CORBAL set min_boundhole_hop_ 5
 Agent/CORBAL set n_ 8
-Agent/CORBAL set k_n_ 3
-Agent/CORBAL set epsilon_ 1.2
+Agent/CORBAL set k_n_ 4
+Agent/CORBAL set epsilon_ 0.8
 Agent/CORBAL set net_width_ 1000
 Agent/CORBAL set net_height_ 1000
 
@@ -132,7 +132,6 @@ puts "Routing Protocol: $opt(rp)"
 for {set i 0} {$i < $opt(nn)} {incr i} {
 	set mnode_($i) [$ns_ node]
 }
-$defaultRNG seed 0
 
 # set up node position
 source ./topo_data.tcl

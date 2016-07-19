@@ -472,16 +472,16 @@ void CorbalAgent::addCorePolygonNode(Point newPoint, corePolygon *corePolygon) {
     node *newNode = new node();
     newNode->x_ = newPoint.x_;
     newNode->y_ = newPoint.y_;
-    newNode->next_ = corePolygon->node_;
-    corePolygon->node_ = newNode;
+    newNode->next_ = NULL;
+    node *tmp = corePolygon->node_;
+    while (tmp && tmp->next_) { tmp = tmp->next_; }
+    if (tmp == NULL) corePolygon->node_ = newNode;
+    else tmp->next_ = newNode;
 }
 
 // check if this node is on boundary of a core polygon
 // if true then update the packet data payload for each (i,j) immediately
 void CorbalAgent::isNodeStayOnBoundaryOfCorePolygon(Packet *p) {
-    if(my_id_ == 1668) {
-        int a = 1;
-    }
     CorbalPacketData *data = (CorbalPacketData *) p->userdata();
     int data_size = data->size() - (n_ + 1) * k_n_;
     int off = 0;
@@ -627,8 +627,6 @@ void CorbalAgent::broadcastHCI() {
 
     hdc->type_ = CORBAL_BROADCAST;
 
-    corePolygonSelection(p);
-
     send(p, 0);
 }
 
@@ -645,70 +643,117 @@ void CorbalAgent::recvHCI(Packet *p) {
         return;
     }
 
-    // check if is really receive this hole's information
-    if (my_core_polygon != NULL)    // already received
-    {
+    // store core polygon(s)
+    if (storeCorePolygons(p)) {
         drop(p, "HciReceived");
         return;
     }
 
-    // select core polygon
-    corePolygonSelection(p);
-
-    if (!canBroadcast()) {
-        drop(p, "CorbalRegion_IsOutside");
+    // check broadcast region for all core polygons
+    for (corePolygon *tmp = core_polygon_set; tmp != NULL; tmp = tmp->next_) {
+        if (canBroadcast(tmp)) {
+            broadcast_timer_.setParameter(p);
+            broadcast_timer_.resched(randSend_.uniform(0.0, 0.5));
+            return;
+        }
     }
-    else {
-        broadcast_timer_.setParameter(p);
-        broadcast_timer_.resched(randSend_.uniform(0.0, 0.5));
-    }
+    drop(p, "CorbalRegion_IsOutside");
 
     dumpBroadcastRegion();
 }
 
 // core polygon selection & update payload data
-void CorbalAgent::corePolygonSelection(Packet *p) {
+bool CorbalAgent::storeCorePolygons(Packet *p) {
     CorbalPacketData *data = (CorbalPacketData *) p->userdata();
     int offset = 0;
-    RNG rand_;
-    int selection = rand_.uniform(k_n_);
-    if (data->size() == n_) { // 1 core polygon only
-        selection = 0;
-    }
 
-    // alloc
-    my_core_polygon = new corePolygon();
+    if (data->size() == n_) { // 1 cg only
+        corePolygon *newCore = new corePolygon();
+        // check if we already have this cg
+        for (int j = 0; j < n_; j++) {
+            offset = j;
+            node newPoint = data->get_Bi_data(offset);
+            addCorePolygonNode(newPoint, newCore);
+        }
 
-    for (int j = 0; j < n_; j++) {
-        offset = selection * n_ + j;
-        node newPoint = data->get_Bi_data(offset);
-        addCorePolygonNode(newPoint, my_core_polygon);
+        //TODO: debug check equal core polygon
+        for (corePolygon *cg = core_polygon_set; cg; cg = cg->next_) {
+            node *nn = cg->node_;
+            bool flag = true;
+            for (node *n = newCore->node_; n; n = n->next_) {
+                if (n->x_ != nn->x_ || n->y_ != nn->y_) {
+                    flag = false;
+                    break;
+                }
+                nn = nn->next_;
+            }
+            if (flag) {
+                delete newCore;
+                return true;
+            }
+        }
+
+        // store new cg
+        newCore->next_ = core_polygon_set;
+        core_polygon_set = newCore;
+    } else {
+        core_polygon_set = NULL;
+        for (int i = 0; i < k_n_; i++) {
+            corePolygon *new_core = new corePolygon();
+            for (int j = 0; j < n_; j++) {
+                offset = i * n_ + j;
+                node newPoint = data->get_Bi_data(offset);
+                addCorePolygonNode(newPoint, new_core);
+            }
+            new_core->next_ = core_polygon_set;
+            core_polygon_set = new_core;
+        }
     }
 
     if (hole_ == NULL && data->size() > n_) { // if not in hole boundary and received multi core polygons
-        updatePayload(p);
+        corePolygon *cg = chooseRandomCorePolygon();
+        updatePayload(p, cg);
     }
+
+    return false;
+}
+
+corePolygon *CorbalAgent::chooseRandomCorePolygon() {
+    int num = 0;
+    for (corePolygon *tmp = core_polygon_set; tmp != NULL; tmp = tmp->next_) {
+        num++;
+    }
+    RNG rand_;
+    int selection = rand_.uniform(num);
+    num = 0;
+    for (corePolygon *tmp = core_polygon_set; tmp != NULL; tmp = tmp->next_) {
+        if (num == selection) {
+            return tmp;
+        }
+        num++;
+    }
+    return core_polygon_set;
 }
 
 // return true if it can continue broadcast or false if the broadcast range has reached
-bool CorbalAgent::canBroadcast() {
+bool CorbalAgent::canBroadcast(corePolygon * cg) {
     // if node is inside polygon or in hole boundary, simply return
-    if (hole_ || G::isPointInsidePolygon(this, my_core_polygon->node_)) {
+    if (hole_ || G::isPointInsidePolygon(this, cg->node_)) {
         return true;
     }
 
     node *pi, *pj;
-    findViewLimitVertex(this, my_core_polygon, &pi, &pj);
+    findViewLimitVertex(this, cg, &pi, &pj);
 
     alpha_ = fabs(G::directedAngle(pi, this, pj)); // get absolute angle
     l_c_n_ = g_min(G::distance(pi, this), G::distance(pj, this));
     // double l_c_n_ = distanceToPolygon(this, my_core_polygon);
-    node *i = my_core_polygon->node_;
+    node *i = cg->node_;
     do {
-        node *j = i->next_ == NULL ? my_core_polygon->node_ : i->next_;
+        node *j = i->next_ == NULL ? cg->node_ : i->next_;
         p_c_ += G::distance(i, j);
         i = j;
-    } while (i != my_core_polygon->node_);
+    } while (i != cg->node_);
 
     double left_side = cos(alpha_ / 2);
     double right_side = 1 / (1 + epsilon_) + p_c_ * (1 - sin((n_ - 2) * M_PI / (2 * n_))) / l_c_n_;
@@ -719,13 +764,13 @@ bool CorbalAgent::canBroadcast() {
     return left_side <= right_side;
 }
 
-void CorbalAgent::updatePayload(Packet *p) {
+void CorbalAgent::updatePayload(Packet *p, corePolygon *cg) {
     CorbalPacketData *data = (CorbalPacketData *) p->userdata();
 
     for (int i = n_ * k_n_; i > 0; i--) {
         data->rmv_data(i);
     }
-    for (node *node = my_core_polygon->node_; node != NULL; node = node->next_) {
+    for (node *node = cg->node_; node != NULL; node = node->next_) {
         data->add(-1, node->x_, node->y_);
     }
 }
@@ -1345,8 +1390,14 @@ void CorbalAgent::dump(Angle a, int i, int j, Line ln) {
 }
 
 void CorbalAgent::dumpBroadcastRegion() {
+    int num = 0;
+    for (corePolygon *cg = core_polygon_set; cg; cg = cg->next_) {
+        num++;
+    }
+
     FILE *fp = fopen("BroadcastRegion.tr", "a+");
-    fprintf(fp, "%d\t%f\t%f\n", my_id_, x_, y_);
+
+    fprintf(fp, "%d\t%f\t%f\t%d\n", my_id_, x_, y_, num);
     fclose(fp);
 }
 

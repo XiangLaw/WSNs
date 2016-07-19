@@ -17,7 +17,7 @@ struct hdr_corbal {
     Point prev_;
     Point source;
     u_int8_t routing_index;
-    Point routing_table[5];
+    Point routing_table[3];
 
     // gpsr header
     u_int8_t gprs_type_;
@@ -26,7 +26,7 @@ struct hdr_corbal {
     int index_; // broadcast use only
 
     inline int size() {
-        return sizeof(u_int8_t) * 3 + 3 * sizeof(Point) + 5 * sizeof(Point) + sizeof(int);
+        return sizeof(u_int8_t) * 3 + 3 * sizeof(Point) + 3 * sizeof(Point) + sizeof(int);
     }
 
     static int offset_;

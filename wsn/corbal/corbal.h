@@ -57,11 +57,13 @@ private:
 
     void recvHCI(Packet *);
 
-    void corePolygonSelection(Packet *);
+    bool storeCorePolygons(Packet *);
 
-    bool canBroadcast();
+    corePolygon *chooseRandomCorePolygon();
 
-    void updatePayload(Packet *); // update payload with new core polygon information
+    bool canBroadcast(corePolygon *);
+
+    void updatePayload(Packet *, corePolygon *); // update payload with new core polygon information
 
     void sendData(Packet *);
 
