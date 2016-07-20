@@ -1195,7 +1195,8 @@ void CorbalAgent::bypassHole(Point *S, Point *D, corePolygon *scalePolygon, core
         for (node *tmp = scalePolygon->node_; tmp != NULL; tmp = tmp->next_, tmp1 = tmp1->next_) {
             if (tmp1 == s1) {
                 S1 = tmp;
-            } else if (tmp1 == s2) {
+            }
+            if (tmp1 == s2) {
                 S2 = tmp;
             }
         }
@@ -1210,7 +1211,8 @@ void CorbalAgent::bypassHole(Point *S, Point *D, corePolygon *scalePolygon, core
         for (node *tmp = scalePolygon->node_; tmp != NULL; tmp = tmp->next_, tmp1 = tmp1->next_) {
             if (tmp1 == d1) {
                 D1 = tmp;
-            } else if (tmp1 == d2) {
+            }
+            if (tmp1 == d2) {
                 D2 = tmp;
             }
         }
