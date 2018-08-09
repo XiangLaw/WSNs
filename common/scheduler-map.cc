@@ -44,6 +44,7 @@
 
 #include "scheduler.h"
 
+using namespace std;
 
 class MapScheduler : public Scheduler {
 public:

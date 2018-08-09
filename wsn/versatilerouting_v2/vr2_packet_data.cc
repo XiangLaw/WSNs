@@ -1,13 +1,13 @@
-#include "corbal_packet_data.h"
+#include "vr2_packet_data.h"
 
-CorbalPacketData::CorbalPacketData() : AppData(CORBAL_DATA)
+VR2PacketData::VR2PacketData() : AppData(VR2_DATA)
 {
     data_ = NULL;
     data_len_ = 0;
     element_size_ = sizeof(nsaddr_t) + 2 * sizeof(double);
 }
 
-CorbalPacketData::CorbalPacketData(CorbalPacketData &d) : AppData(d)
+VR2PacketData::VR2PacketData(VR2PacketData &d) : AppData(d)
 {
     element_size_ = sizeof(nsaddr_t) + 2 * sizeof(double);
     data_len_ = d.data_len_;
@@ -23,7 +23,7 @@ CorbalPacketData::CorbalPacketData(CorbalPacketData &d) : AppData(d)
     }
 }
 
-void CorbalPacketData::add(nsaddr_t id, double x, double y)
+void VR2PacketData::add(nsaddr_t id, double x, double y)
 {
     unsigned char* temp = data_;
     data_ = new unsigned char[data_len_ + element_size_];
@@ -38,7 +38,7 @@ void CorbalPacketData::add(nsaddr_t id, double x, double y)
 
 // note: never call ADD method after calling this method. it means this method must to be called after all
 // Bi node store schema: next_index_of_1, B(1-1), B(1-2), ..., B(1-n), next_index_of_2, B(2-1), ..., B(2-n), ...
-void CorbalPacketData::addHBA(int n, int kn) {
+void VR2PacketData::addHBA(int n, int kn) {
     unsigned char *tmp = data_;
     data_ = new unsigned char[data_len_ + (n + 1) * kn * element_size_](); // initialize all element to zero
     memcpy(data_, tmp, data_len_);
@@ -46,7 +46,7 @@ void CorbalPacketData::addHBA(int n, int kn) {
 }
 
 
-void CorbalPacketData::addBiNode(int off, nsaddr_t id, double x, double y)
+void VR2PacketData::addBiNode(int off, nsaddr_t id, double x, double y)
 {
     int offset = off * element_size_;
     memcpy(data_ + offset, &id, sizeof(nsaddr_t));
@@ -54,7 +54,7 @@ void CorbalPacketData::addBiNode(int off, nsaddr_t id, double x, double y)
     memcpy(data_ + offset + sizeof(nsaddr_t) + sizeof(double), &y, sizeof(double));
 }
 
-void CorbalPacketData::dump() {
+void VR2PacketData::dump() {
     FILE *fp = fopen("BoundHole.tr", "a+");
 
     for (int i = 1; i <= data_len_ / element_size_; i++)
@@ -62,11 +62,12 @@ void CorbalPacketData::dump() {
         node n = get_data(i);
         fprintf(fp, "%d\t%f\t%f\n", n.id_, n.x_, n.y_);
     }
+    fprintf(fp, "\n");
 
     fclose(fp);
 }
 
-node CorbalPacketData::get_data(int index)
+node VR2PacketData::get_data(int index)
 {
     node re;
     int offset = (index - 1) * element_size_;
@@ -79,12 +80,12 @@ node CorbalPacketData::get_data(int index)
 }
 
 
-int CorbalPacketData::indexOf(node no)
+int VR2PacketData::indexOf(node no)
 {
     return indexOf(no.id_, no.x_, no.y_);
 }
 
-int CorbalPacketData::indexOf(nsaddr_t id, double x, double y)
+int VR2PacketData::indexOf(nsaddr_t id, double x, double y)
 {
     node n;
     for (int i = 0; i < element_size_; i++)
@@ -97,7 +98,7 @@ int CorbalPacketData::indexOf(nsaddr_t id, double x, double y)
     return -1;
 }
 
-void CorbalPacketData::rmv_data(int index)
+void VR2PacketData::rmv_data(int index)
 {
     if (index > data_len_ / element_size_ || index <= 0) return;
 
@@ -112,17 +113,17 @@ void CorbalPacketData::rmv_data(int index)
     data_len_ -= element_size_;
 }
 
-AppData* CorbalPacketData::copy()
+AppData* VR2PacketData::copy()
 {
-    return new CorbalPacketData(*this);
+    return new VR2PacketData(*this);
 }
 
-int CorbalPacketData::size() const
+int VR2PacketData::size() const
 {
     return data_len_ / element_size_;
 }
 
-node CorbalPacketData::get_Bi_data(int off)
+node VR2PacketData::get_Bi_data(int off)
 {
     node re;
     int offset = off * element_size_;
@@ -134,7 +135,7 @@ node CorbalPacketData::get_Bi_data(int off)
     return re;
 }
 
-int CorbalPacketData::get_next_index_of_Bi(int off)
+int VR2PacketData::get_next_index_of_Bi(int off)
 {
     int re = 0;
     int offset = off * element_size_;
@@ -143,8 +144,7 @@ int CorbalPacketData::get_next_index_of_Bi(int off)
     return re;
 }
 
-void CorbalPacketData::update_next_index_of_Bi(int off, int next_index) {
+void VR2PacketData::update_next_index_of_Bi(int off, int next_index) {
     int offset = off * element_size_;
     memcpy(data_ + offset, &next_index, sizeof(int));
 }
-

@@ -44,17 +44,17 @@ class NHRAgent : public BoundHoleAgent {
 private:
     double delta_; // scale factor
 
-    vector<BoundaryNode> hole_;
-    vector<BoundaryNode> octagon_hole_;
+    std::vector<BoundaryNode> hole_;
+    std::vector<BoundaryNode> octagon_hole_;
     AgentBroadcastTimer broadcast_timer_;
     Point endpoint_; // endpoint of the node
     bool isPivot_; // node that can go straight to the gate
 
     void createHole(Packet *p);
 
-    vector<BoundaryNode> determineConvexHull();
+    std::vector<BoundaryNode> determineConvexHull();
 
-    void approximateHole(vector<BoundaryNode>);
+    void approximateHole(std::vector<BoundaryNode>);
 
     void broadcastHCI();
 
@@ -76,13 +76,13 @@ private:
 
     bool sdPolygonIntersect(Packet *);
 
-    void bypassHole(Packet *, Point, Point, vector<BoundaryNode>, Point);
+    void bypassHole(Packet *, Point, Point, std::vector<BoundaryNode>, Point);
 
-    void findLimitAnchorPoint(Point, vector<BoundaryNode>, Point, int &, int &);
+    void findLimitAnchorPoint(Point, std::vector<BoundaryNode>, Point, int &, int &);
 
-    void findViewLimitVertices(Point, vector<BoundaryNode>, int &, int &);
+    void findViewLimitVertices(Point, std::vector<BoundaryNode>, int &, int &);
 
-    bool isPointInsidePolygon(Point, vector<BoundaryNode>);
+    bool isPointInsidePolygon(Point, std::vector<BoundaryNode>);
 
     void routeToDest(Packet *p);
 
@@ -90,7 +90,7 @@ private:
 
     void dumpBroadcastRegion();
 
-    void dumpScalePolygon(vector<BoundaryNode>, Point);
+    void dumpScalePolygon(std::vector<BoundaryNode>, Point);
 
 public:
     NHRAgent();

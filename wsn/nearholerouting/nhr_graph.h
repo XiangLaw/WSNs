@@ -9,7 +9,7 @@ using namespace std;
 
 class NHRGraph {
 public:
-    NHRGraph(Point agent, vector<BoundaryNode> hole);
+    NHRGraph(Point agent, std::vector<BoundaryNode> hole);
 
     Point endpoint() { return endpoint_; }
 
@@ -21,7 +21,7 @@ public:
 
     Point traceBack(Point &);
 
-    void dumpVoronoi(vector<BoundaryNode> polygon, map<Point, vector<Point> > vertices);
+    void dumpVoronoi(std::vector<BoundaryNode> polygon, map<Point, std::vector<Point> > vertices);
 
 
 private:
@@ -30,16 +30,16 @@ private:
     Point gatepoint_;
     bool isPivot_;
     map<Point, Point> trace_;
-    vector<BoundaryNode> hole_;
-    vector<BoundaryNode> cave_;
+    std::vector<BoundaryNode> hole_;
+    std::vector<BoundaryNode> cave_;
 
     void constructGraph();
 
-    bool validateVoronoiVertex(Point, vector<BoundaryNode>, double, double, double, double);
+    bool validateVoronoiVertex(Point, std::vector<BoundaryNode>, double, double, double, double);
 
-    void addVertexToGraph(std::map<Point, vector<Point> > &, Point, Point);
+    void addVertexToGraph(std::map<Point, std::vector<Point> > &, Point, Point);
 
-    Point findShortestPath(std::map<Point, vector<Point> > &, Point, set<Point>);
+    Point findShortestPath(std::map<Point, std::vector<Point> > &, Point, set<Point>);
 
-    bool perpendicularLinePolygonIntersect(Point, vector<BoundaryNode>, Point &);
+    bool perpendicularLinePolygonIntersect(Point, std::vector<BoundaryNode>, Point &);
 };

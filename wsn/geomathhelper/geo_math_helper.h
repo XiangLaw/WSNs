@@ -10,6 +10,7 @@
 #ifndef GEO_MATH_HELPER_H_
 #define GEO_MATH_HELPER_H_
 
+#include <vector>
 #include "math.h"
 #include "cstdlib"
 #include "float.h"
@@ -29,6 +30,11 @@ struct Point
 	double x_;
 	double y_;
 
+    Point() {}
+
+    Point(double a, double b) {
+        x_ = a; y_ = b;
+    }
 	inline bool operator==(const Point& rhs) { return x_ == rhs.x_ && y_ == rhs.y_; }
 	inline bool operator!=(const Point& rhs) { return !operator==(rhs); }
     inline bool operator<(const Point& rhs) const { return x_ < rhs.x_ || (x_ == rhs.x_ && y_ < rhs.y_); }
@@ -210,6 +216,8 @@ public:
      */
     static Angle angle(Point p0, Point p1, Point p2, Point p3);
 
+    static Angle abs_angle(Point p0, Point p1, Point p2, Point p3); //positive angle which is les than pi
+
     static Angle angle(Point *p0, Point *p1, Point *p2, Point *p3) { return angle(*p0, *p1, *p2, *p3); }
 
     // angle of vector (v2) to vector (v1)
@@ -232,6 +240,9 @@ public:
     static bool is_intersect2(Point *p1, Point *p2, Point p3, Point p4) { return is_intersect2(p1, p2, &p3, &p4); }
 
     static bool intersection(Point *p1, Point *p2, Point *p3, Point *p4, Point &p);
+
+    // check if line through p1 p2 cut segment p3 p4
+    static bool is_intersect3(Point p1, Point p2, Point p3, Point p4);
 
     // Point that is intersection point of l1 and l2
     static bool intersection(Line l1, Line l2, Point *p) { return intersection(l1, l2, *p); }
@@ -424,5 +435,24 @@ public:
     static bool isPointReallyInsidePolygon(Point *d, node *node_list);
 
     static int orientation(node* p, Point q, node* r);
+
+    //=======================================================================================
+    static bool inSegment(Point, Point, Point);
+
+    static bool isPointInsidePolygon(Point, std::vector<Point>);
+
+    static bool isPointReallyInsidePolygon(Point, std::vector<Point>);
+
+    static bool intersection1(Point, Point, Point, Point, Point &);
+
+    static bool segmentPolygonIntersection(Point, Point, node *, Point &);
+
+    static bool isSegmentInsidePolygon(Point, Point, std::vector<Point>);
+
+    static bool segmentPolygonIntersect(Point, Point, std::vector<Point>);
+
+    static bool segmentPolygonIntersect(Point, Point, std::vector<Point>, Point &);
+
+    static bool linePolygonIntersect(Point, Point, std::vector<Point>);
 };
 #endif /* GEO_MATH_HELPER_H_ */

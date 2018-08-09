@@ -90,7 +90,7 @@ int NHRAgent::command(int argc, const char *const *argv) {
 /*------------- Hole approximation -------------*/
 void NHRAgent::createHole(Packet *p) {
     int i = 0;
-    vector<BoundaryNode> convex;
+    std::vector<BoundaryNode> convex;
 
     polygonHole *h = createPolygonHole(p);
     for (struct node *node_tmp = h->node_list_; node_tmp; node_tmp = node_tmp->next_) {
@@ -118,10 +118,10 @@ void NHRAgent::createHole(Packet *p) {
     dump();
 }
 
-vector<BoundaryNode> NHRAgent::determineConvexHull() {
+std::vector<BoundaryNode> NHRAgent::determineConvexHull() {
     std::stack<BoundaryNode *> hull;
-    vector<BoundaryNode> convex;
-    vector<BoundaryNode *> clone_hole;
+    std::vector<BoundaryNode> convex;
+    std::vector<BoundaryNode *> clone_hole;
 
     for (std::vector<BoundaryNode>::iterator it = hole_.begin(); it != hole_.end(); ++it) {
         clone_hole.push_back(&(*it));
@@ -155,7 +155,7 @@ vector<BoundaryNode> NHRAgent::determineConvexHull() {
     return convex;
 }
 
-void NHRAgent::approximateHole(vector<BoundaryNode> convex) {
+void NHRAgent::approximateHole(std::vector<BoundaryNode> convex) {
     /*
 	 * define 8 lines for new approximate hole
 	 *
@@ -405,7 +405,7 @@ void NHRAgent::recvHCI(Packet *p) {
 
 // check if node is inside NHR region. also calculate the scale factor = min distance from node to octagon
 bool NHRAgent::canBroadcast() {
-    vector<BoundaryNode *> convex;
+    std::vector<BoundaryNode *> convex;
 
     // construct temporary node list
     polygonHole *node_list = new polygonHole();
@@ -622,7 +622,7 @@ bool NHRAgent::determineOctagonAnchorPoints(Packet *p) {
     scale_factor = (dis + delta_ * range_) / dis;
 
     // scale hole by I and scale_factor
-    vector<BoundaryNode> scaleHole;
+    std::vector<BoundaryNode> scaleHole;
 
     for (int i = 0; i < octagon_hole_.size(); i++) {
         BoundaryNode newPoint;
@@ -651,7 +651,7 @@ bool NHRAgent::sdPolygonIntersect(Packet *p) {
     return num_intersection > 0;
 }
 
-bool NHRAgent::isPointInsidePolygon(Point p, vector<BoundaryNode> polygon) {
+bool NHRAgent::isPointInsidePolygon(Point p, std::vector<BoundaryNode> polygon) {
     bool odd = false;
     int i, j;
 
@@ -666,11 +666,11 @@ bool NHRAgent::isPointInsidePolygon(Point p, vector<BoundaryNode> polygon) {
 }
 
 void NHRAgent::bypassHole(Packet *p, Point source, Point dest,
-                          vector<BoundaryNode> scaleOctagon, Point center) {
+                          std::vector<BoundaryNode> scaleOctagon, Point center) {
     struct hdr_nhr *edh = HDR_NHR(p);
 
     int si1, si2, di1, di2;
-    vector<Point> aps;
+    std::vector<Point> aps;
 
     findLimitAnchorPoint(source, scaleOctagon, center, si2, si1);
     findLimitAnchorPoint(dest, scaleOctagon, center, di1, di2);
@@ -723,20 +723,20 @@ void NHRAgent::bypassHole(Packet *p, Point source, Point dest,
     }
     dis += G::distance(scaleOctagon[di2], dest);
     if (dis < length) {
-        vector<Point>().swap(aps);
+        std::vector<Point>().swap(aps);
         for (int i = di2; i <= si2; ++i) {
             aps.push_back(scaleOctagon[i]);
         }
     }
 
     // update routing table
-    for (vector<Point>::iterator it = aps.begin(); it != aps.end(); ++it) {
+    for (std::vector<Point>::iterator it = aps.begin(); it != aps.end(); ++it) {
         edh->anchor_points[++edh->ap_index] = *it;
     }
 }
 
 void NHRAgent::findLimitAnchorPoint(Point point,
-                                    vector<BoundaryNode> scaleHole, Point center,
+                                    std::vector<BoundaryNode> scaleHole, Point center,
                                     int &i1, int &i2) {
     i1 = i2 = -1;
     if (!isPointInsidePolygon(point, scaleHole)) { // point is outside scaleHole
@@ -753,8 +753,8 @@ void NHRAgent::findLimitAnchorPoint(Point point,
     }
 }
 
-void NHRAgent::findViewLimitVertices(Point point, vector<BoundaryNode> polygon, int &i1, int &i2) {
-    vector<BoundaryNode *> clone;
+void NHRAgent::findViewLimitVertices(Point point, std::vector<BoundaryNode> polygon, int &i1, int &i2) {
+    std::vector<BoundaryNode *> clone;
     for (int i = 0; i < polygon.size(); i++) {
         polygon[i].id_ = i;
         clone.push_back(&polygon[i]);
@@ -797,7 +797,7 @@ void NHRAgent::dumpBroadcastRegion() {
     fclose(fp);
 }
 
-void NHRAgent::dumpScalePolygon(vector<BoundaryNode> scale, Point center) {
+void NHRAgent::dumpScalePolygon(std::vector<BoundaryNode> scale, Point center) {
     FILE *fp = fopen("ScalePolygon.tr", "a+");
     fprintf(fp, "%f\t%f\n\n", center.x_, center.y_);
     for (int i = 0; i < scale.size(); ++i) {

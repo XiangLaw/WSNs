@@ -121,7 +121,19 @@ enum AppDataType {
 	HACH_DATA,
 
 	// Near hole routing
-	NHR_DATA
+	NHR_DATA,
+
+	// Vincinity hole routing
+	VHR_DATA,
+
+	// Versatile routing version 1
+    VR1_DATA,
+
+	// Versatile routing version 2
+    VR2_DATA,
+
+	// multiple holes + inside hole goal
+    GOAL_DATA
 };
 
 // Interface for generic application-level data unit. It should know its 

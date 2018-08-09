@@ -716,6 +716,15 @@ Simulator instproc create-wireless-node args {
             NHR {
                 set ragent [$self create-nhr-agent $node]
             }
+            VHR {
+                set ragent [$self create-vhr-agent $node]
+            }
+            VR1 {
+                set ragent [$self create-vr1-agent $node]
+            }
+            VR2 {
+                set ragent [$self create-vr2-agent $node]
+            }
 			MDART {
 				set ragent [$self create-mdart-agent $node]
                         }
@@ -1116,6 +1125,54 @@ Simulator instproc create-nhr-agent { node } {
 	return $ragent
 }
 
+# VHR
+Simulator instproc create-vhr-agent { node } {
+	set ragent [new Agent/VHR]
+	set addr [$node node-addr]
+	$ragent addr $addr
+	$ragent node $node
+	if [Simulator set mobile_ip_] {
+		$ragent port-dmux [$node demux]
+	}
+	$node addr $addr
+	$node set ragent_ $ragent
+	$self at 0.0 	"$ragent start"    ;# start updates
+	$self at 60	"$ragent boundhole"
+	return $ragent
+}
+
+# VR version 1
+Simulator instproc create-vr1-agent { node } {
+	set ragent [new Agent/VR1]
+	set addr [$node node-addr]
+	$ragent addr $addr
+	$ragent node $node
+	if [Simulator set mobile_ip_] {
+		$ragent port-dmux [$node demux]
+	}
+	$node addr $addr
+	$node set ragent_ $ragent
+	$self at 0.0 	"$ragent start"    ;# start updates
+	$self at 60.0 	"$ragent boundhole"
+	return $ragent
+}
+
+# VR version 2
+Simulator instproc create-vr2-agent { node } {
+	set ragent [new Agent/VR2]
+	set addr [$node node-addr]
+	$ragent addr $addr
+	$ragent node $node
+	if [Simulator set mobile_ip_] {
+		$ragent port-dmux [$node demux]
+	}
+	$node addr $addr
+	$node set ragent_ $ragent
+	$self at 0.0 	"$ragent start"    ;# start updates
+	$self at 60.0 	"$ragent boundhole"
+	return $ragent
+}
+
 # GOAL
 Simulator instproc create-goal-agent { node } {
 	set ragent [new Agent/GOAL]
@@ -1129,7 +1186,6 @@ Simulator instproc create-goal-agent { node } {
 	$node set ragent_ $ragent	
 	$self at 0.0	"$ragent start"    ;# start updates
 	$self at 60	"$ragent boundhole"
-	$self at 99	"$ragent bcenergy"
 	return $ragent
 }
 

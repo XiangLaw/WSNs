@@ -221,7 +221,7 @@ void BoundHoleAgent::sendBoundHole()
 		bhh->type_ = BOUNDHOLE_BOUNDHOLE;
 
 		send(p, 0);
-
+		boundhole_pkt_counter_ ++;
 //		printf("%d\t- Send BoundHole\n", my_id_);
 	}
 }
@@ -351,6 +351,7 @@ void BoundHoleAgent::recvBoundHole(Packet *p)
 	bhh->prev_ = *this;
 
 	send(p, 0);
+	boundhole_pkt_counter_ ++;
 }
 
 void BoundHoleAgent::sendRefresh(Packet* p)

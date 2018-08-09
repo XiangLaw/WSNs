@@ -225,8 +225,11 @@ static const packet_t PT_TAAGENT = 93; // topological approach base class
 static const packet_t PT_CORBAL = 94;
 static const packet_t PT_HACH = 95;
 static const packet_t PT_NHR = 96; // near hole routing
-
-static packet_t       PT_NTYPE = 97; 			// This MUST be the LAST one
+static const packet_t PT_VHR = 97;  // vicinity hole routing
+static const packet_t PT_VR1 = 98;  // versatile routing version 1
+static const packet_t PT_VR2 = 99;  // versatile routing version 2
+static const packet_t PT_GOAL = 100; // goal multiple hole + inside hole
+static packet_t       PT_NTYPE = 101; 			// This MUST be the LAST one
 
 enum packetClass
 {
@@ -470,6 +473,10 @@ public:
 		name_[PT_CORBAL] = "CORBAL";
 		name_[PT_HACH] = "HACH";
 		name_[PT_NHR] = "NHR";
+        name_[PT_VHR] = "VHR";
+		name_[PT_VR1] = "VR1";
+        name_[PT_VR2] = "VR2";
+		name_[PT_GOAL] = "GOAL";
 		name_[PT_NTYPE]= "undefined";
 	}
 	static int addPacket(char *name);

@@ -1,8 +1,11 @@
 #include <wsn/graph/voronoi/VoronoiDiagram.h>
 #include <queue>
+#include <climits>
 #include "nhr_graph.h"
 
-NHRGraph::NHRGraph(Point agent, vector<BoundaryNode> hole) {
+using namespace std;
+
+NHRGraph::NHRGraph(Point agent, std::vector<BoundaryNode> hole) {
     agent_ = agent;
     hole_ = hole;
     isPivot_ = true;
@@ -11,7 +14,7 @@ NHRGraph::NHRGraph(Point agent, vector<BoundaryNode> hole) {
 }
 
 void NHRGraph::constructGraph() {
-    map<Point, vector<Point> > graph;
+    map<Point, std::vector<Point> > graph;
     int site_contains_node;
     Point gate_endpoint;
     set<Point> endpoints;
@@ -45,7 +48,7 @@ void NHRGraph::constructGraph() {
                 }
                 delete node_list;
             }
-            vector<BoundaryNode>().swap(cave_);
+            std::vector<BoundaryNode>().swap(cave_);
         }
     }
 
@@ -147,7 +150,7 @@ void NHRGraph::constructGraph() {
     endpoint_ = findShortestPath(graph, gate_endpoint, endpoints);
 }
 
-bool NHRGraph::validateVoronoiVertex(Point p, vector<BoundaryNode> polygon,
+bool NHRGraph::validateVoronoiVertex(Point p, std::vector<BoundaryNode> polygon,
                                      double min_x, double max_x, double min_y, double max_y) {
     if (p.x_ < min_x || p.x_ > max_x || p.y_ < min_y || p.y_ > max_y)
         return false;
@@ -165,32 +168,32 @@ bool NHRGraph::validateVoronoiVertex(Point p, vector<BoundaryNode> polygon,
     return odd;
 }
 
-void NHRGraph::addVertexToGraph(std::map<Point, vector<Point> > &graph, Point v1, Point v2) {
-    std::map<Point, vector<Point> >::iterator it;
+void NHRGraph::addVertexToGraph(std::map<Point, std::vector<Point> > &graph, Point v1, Point v2) {
+    std::map<Point, std::vector<Point> >::iterator it;
     it = graph.find(v1);
     if (it != graph.end()) {
         it->second.push_back(v2);
     } else {
-        vector<Point> val;
+        std::vector<Point> val;
         val.push_back(v2);
-        graph.insert(std::pair<Point, vector<Point> >(v1, val));
+        graph.insert(std::pair<Point, std::vector<Point> >(v1, val));
     }
     it = graph.find(v2);
     if (it != graph.end()) {
         it->second.push_back(v1);
     } else {
-        vector<Point> val;
+        std::vector<Point> val;
         val.push_back(v1);
-        graph.insert(std::pair<Point, vector<Point> >(v2, val));
+        graph.insert(std::pair<Point, std::vector<Point> >(v2, val));
     }
 }
 
-Point NHRGraph::findShortestPath(std::map<Point, vector<Point> > &graph, Point gate, set<Point> endpoints) {
+Point NHRGraph::findShortestPath(std::map<Point, std::vector<Point> > &graph, Point gate, set<Point> endpoints) {
     map<Point, Point> trace;
     std::queue<Point> queue;
     map<Point, int> level;
     int n_level = 0;
-    std::map<Point, vector<Point> >::iterator root;
+    std::map<Point, std::vector<Point> >::iterator root;
     root = graph.find(gate);
     queue.push(root->first);
     trace.insert(std::pair<Point, Point>(root->first, root->first));
@@ -231,7 +234,7 @@ Point NHRGraph::findShortestPath(std::map<Point, vector<Point> > &graph, Point g
     return closet_endpoint;
 }
 
-bool NHRGraph::perpendicularLinePolygonIntersect(Point p, vector<BoundaryNode> cave, Point &perpendicular_point) {
+bool NHRGraph::perpendicularLinePolygonIntersect(Point p, std::vector<BoundaryNode> cave, Point &perpendicular_point) {
     Line gate_line = G::line(cave[0], cave[cave.size() - 1]);
     Line perpendicular_line = G::perpendicular_line(p, gate_line);
     G::intersection(gate_line, perpendicular_line, &perpendicular_point);
@@ -267,12 +270,10 @@ Point NHRGraph::traceBack(Point &current_vertex) {
     return agent_;
 }
 
-void NHRGraph::dumpVoronoi(vector<BoundaryNode> polygon, map<Point, vector<Point> > vertices) {
+void NHRGraph::dumpVoronoi(std::vector<BoundaryNode> polygon, std::map<Point, std::vector<Point> > vertices) {
     FILE *fp = fopen("Voronoi.tr", "a+");
-    for (std::vector<BoundaryNode>::iterator it = polygon.begin(); it != polygon.end(); ++it)
-        fprintf(fp, "%d\t%f\t%f\n", 1, (*it).x_, (*it).y_);
-    for (map<Point, vector<Point> >::iterator it = vertices.begin(); it != vertices.end(); ++it) {
-        for (vector<Point>::iterator it2 = it->second.begin(); it2 != it->second.end(); ++it2) {
+    for (map<Point, std::vector<Point> >::iterator it = vertices.begin(); it != vertices.end(); ++it) {
+        for (std::vector<Point>::iterator it2 = it->second.begin(); it2 != it->second.end(); ++it2) {
             fprintf(fp, "==%d\t%f\t%f\n", 1, (*it).first.x_, (*it).first.y_);
             fprintf(fp, "==%d\t%f\t%f\n\n", 1, (*it2).x_, (*it2).y_);
         }
