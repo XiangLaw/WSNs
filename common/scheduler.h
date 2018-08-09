@@ -39,6 +39,7 @@
 
 #include "config.h"
 
+
 // Make use of 64 bit integers if available.
 #ifdef HAVE_INT64
 typedef int64_t scheduler_uid_t;

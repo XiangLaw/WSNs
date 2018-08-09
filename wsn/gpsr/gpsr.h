@@ -87,6 +87,7 @@ protected:
 	void dumpEnergy();
 	void dumpEnergyByTime();
 	void dumpRedundantNode(int);
+    void dumpPktOverhead();
 
 	double hello_period_;
 
@@ -98,6 +99,13 @@ protected:
 	Point * 		dest;				// position of destination
 
 	nsaddr_t my_id_;					// node id (address), which is NOT necessary
+
+	// these parameters are for packet overhead calculating
+	int data_pkt_counter_;
+	int hello_counter_;
+	int boundhole_pkt_counter_;
+	int HBA_counter_;
+	int HCI_counter_;
 
 	neighbor* getNeighbor(nsaddr_t);
 	neighbor* getNeighborByPerimeter(Point);

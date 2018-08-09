@@ -3,18 +3,20 @@
 #include "corbal.h"
 #include "corbal_packet_data.h"
 
+#define ALPHA_  M_PI/6
+
 int hdr_corbal::offset_;
 
 static class CorbalHeaderClass : public PacketHeaderClass {
 public:
-    CorbalHeaderClass() : PacketHeaderClass("PacketHeader/CORBAL", sizeof(hdr_corbal)) {
+    CorbalHeaderClass() : PacketHeaderClass("PacketHeader/CORBAL", sizeof(hdr_all_corbal)) {
         bind_offset(&hdr_corbal::offset_);
     }
 } class_corbalhdr;
 
 static class CorbalAgentClass : public TclClass {
 public:
-    CorbalAgentClass() : TclClass("Agent/CORBAL") { }
+    CorbalAgentClass() : TclClass("Agent/CORBAL") {}
 
     TclObject *create(int, const char *const *) {
         return (new CorbalAgent());
@@ -40,7 +42,13 @@ CorbalAgent::CorbalAgent() : GPSRAgent(),
     n_ = 8;
     core_polygon_set = NULL;
     hole_ = NULL;
-    epsilon_ = 0.5;
+    epsilon_ = 0.95;
+    sub_count = 0;
+    num_array_ = 0;
+    boundary_vertices_num = 0;
+    boundhole_counter_ = 0;
+    broadcast_counter_ = 0;
+    fwd_counter_ = 0;
 
     bind("range_", &range_);
     bind("limit_boundhole_hop_", &limit_max_hop_);
@@ -51,9 +59,9 @@ CorbalAgent::CorbalAgent() : GPSRAgent(),
     bind("net_height_", &network_height_);
     bind("k_n_", &k_n_);
 
-    theta_n = 2 * M_PI / (n_ * k_n_);
-//    theta_n = 2 * M_PI * 1 / 9;
-//    k_n_ = (int) floor((n_ - 2) * M_PI / (n_ * theta_n));
+    theta_n = 2 * M_PI / (n_ * (k_n_ + ALPHA_));
+    sin_ = sin((n_ - 2) * M_PI / (2 * n_));
+    gama_ = (1 + epsilon_) * sin_;
 }
 
 int
@@ -80,24 +88,17 @@ void
 CorbalAgent::recv(Packet *p, Handler *h) {
     hdr_cmn *cmh = HDR_CMN(p);
     hdr_ip *iph = HDR_IP(p);
-    hdr_corbal *bhh = HDR_CORBAL(p);
 
+    if (my_id_ == 125){
+        int a= 0;
+    }
     switch (cmh->ptype()) {
         case PT_HELLO:
             GPSRAgent::recv(p, h);
             break;
 
         case PT_CORBAL:
-            if (bhh->type_ == CORBAL_BOUNDHOLE) {
-                recvBoundHole(p);
-            }
-            else if (bhh->type_ == CORBAL_HBA) // bhh->type_ == CORBAL_HBA
-            {
-                recvHBA(p);
-            }
-            else if (bhh->type_ == CORBAL_BROADCAST) {
-                recvHCI(p);
-            }
+            recvCORBAL(p, h);
             break;
 
         case PT_CBR:
@@ -106,8 +107,7 @@ CorbalAgent::recv(Packet *p, Handler *h) {
                 if (cmh->num_forwards() == 0)        // a new packet
                 {
                     sendData(p);
-                }
-                else    //(cmh->num_forwards() > 0)	// routing loop -> drop
+                } else    //(cmh->num_forwards() > 0)	// routing loop -> drop
                 {
                     drop(p, DROP_RTR_ROUTE_LOOP);
                     return;
@@ -116,6 +116,7 @@ CorbalAgent::recv(Packet *p, Handler *h) {
 
             if (iph->ttl_-- <= 0) {
                 drop(p, DROP_RTR_TTL);
+                dumpDrop(iph, 0);
                 return;
             }
             recvData(p);
@@ -127,9 +128,21 @@ CorbalAgent::recv(Packet *p, Handler *h) {
     }
 }
 
+void CorbalAgent::recvCORBAL(Packet *p, Handler *h) {
+    hdr_corbal_ha *bhh = HDR_CORBAL_HA(p);
+    if (bhh->type_ == CORBAL_BOUNDHOLE) {
+        recvBoundHole(p);
+    } else if (bhh->type_ == CORBAL_HBA) // bhh->type_ == CORBAL_HBA
+    {
+        recvHBA(p);
+    } else if (bhh->type_ == CORBAL_BROADCAST) {
+        recvHCI(p);
+    }
+}
+
 void
 CorbalAgent::startUp() {
-    findStuck_timer_.resched(50);
+    findStuck_timer_.resched(65);
 
     // clear trace file
     FILE *fp;
@@ -146,6 +159,22 @@ CorbalAgent::startUp() {
     fp = fopen("DynamicScaleHole.tr", "w");
     fclose(fp);
     fp = fopen("BroadcastEnergy.tr", "w");
+    fclose(fp);
+    fp = fopen("BigForbiddenArea.tr", "w");
+    fclose(fp);
+    fp = fopen("BI.tr", "w");
+    fclose(fp);
+    fp = fopen("helloCounter.tr", "w");
+    fclose(fp);
+    fp = fopen("boundholeCounter.tr", "w");
+    fclose(fp);
+    fp = fopen("broadcastCounter.tr", "w");
+    fclose(fp);
+    fp = fopen("Hopcounts.tr", "w");
+    fclose(fp);
+    fp = fopen("Drop.tr", "w");
+    fclose(fp);
+    fp = fopen("Path.tr", "w");
     fclose(fp);
 }
 
@@ -201,7 +230,7 @@ void CorbalAgent::sendBoundHole() {
     Packet *p;
     hdr_cmn *cmh;
     hdr_ip *iph;
-    hdr_corbal *bhh;
+    hdr_corbal_ha *bhh;
 
     for (stuckangle *sa = stuck_angle_; sa; sa = sa->next_) {
         p = allocpkt();
@@ -213,7 +242,7 @@ void CorbalAgent::sendBoundHole() {
 
         cmh = HDR_CMN(p);
         iph = HDR_IP(p);
-        bhh = HDR_CORBAL(p);
+        bhh = HDR_CORBAL_HA(p);
 
         cmh->ptype() = PT_CORBAL;
         cmh->direction() = hdr_cmn::DOWN;
@@ -232,13 +261,14 @@ void CorbalAgent::sendBoundHole() {
         bhh->type_ = CORBAL_BOUNDHOLE;
 
         send(p, 0);
+        boundhole_counter_ ++;
     }
 }
 
 void CorbalAgent::recvBoundHole(Packet *p) {
     struct hdr_ip *iph = HDR_IP(p);
     struct hdr_cmn *cmh = HDR_CMN(p);
-    struct hdr_corbal *bhh = HDR_CORBAL(p);
+    struct hdr_corbal_ha *bhh = HDR_CORBAL_HA(p);
 
     CorbalPacketData *data = (CorbalPacketData *) p->userdata();
 
@@ -246,12 +276,15 @@ void CorbalAgent::recvBoundHole(Packet *p) {
     if (iph->saddr() == my_id_) {
         if (iph->ttl_ > (limit_max_hop_ - limit_min_hop_)) {
             drop(p, " SmallHole");    // drop hole that have less than limit_min_hop_ hop
-        }
-        else {
+        } else {
             hole_ = createPolygonHole(p);
             data->dump();
+            if (cmh->uid_ == 1798 || cmh->uid_ == 1857){
+                int a =0;
+            }
             // starting sending HBA to hole boundary
             sendHBA(p);
+
         }
         return;
     }
@@ -267,8 +300,7 @@ void CorbalAgent::recvBoundHole(Packet *p) {
     if (n.id_ != iph->saddr()) {
         // if this is second hop => remove "b"
         data->rmv_data(1);
-    }
-    else {
+    } else {
         // get the entry at index n-1
         n = data->get_data(data->size() - 1);
     }
@@ -302,8 +334,7 @@ void CorbalAgent::recvBoundHole(Packet *p) {
                     return;
                 }
                 continue;
-            }
-            else {
+            } else {
                 nb = getNeighbor(next.id_);
                 if (nb == NULL) {
                     drop(p, DROP_RTR_NO_ROUTE);
@@ -336,6 +367,7 @@ void CorbalAgent::recvBoundHole(Packet *p) {
     bhh->prev_ = *this;
 
     send(p, 0);
+    boundhole_counter_ ++;
 }
 
 node *CorbalAgent::getNeighborByBoundHole(Point *p, Point *prev) {
@@ -362,12 +394,12 @@ void CorbalAgent::sendHBA(Packet *p) {
     CorbalPacketData *data = (CorbalPacketData *) p->userdata();
     hdr_cmn *cmh = HDR_CMN(p);
     hdr_ip *iph = HDR_IP(p);
-    hdr_corbal *bhh = HDR_CORBAL(p);
+    hdr_corbal_ha *bhh = HDR_CORBAL_HA(p);
 
     // update data payload - alloc memory for set of B(i) nodes
     data->add(my_id_, x_, y_); // add back H0 to end of array
     data->addHBA(n_, k_n_);
-    // TODO: refactor this scope. we need to call this function twice since there is a special case:
+    // we need to call this function twice since there is a special case:
     // a node is belong to 2 edges of core polygon, i.e. this node is a vertex of core polygon
     isNodeStayOnBoundaryOfCorePolygon(p);
     isNodeStayOnBoundaryOfCorePolygon(p);
@@ -392,14 +424,18 @@ void CorbalAgent::sendHBA(Packet *p) {
     bhh->index_ = 2;
 
     send(p, 0);
+    boundhole_counter_ ++;
 }
 
 void CorbalAgent::recvHBA(Packet *p) {
     struct hdr_ip *iph = HDR_IP(p);
-    struct hdr_corbal *bhh = HDR_CORBAL(p);
+    struct hdr_corbal_ha *bhh = HDR_CORBAL_HA(p);
+    hdr_cmn *cmh = HDR_CMN(p);
 
     CorbalPacketData *data = (CorbalPacketData *) p->userdata();
-
+    if (cmh->uid_ == 1798 || cmh->uid_ == 1857){
+        int a =0;
+    }
     hole_ = createPolygonHole(p);
     int i = bhh->index_;
 
@@ -417,11 +453,14 @@ void CorbalAgent::recvHBA(Packet *p) {
         bhh->index_++;
 
         send(p, 0);
-    }
-    else { // back to H0
+        boundhole_counter_ ++;
+    } else { // back to H0
         isNodeStayOnBoundaryOfCorePolygon(p);
         isNodeStayOnBoundaryOfCorePolygon(p);
         contructCorePolygonSet(p);
+        if (cmh->uid_ == 1798 || cmh->uid_ == 1857){
+            int a =0;
+        }
         drop(p, "BOUNDHOLE_HBA");
 
         // broadcast HCI
@@ -433,6 +472,9 @@ void CorbalAgent::contructCorePolygonSet(Packet *p) {
     CorbalPacketData *data = (CorbalPacketData *) p->userdata();
     int data_size = data->size() - (n_ + 1) * k_n_;
     int off = 0;
+
+    corePolygon *tmp_choose = new corePolygon();
+    double area = 9999999, tmp_area = 0;
 
     for (int i = 1; i <= k_n_; i++) {
         corePolygon *new_core = new corePolygon();
@@ -458,18 +500,58 @@ void CorbalAgent::contructCorePolygonSet(Packet *p) {
             }
         }
 
-        new_core->next_ = core_polygon_set;
-        core_polygon_set = new_core;
+        if(areaCorePolygon(new_core) < area){
+            tmp_choose = new_core;
+            area = areaCorePolygon(new_core);
+        }
+        //new_core->next_ = core_polygon_set;
+        //core_polygon_set = new_core;
+    }
+    tmp_choose->next_ = core_polygon_set;
+    core_polygon_set = tmp_choose;
+
+    /*corePolygon *tmp = NULL;
+    corePolygon *tmp_choose = NULL;
+
+    double area = 9999999, tmp_area = 0;
+    tmp = core_polygon_set;
+    while (tmp){
+        tmp_area = areaCorePolygon(tmp);
+        if (area > tmp_area){
+            tmp_choose = tmp;
+            area = tmp_area;
+        }
+        tmp = tmp->next_;
     }
 
-    dumpCorePolygon();
+    core_polygon_set = NULL;
+    tmp_choose->next_ = core_polygon_set;
+    core_polygon_set = tmp_choose;
+     */
+    //dumpCorePolygon();
+}
+double CorbalAgent::areaCorePolygon(corePolygon *tmp){
+    node* node_tmp = tmp->node_;
+    Point array_tmp[n_];
+    double sum = 0, sum_a = 0, sum_b = 0;
+    for (int i = 0; i < n_; i++){
+        array_tmp[i] = *node_tmp;
+        node_tmp = node_tmp->next_;
+    }
+    for (int i = 0; i < n_ - 1;i++){
+        sum_a = sum_a + array_tmp[i].x_ * array_tmp[i+1].y_;
+        sum_b = sum_b + array_tmp[i+1].x_ * array_tmp[i].y_;
+    }
+    sum_a = sum_a + array_tmp[n_-1].x_ * array_tmp[0].y_;
+    sum_b = sum_b + array_tmp[1].x_ * array_tmp[n_ -1].y_;
+    sum = (sum_a - sum_b)/2;
+    if (sum < 0){
+        sum = 0 - sum;
+    }
+    return  sum;
 }
 
 void CorbalAgent::addCorePolygonNode(Point newPoint, corePolygon *corePolygon) {
-    for (node *i = corePolygon->node_; i; i = i->next_) {
-        if (*i == newPoint) return;
-    }
-
     node *newNode = new node();
     newNode->x_ = newPoint.x_;
     newNode->y_ = newPoint.y_;
@@ -479,7 +561,6 @@ void CorbalAgent::addCorePolygonNode(Point newPoint, corePolygon *corePolygon) {
     if (tmp == NULL) corePolygon->node_ = newNode;
     else tmp->next_ = newNode;
 }
-
 // check if this node is on boundary of a core polygon
 // if true then update the packet data payload for each (i,j) immediately
 void CorbalAgent::isNodeStayOnBoundaryOfCorePolygon(Packet *p) {
@@ -497,8 +578,7 @@ void CorbalAgent::isNodeStayOnBoundaryOfCorePolygon(Packet *p) {
 
         if (next_index == 1) {
             next_index = n_ + 1;
-        }
-        else if (next_index == 0) {
+        } else if (next_index == 0) {
             next_index = n_ + 1;
             first_time = true;
         }
@@ -595,10 +675,10 @@ void CorbalAgent::broadcastHCI() {
     CorbalPacketData *payload;
     hdr_cmn *cmh;
     hdr_ip *iph;
-    hdr_corbal *hdc;
+    hdr_corbal_ha *hdc;
 
-    if (hole_ == NULL)
-        return;
+    /*   if (hole_ == NULL)
+           return;*/
 
     p = allocpkt();
     payload = new CorbalPacketData();
@@ -611,7 +691,7 @@ void CorbalAgent::broadcastHCI() {
 
     cmh = HDR_CMN(p);
     iph = HDR_IP(p);
-    hdc = HDR_CORBAL(p);
+    hdc = HDR_CORBAL_HA(p);
 
     cmh->ptype() = PT_CORBAL;
     cmh->direction() = hdr_cmn::DOWN;
@@ -624,16 +704,37 @@ void CorbalAgent::broadcastHCI() {
     iph->saddr() = my_id_;
     iph->sport() = RT_PORT;
     iph->dport() = RT_PORT;
-    iph->ttl_ = 4 * IP_DEF_TTL;
+    iph->ttl_ = 200;
 
     hdc->type_ = CORBAL_BROADCAST;
 
+    dumpCorePolygon();
+
     send(p, 0);
+    broadcast_counter_ ++ ;
 }
 
 void CorbalAgent::recvHCI(Packet *p) {
     struct hdr_ip *iph = HDR_IP(p);
+    CorbalPacketData *data = (CorbalPacketData *) p->userdata();
+    hdr_cmn *cmh = HDR_CMN(p);
 
+
+    /*if (my_id_ == 1578) {
+        int a = 1;
+    }*/
+    int offset = 0;
+    /*if (cmh->uid_ == 1865){
+        int a= 1;
+        corePolygon *newCore = new corePolygon();
+        // check if we already have this cg
+        for (int j = 0; j < n_; j++) {
+            offset = j;
+            node newPoint = data->get_Bi_data(offset);
+            addCorePolygonNode(newPoint, newCore);
+        }
+
+    }*/
     // if the hci packet has came back to the initial node
     if (iph->saddr() == my_id_) {
         drop(p, "CorbalLoopHCI");
@@ -645,92 +746,100 @@ void CorbalAgent::recvHCI(Packet *p) {
     }
 
     // store core polygon(s)
-    if (storeCorePolygons(p)) {
+    corePolygon *diffCores = storeCorePolygons(p);
+    if (diffCores == NULL) {
         drop(p, "HciReceived");
         return;
     }
-
-    // check broadcast region for all core polygons
-    for (corePolygon *tmp = core_polygon_set; tmp != NULL; tmp = tmp->next_) {
-        if (canBroadcast(tmp)) {
+/*
+    if (hole_ == NULL) { // if not in hole boundary and received multi core polygons
+        corePolygon *cg = chooseRandomCorePolygon(diffCores);
+        updatePayload(p, cg);
+        if (canBroadcast(cg)) {
             broadcast_timer_.setParameter(p);
             broadcast_timer_.resched(randSend_.uniform(0.0, 0.5));
             return;
         }
+    } else {
+        broadcast_timer_.setParameter(p);
+        broadcast_timer_.resched(randSend_.uniform(0.0, 0.5));
+        return;
     }
-    drop(p, "CorbalRegion_IsOutside");
+    drop(p, "CorbalRegion_IsOutside");*/
+    // broadcast message
+    cmh->direction_ = hdr_cmn::DOWN;
+    cmh->last_hop_  = my_id_;
+
+    iph->ttl_--;
+    if (iph->ttl_ <= 0)	drop(p, "Limit");
+    else{
+        //send(p, 0);
+        broadcast_timer_.setParameter(p);
+        broadcast_timer_.resched(randSend_.uniform(0.0, 0.5));
+        broadcast_counter_ ++;
+    }
 }
 
 // core polygon selection & update payload data
-bool CorbalAgent::storeCorePolygons(Packet *p) {
+corePolygon *CorbalAgent::storeCorePolygons(Packet *p) {
     CorbalPacketData *data = (CorbalPacketData *) p->userdata();
     int offset = 0;
 
-    if (data->size() == n_) { // 1 cg only
-        corePolygon *newCore = new corePolygon();
-        // check if we already have this cg
-        for (int j = 0; j < n_; j++) {
-            offset = j;
-            node newPoint = data->get_Bi_data(offset);
-            addCorePolygonNode(newPoint, newCore);
-        }
+    corePolygon *newCore = new corePolygon();
+    // check if we already have this cg
+    for (int j = 0; j < n_; j++) {
+        offset = j;
+        node newPoint = data->get_Bi_data(offset);
+        addCorePolygonNode(newPoint, newCore);
+    }
 
-        for (corePolygon *cg = core_polygon_set; cg; cg = cg->next_) {
-            node *nn = cg->node_;
-            bool flag = true;
-            for (node *n = newCore->node_; n; n = n->next_) {
-                if (n->x_ != nn->x_ || n->y_ != nn->y_) {
-                    flag = false;
-                    break;
-                }
-                nn = nn->next_;
+    for (corePolygon *cg = core_polygon_set; cg; cg = cg->next_) {
+        node *nn = cg->node_;
+        bool flag = true;
+        for (node *n = newCore->node_; n; n = n->next_) {
+            if (n->x_ != nn->x_ || n->y_ != nn->y_) {
+                flag = false;
+                break;
             }
-            if (flag) {
-                delete newCore;
-                return true;
-            }
+            nn = nn->next_;
         }
-
-        // store new cg
-        newCore->next_ = core_polygon_set;
-        core_polygon_set = newCore;
-    } else {
-        core_polygon_set = NULL;
-        for (int i = 0; i < k_n_; i++) {
-            corePolygon *new_core = new corePolygon();
-            for (int j = 0; j < n_; j++) {
-                offset = i * n_ + j;
-                node newPoint = data->get_Bi_data(offset);
-                addCorePolygonNode(newPoint, new_core);
-            }
-            new_core->next_ = core_polygon_set;
-            core_polygon_set = new_core;
+        if (flag) {
+            delete newCore;
+            return NULL;
         }
     }
 
-    if (hole_ == NULL && data->size() > n_) { // if not in hole boundary and received multi core polygons
-        corePolygon *cg = chooseRandomCorePolygon();
-        updatePayload(p, cg);
-    }
 
-    return false;
+    // store new cg
+    newCore->next_ = core_polygon_set;
+    core_polygon_set = newCore;
+    if (core_polygon_set != NULL){
+        if (core_polygon_set->next_ != NULL){
+            if (core_polygon_set->next_->next_ != NULL){
+                int a= 0;
+                //  dumpCorePolygon();
+            }
+        }
+    }
+    return newCore;
 }
 
-corePolygon *CorbalAgent::chooseRandomCorePolygon() {
+/*
+corePolygon *CorbalAgent::chooseRandomCorePolygon(corePolygon* cg) {
     int num = 0;
-    for (corePolygon *tmp = core_polygon_set; tmp != NULL; tmp = tmp->next_) {
+    for (corePolygon *tmp = cg; tmp != NULL; tmp = tmp->next_) {
         num++;
     }
     RNG rand_;
     int selection = rand_.uniform(num);
     num = 0;
-    for (corePolygon *tmp = core_polygon_set; tmp != NULL; tmp = tmp->next_) {
+    for (corePolygon *tmp = cg; tmp != NULL; tmp = tmp->next_) {
         if (num == selection) {
             return tmp;
         }
         num++;
     }
-    return core_polygon_set;
+    return cg;
 }
 
 // return true if it can continue broadcast or false if the broadcast range has reached
@@ -755,13 +864,15 @@ bool CorbalAgent::canBroadcast(corePolygon * cg) {
     } while (i != cg->node_);
 
     double left_side = cos(alpha / 2);
-    double right_side = 1 / (1 + epsilon_) + p_c * (1 - sin((n_ - 2) * M_PI / (2 * n_))) / l_c_n;
+    double right_side1 = 1 / (1 + epsilon_) + p_c * (1 - sin_) / l_c_n;
+    double right_side2 = 1 / ((1 + epsilon_) * sin_);
 
     //double left_side = p_c_ / l_c_n_ * (0.3 / cos(alpha_ / 2) + 1) + 1 / cos(alpha_ / 2);
     //double right_side = s_;
 
-    return left_side <= right_side;
-}
+ //   return !(left_side > right_side1 || left_side > right_side2);
+	return !(left_side > right_side1);
+}*/
 
 void CorbalAgent::updatePayload(Packet *p, corePolygon *cg) {
     CorbalPacketData *data = (CorbalPacketData *) p->userdata();
@@ -812,7 +923,7 @@ double CorbalAgent::distanceToPolygon(Point *p, corePolygon *polygon) {
 void CorbalAgent::sendData(Packet *p) {
     hdr_cmn *cmh = HDR_CMN(p);
     hdr_ip *iph = HDR_IP(p);
-    hdr_corbal *hdc = HDR_CORBAL(p);
+    hdr_corbal_data *hdc = HDR_CORBAL_DATA(p);
 
     cmh->size() += IP_HDR_LEN + hdc->size();
     cmh->direction_ = hdr_cmn::DOWN;
@@ -820,17 +931,146 @@ void CorbalAgent::sendData(Packet *p) {
     hdc->type_ = CORBAL_CBR_GREEDY;
     hdc->source = *this;
     hdc->routing_table[0] = *dest;
+    hdc->sub = hdc->routing_table[0];
     hdc->routing_index = 1;
+    hdc->hopcount_ = 0;
 
     iph->saddr() = my_id_;
     iph->ttl_ = 4 * IP_DEF_TTL;
     hdc->gprs_type_ = GPSR_GPSR;
+
+    corePolygon *tmp = core_polygon_set;
+    // Noi vong cho cac danh sach node cua cac core
+    while(tmp){
+        tmp->circleNodeList();
+        tmp = tmp->next_;
+    }
+
+    if (core_list_st_.size() == 0){
+        findHolelist(*this, *dest); //Tim danh sach cac holes nam tren doan thang st
+    }
+
+    if(iph->saddr() == 2524)
+        printf("here");
+
+    if (core_list_st_.size() > 0)
+    {
+        if (b_list_.size() == 0) { //Neu la lan phat goi tin dau tien,
+            routing(hdc);
+            edge tmp_b[40];
+            int z = 0;
+            for (list<edge>::iterator iter = b_list_.begin(); iter != b_list_.end(); iter++){
+                tmp_b[z] = *iter;
+                z++;
+            }
+
+
+            // select only base path whose all segments make a obstute angles with st
+            double tmp_angle = 0;
+            for (int i = 0; i < num_array_; i++){
+                for (int j = 0; j < 19; j++){
+                    tmp_angle = G::angle(*this, *dest, sub_node_final_array[i][j], sub_node_final_array[i][j+1]);
+                    if (tmp_angle > M_PI/2 && tmp_angle < 3*M_PI/2){
+                        for (int k = 0; k < 20; k++){
+                            sub_node_final_array[i][k] = sub_node_final_array[num_array_-1][k];
+                            sub_node_array[i][k] = sub_node_array[num_array_-1][k];
+                        }
+                        cost_sub[i] = cost_sub[num_array_ -1];
+                        num_array_--;
+                        i--;
+                        break;
+                    }
+                }
+            }
+
+            for (int i = 0; i < 20; i++) {
+                sub_node_array[num_array_][i] = sub_node[i];
+                sub_node_final_array[num_array_][i] = sub_node_final[i];
+            }
+            cost_sub[num_array_] = cost_shortest_path_;
+            num_array_++;
+
+            //delete the base path that contains sub-path
+            bool flag;
+            for (int p = 0; p <num_array_; p++){ //xet [p][]
+                for (int q = 0; q <num_array_; q++){ //duyet toan bo [q][]
+                    if (p != q){
+                        for (int x = 0; x < 20; x++){ //phan tu [q][x]
+                            flag = false;
+                            for (int y = 0; y < 20; y++){
+                                if ((sub_node_final_array[q][x].x_ == sub_node_final_array[p][y].x_)
+                                    || (sub_node_final_array[q][x].y_ == sub_node_final_array[p][y].y_ )){
+                                    flag = true;
+                                    break;
+                                }
+                            }
+                            if (flag == false){
+                                break;
+                            }
+                        }
+
+                        if (flag){
+                            for (int k = 0; k < 20; k++){
+                                sub_node_final_array[p][k] = sub_node_final_array[num_array_-1][k];
+                                sub_node_array[p][k] = sub_node_array[num_array_-1][k];
+                            }
+                            cost_sub[p] = cost_sub[num_array_ -1];
+                            num_array_--;
+                            p--;
+                            break;
+                        }
+                        //   flag = true;
+                    }
+                }
+            }
+
+            // calculate priority index of each base path
+            for (int i = 0; i < num_array_; i++){
+                double n1 = 0.0; // total number of the vertices
+                double n2 = 0.0; // number of boundary vertices
+                for (int k = 0; k<20; k++){
+                    if(sub_node_final_array[i][k].x_ == 0 && sub_node_final_array[i][k].y_ == 0)
+                        break;
+                    n1++;
+                    for (int m = 0; m < boundary_vertices_num; m++){
+                        if (sub_node_final_array[i][k].x_ == boundary_vertices[m].x_ &&  sub_node_final_array[i][k].y_ == boundary_vertices[m].y_){
+                            n2 ++;
+                        }
+                    }
+                }
+                //    if(n2 > 0)
+                priority_index_list[i] = (double)(n2+2.0)/(double)(n1+2.0);
+                //    else
+                //        priority_index_list[i] = 0.0;
+            }
+
+            double amountspeed = 0.0;
+
+            for (int i = 0; i < num_array_; i++){
+                amountspeed += priority_index_list[i];
+                priority_index_list[i] = amountspeed;
+            }
+
+            for (int i = 0; i < num_array_; i++){
+                if(amountspeed == 0.0)
+                    priority_index_list[i] = (double)1.0/(double)num_array_;
+                else
+                    priority_index_list[i] = priority_index_list[i]/amountspeed;
+            }
+
+
+        }
+        scale_path(hdc);
+        hdc->sub = hdc->routing_table[1];
+        hdc->sub_count = 1;
+    }
+
 }
 
 void CorbalAgent::recvData(Packet *p) {
     struct hdr_cmn *cmh = HDR_CMN(p);
     struct hdr_ip *iph = HDR_IP(p);
-    struct hdr_corbal *hdc = HDR_CORBAL(p);
+    struct hdr_corbal_data *hdc = HDR_CORBAL_DATA(p);
 
     node *tmp;
 
@@ -840,195 +1080,63 @@ void CorbalAgent::recvData(Packet *p) {
         return;
     }
 
-    if (core_polygon_set) {
-        if (hdc->type_ == CORBAL_CBR_GREEDY) {
-            // change to routing mode
-            hdc->type_ = CORBAL_CBR_ROUTING;
-            corePolygon *my_core_polygon = chooseRandomCorePolygon();
-            // calculate scale factor and check if SD intersects with hole
-            double scale_factor = calculateScaleFactor(p, my_core_polygon);
-            if (scale_factor > 0) {
-                // routing using corbal
-                // random I
-                Point I;
-                I.x_ = 0;
-                I.y_ = 0;
-                double fr = 0;
-                tmp = my_core_polygon->node_;
-                do {
-                    int ra = rand();
-                    I.x_ += tmp->x_ * ra;
-                    I.y_ += tmp->y_ * ra;
-                    fr += ra;
-                    tmp = tmp->next_ == NULL ? my_core_polygon->node_ : tmp->next_;
-                } while (tmp != my_core_polygon->node_);
+    node *nexthop = NULL;
 
-                I.x_ = I.x_ / fr;
-                I.y_ = I.y_ / fr;
+    if(iph->saddr() == 2521){
+        if(this->my_id_ == 2521){
+            FILE *fp = fopen("Path.tr", "a+");
+            fprintf(fp, "\n\n%f\t%f", this->x_, this->y_);
+            fclose(fp);
+        }
+        else{
+            FILE *fp = fopen("Path.tr", "a+");
+            fprintf(fp, "\n%f\t%f", this->x_, this->y_);
+            fclose(fp);
+        }
+    }
 
-                double rand_angle = randSend_.uniform(0.0, 1.0) * 2 * M_PI;
-                rand_angle = rand_angle > M_PI ? rand_angle - 2 * M_PI : rand_angle;
-                Line rand_line = G::line(I, rand_angle);
-                tmp = my_core_polygon->node_;
-                Point rand_int;
-                do {
-                    node *tmp_next = tmp->next_ == NULL ? my_core_polygon->node_ : tmp->next_;
-                    if (G::lineSegmentIntersection(tmp, tmp_next, rand_line, rand_int)) {
-                        if (G::angle_x_axis(&I, &rand_int) * rand_angle >= 0) {
-                            break;
-                        }
-                    }
-                    tmp = tmp->next_ == NULL ? my_core_polygon->node_ : tmp->next_;
-                } while (tmp != my_core_polygon->node_);
-
-                double rand_distance = randSend_.uniform(0.0, 1.0) * G::distance(I, rand_int);
-                Point I1, I2;
-                G::circleLineIntersect(I, rand_distance, I, rand_int, &I1, &I2);
-                if (G::onSegment(I, I1, rand_int)) {
-                    I = I1;
-                } else {
-                    I = I2;
-                }
-
-                // scale hole by I and scale_factor_
-                double real_scale_factor = scale_factor;
-                bool recalculate_scale_factor = false;
-
-                corePolygon *revereScaleHole = new corePolygon();
-                revereScaleHole->next_ = NULL;
-                revereScaleHole->node_ = NULL;
-
-                corePolygon *scaleHole = new corePolygon();
-                scaleHole->next_ = NULL;
-                scaleHole->node_ = NULL;
-
-                // add new node
-                tmp = my_core_polygon->node_;
-                do {
-                    double tmp_x = scale_factor * tmp->x_ + (1 - scale_factor) * I.x_;
-                    double tmp_y = scale_factor * tmp->y_ + (1 - scale_factor) * I.y_;
-                    if (tmp_x < 0 || tmp_y < 0 || tmp_x > network_width_ || tmp_y > network_height_) {
-                        recalculate_scale_factor = true;
-                        break;
-                    }
-                    tmp = tmp->next_ == NULL ? my_core_polygon->node_ : tmp->next_;
-                } while (tmp != my_core_polygon->node_);
-
-                if (recalculate_scale_factor) {
-                    Point p_border[4] = {};
-                    p_border[0].x_ = 0;
-                    p_border[0].y_ = 0;
-                    p_border[1].x_ = network_width_;
-                    p_border[1].y_ = 0;
-                    p_border[2].x_ = network_width_;
-                    p_border[2].y_ = network_height_;
-                    p_border[3].x_ = 0;
-                    p_border[3].y_ = network_height_;
-
-                    tmp = my_core_polygon->node_;
-                    do {
-
-                        Line I_node = G::line(I, tmp);
-                        for (int i = 0; i < 4; i++) {
-                            Point intersect;
-                            if (G::lineSegmentIntersection(&p_border[i % 4], &p_border[(i + 1) % 4], I_node,
-                                                           intersect) &&
-                                G::onSegment(&I, tmp, &intersect)) {
-                                double d1 = G::distance(I, tmp);
-                                double d2 = G::distance(I, intersect);
-                                if (real_scale_factor > d2 / d1) {
-                                    real_scale_factor = d2 / d1;
-                                }
-                            }
-                        }
-                        tmp = tmp->next_ == NULL ? my_core_polygon->node_ : tmp->next_;
-                    } while (tmp != my_core_polygon->node_);
-
-                    real_scale_factor = 3 * real_scale_factor / 4;
-                }
-
-                tmp = my_core_polygon->node_;
-                do {
-                    node *newNode = new node();
-                    newNode->x_ = real_scale_factor * tmp->x_ + (1 - real_scale_factor) * I.x_;
-                    newNode->y_ = real_scale_factor * tmp->y_ + (1 - real_scale_factor) * I.y_;
-                    newNode->next_ = revereScaleHole->node_;
-                    revereScaleHole->node_ = newNode;
-
-                    tmp = tmp->next_ == NULL ? my_core_polygon->node_ : tmp->next_;
-                } while (tmp != my_core_polygon->node_);
-
-                tmp = revereScaleHole->node_;
-                do {
-                    node *newNode = new node();
-                    newNode->x_ = tmp->x_;
-                    newNode->y_ = tmp->y_;
-                    newNode->next_ = scaleHole->node_;
-                    scaleHole->node_ = newNode;
-
-                    tmp = tmp->next_ == NULL ? revereScaleHole->node_ : tmp->next_;
-                } while (tmp != revereScaleHole->node_);
-
-                // free reverse scale hole
-                do {
-                    tmp = revereScaleHole->node_;
-                    revereScaleHole->node_ = revereScaleHole->node_->next_;
-                    delete tmp;
-                } while (revereScaleHole->node_);
-
-                // circle node list
-                tmp = scaleHole->node_;
-                while (tmp->next_) tmp = tmp->next_;
-                tmp->next_ = scaleHole->node_;
-
-                dumpScaleHole(p, scaleHole);
-
-                // generate routing table
-                bypassHole(this, &(hdc->routing_table[0]), scaleHole, my_core_polygon,
-                           hdc->routing_table, hdc->routing_index);
-
-                // free
-                tmp = scaleHole->node_;
-                while (tmp->next_ != scaleHole->node_) tmp = tmp->next_;
-                tmp->next_ = NULL;
-
-                do {
-                    tmp = scaleHole->node_;
-                    scaleHole->node_ = scaleHole->node_->next_;
-                    delete tmp;
-                } while (scaleHole->node_);
+    if(iph->saddr() == 2521 && iph->ttl_ < 10){
+        printf("here");
+    }
+// -------- forward by greedy
+    if (hdc->routing_index > hdc->sub_count){
+        nexthop = getNeighborByGreedy(hdc->sub);
+        while (nexthop == NULL && hdc->routing_index > hdc->sub_count) {
+            hdc->sub_count++;
+            hdc->sub = hdc->routing_table[hdc->sub_count];
+            if (hdc->routing_index > hdc->sub_count){
+                nexthop = getNeighborByGreedy(hdc->sub);
+            }else{
+                nexthop = recvGPSR(p, hdc->sub);
             }
         }
+    } else {
+        nexthop = recvGPSR(p, hdc->sub);
     }
 
-    node *nexthop = NULL;
-    while (nexthop == NULL && hdc->routing_index > 0) {
-        if (hdc->routing_index == 1)
-            nexthop = recvGPSR(p, hdc->routing_table[hdc->routing_index - 1]);
-        else
-            nexthop = getNeighborByGreedy(hdc->routing_table[hdc->routing_index - 1]);
-        if (nexthop == NULL) {
-            hdc->routing_index--;
-        }
-    }
 
     if (nexthop == NULL)    // no neighbor close
     {
         printf("dropped: %f - %d\n", NOW, cmh->uid());
         drop(p, DROP_RTR_NO_ROUTE);
+        dumpDrop(iph,1);
         return;
-    }
-    else {
+    } else {
         cmh->direction() = hdr_cmn::DOWN;
         cmh->addr_type() = NS_AF_INET;
         cmh->last_hop_ = my_id_;
+        hdc->hopcount_ ++;
+        fwd_counter_++;
         cmh->next_hop_ = nexthop->id_;
+        if(cmh->next_hop_ == iph->daddr()){
+            dumpHop(hdc, iph);
+        }
         send(p, 0);
     }
 }
 
 node *CorbalAgent::recvGPSR(Packet *p, Point destionation) {
-    struct hdr_corbal *egh = HDR_CORBAL(p);
+    struct hdr_corbal_data *egh = HDR_CORBAL_DATA(p);
 
     node *nb = NULL;
 
@@ -1041,8 +1149,7 @@ node *CorbalAgent::recvGPSR(Packet *p, Point destionation) {
 
                 if (nb == NULL) {
                     return NULL;
-                }
-                else {
+                } else {
                     egh->gprs_type_ = GPSR_PERIME;
                     egh->peri_ = *this;
                 }
@@ -1054,8 +1161,7 @@ node *CorbalAgent::recvGPSR(Packet *p, Point destionation) {
             nb = this->getNeighborByGreedy(destionation, egh->peri_);
             if (nb) {
                 egh->gprs_type_ = GPSR_GPSR;
-            }
-            else {
+            } else {
                 nb = getNeighborByPerimeter(egh->prev_);
                 if (nb == NULL) {
                     return NULL;
@@ -1074,7 +1180,7 @@ node *CorbalAgent::recvGPSR(Packet *p, Point destionation) {
 
 // scale_factor_ = -1 when SD not intersect with core polygon -> no need to routing
 double CorbalAgent::calculateScaleFactor(Packet *p, corePolygon *my_core_polygon) {
-    struct hdr_corbal *hdc = HDR_CORBAL(p);
+    struct hdr_corbal_data *hdc = HDR_CORBAL_DATA(p);
     double scale_factor = 0;
     // check if SD intersect with core polygon
     int numIntersect = 0;
@@ -1103,26 +1209,29 @@ double CorbalAgent::calculateScaleFactor(Packet *p, corePolygon *my_core_polygon
         p_c += G::distance(i, j);
         i = j;
     } while (i != my_core_polygon->node_);
-    if (*this == hdc->source) { // S is source node
-//        double delta = (s_ - 1) * l_c_sd / p_c_ -
-//                       s_ * (1 - sin((n_ - 2) * M_PI / (2 * n_)));
-        double delta = epsilon_ * l_c_sd - (1 + epsilon_) * (1 - sin((n_ - 2) * M_PI / (2 * n_))) * p_c;
-        if (delta > 0) {
-            scale_factor = 1 + delta / p_c;
+    if (*this == hdc->source) { // S is source node -- (13) formula
+        double xi1 = 1;
+        double xi2 = 1 + ((1 + epsilon_) * sin_ * l_c_sd - l_c_sd) / p_c;
+        double xi3 = 1 + ((1 + epsilon_) * (l_c_sd - (1 - sin_) * p_c) - l_c_sd) / p_c;
+        if (xi1 >= xi2 && xi1 >= xi3) {
+            scale_factor = xi1;
+        } else if (xi2 >= xi1 && xi2 >= xi3) {
+            scale_factor = xi2;
         } else {
-            scale_factor = 1;
+            scale_factor = xi3;
         }
-    }
-    else { // S is sub-source node
-        //double delta = (s_ * l_c_xd - l_c_sd - G::distance(this, &(hdc->source))) / p_c_ -
-        //               s_ * (1 - sin((n_ - 2) * M_PI / (2 * n_)));
-//        double delta = (s_ - 1 / cos(alpha_ / 2)) * l_c_n_ / p_c_ - 0.3 / cos(alpha_ / 2);
-        double delta = (1 + epsilon_) * (l_c_xd) - l_c_sd - G::distance(this, &(hdc->source)) -
-                       (1 + epsilon_) * (1 - sin((n_ - 2) * M_PI / (2 * n_))) * p_c;
-        if (delta > 0) {
-            scale_factor = 1 + delta / p_c;
+    } else { // S is sub-source node -- (14) formula
+        double xi1 = 1;
+        double xi2 = 1 + ((1 + epsilon_) * sin_ * l_c_sd - (G::distance(this, &(hdc->source)) + l_c_xd)) / p_c;
+        double xi3 = 1 +
+                     ((1 + epsilon_) * (l_c_sd - (1 - sin_) * p_c) - (G::distance(this, &(hdc->source)) + l_c_xd)) /
+                     p_c;
+        if (xi1 >= xi2 && xi1 >= xi3) {
+            scale_factor = xi1;
+        } else if (xi2 >= xi1 && xi2 >= xi3) {
+            scale_factor = xi2;
         } else {
-            scale_factor = 1;
+            scale_factor = xi3;
         }
     }
     return scale_factor;
@@ -1415,11 +1524,1270 @@ void CorbalAgent::dumpScaleHole(Packet *p, corePolygon *hole) {
     do {
         fprintf(fp, "%d\t%f\t%f\n", cmh->uid_, n->x_, n->y_);
         n = n->next_;
-    }
-    while (n != hole->node_);
+    } while (n != hole->node_);
 
     fprintf(fp, "%d	%f	%f\n", cmh->uid_, n->x_, n->y_);
     fprintf(fp, "\n");
 
     fclose(fp);
+}
+
+void CorbalAgent::dumpBigForbiddenArea(Packet *p) {
+    hdr_cmn *cmh = HDR_CMN(p);
+    struct hdr_corbal_data *hdc = HDR_CORBAL_DATA(p);
+    hdr_ip *iph = HDR_IP(p);
+    FILE *fp = fopen("BigForbiddenArea.tr", "a+");
+    fprintf(fp, "%d\t%d\t%f\t%f\n", cmh->uid(), iph->saddr(), hdc->source.x_, hdc->source.y_);
+    fclose(fp);
+}
+
+
+void
+CorbalAgent::findBlist(node *s, node* t) {
+    node *temp = new node();
+
+    double a = b_list_.size();
+    // tim tiep tuyen tu s den cac hole
+    for (list<corePolygon *>::iterator iter = core_list_st_.begin(); iter != core_list_st_.end(); iter++) {
+        findTangent(s, *iter, 0);
+    }
+    for (int i = 1; i <= count; i++){
+        for (list<edge>::iterator iter = b_list_.begin(); iter != b_list_.end(); iter++){
+            if(iter->id == i){
+                double dis = 0;
+                dis += G::distance(iter->a.x_, iter->a.y_, iter->b.x_, iter->b.y_)/2;
+                if (dis==0)
+                    dis = 0.001;
+                addEdge(0,i,dis);
+            }
+        }
+        //    add_edge(0,i,1);
+
+    }
+//     a = b_list_.size();
+
+    //tim tiep tuyen cua cac hole
+    for (list<corePolygon *>::iterator iter = core_list_st_.begin(); iter != core_list_st_.end(); iter++) {
+        temp = (*iter)->node_;
+        while (temp != NULL) {
+            for (list<corePolygon *>::iterator iter2 = core_list_st_.begin(); iter2 != core_list_st_.end(); iter2++) {
+                if ((*iter)->id_ < (*iter2)->id_) {
+                    findTangent(temp, *iter2, (*iter)->id_);
+                }
+            }
+            if (temp->next_ == (*iter)->node_) {
+                break;
+            }
+            temp = temp->next_;
+        }
+    }
+    a = b_list_.size();
+
+    int ho = core_num + 1;
+    int j = count +1;
+    // tim tiep tuyen tu t den cac hole
+    for (list<corePolygon *>::iterator iter = core_list_st_.begin(); iter != core_list_st_.end(); iter++) {
+        findTangent(t, *iter, ho);
+    }
+
+    int final = count + 1;
+    for (j; j < final; j++){
+        //      add_edge(j,final,1);
+        for (list<edge>::iterator iter = b_list_.begin(); iter != b_list_.end(); iter++) {
+            if (iter->id == j){
+                double dis = 0;
+                dis += G::distance(iter->a.x_, iter->a.y_, iter->b.x_, iter->b.y_)/2;
+                if (dis==0)
+                    dis = 0.001;
+                addEdge(j, final, dis);
+            }
+
+        }
+    }
+    a = b_list_.size();
+}
+
+void
+CorbalAgent::addEdge( int src, int dest, double cost)
+{
+    if (my_id_ == 1652){
+        printf("Add: %d - %d: %f\n", src, dest, cost);
+    }
+    graph[src][dest] = cost;
+    // graph[dest][src] = cost;
+
+    return;
+}
+
+
+void
+CorbalAgent::findHolelist(Point s, Point t) {
+    corePolygon * tmp = core_polygon_set;
+    bool Istersection = false;
+    while (tmp != NULL){
+
+        Istersection = is_intersect_poly2(tmp, s, t); //doan thang sS1
+        if (Istersection){
+            bool done = false;
+            if (core_list_st_.size() == 0){
+                core_num++;
+                tmp->id_ = core_num;
+                core_list_st_.push_back(tmp);
+            } else {
+                for (list<corePolygon *>::iterator iter = core_list_st_.begin(); iter != core_list_st_.end(); iter++) {
+                    if (G::distance(s.x_, s.y_, (*iter)->node_->x_, (*iter)->node_->y_)
+                        > G::distance(s.x_, s.y_, tmp->node_->x_, tmp->node_->y_)) {
+                        core_num++;
+                        tmp->id_ = core_num;
+                        core_list_st_.insert(iter, tmp);
+                        done = true;
+                        break;
+                    }
+                }
+                if (!done){
+                    core_num++;
+                    tmp->id_ = core_num;
+                    core_list_st_.push_back(tmp);
+                }
+            }
+
+        } else{
+            core_list_un_st_.push_back(tmp);
+        };
+        Istersection = false;
+        tmp = tmp->next_;
+    }
+}
+
+void
+CorbalAgent::findTangent(node *s, corePolygon *tmp, int hole_nb) {
+    // create routing table for packet p
+    node* S1;	// min angle view of this node to hole
+    node* S2;	// max angle view of this node to hole
+
+    // ------------------- S1 S2 - view angle of this node to hole
+    double Smax = 0;
+
+    node* i = tmp->node_;
+    do {
+        for (node* j = i->next_; j != tmp->node_; j = j->next_)
+        {
+            // S1 S2
+            double angle = G::angle(s, i, j);
+            if (angle > Smax)
+            {
+                Smax = angle;
+                S1 = i;
+                S2 = j;
+            }
+        }
+        i = i->next_;
+    } while(i != tmp->node_);
+
+    bool Istersection1 = false, Istersection2 = false;
+    bool Istersection3 = false, Istersection4 = false;
+
+
+    edge temp_edge;
+//Kiem tra duong thang cat hole 1 chieu
+    for (list<corePolygon *>::iterator iter = core_list_st_.begin(); iter != core_list_st_.end(); iter++) {
+        if ((*iter)->id_ != tmp->id_ ) {
+            if ((*iter)->id_ == hole_nb || hole_nb == (*iter)->id_  + 1) {
+                if(!Istersection1) {
+                    Istersection1 = is_intersect_poly(*iter, *s, *S1);
+                }
+                if(!Istersection2) {
+                    Istersection2 = is_intersect_poly(*iter, *s, *S2);
+                }
+            }
+        }
+    }
+
+    for (list<corePolygon *>::iterator iter = core_list_st_.begin(); iter != core_list_st_.end(); iter++) {
+        if ((*iter)->id_ != tmp->id_ && (*iter)->id_ != hole_nb) {
+            if(!Istersection3){
+                Istersection3 = is_intersect_poly2(*iter, *s, *S1); //doan thang sS1
+            }
+            if(!Istersection4) {
+                Istersection4 = is_intersect_poly2(*iter, *s, *S2);
+            }
+        }
+    }
+
+    double tmp_angle = 0;
+    if (!Istersection1 && !Istersection3 &&(hole_nb < tmp->id_ || hole_nb == core_num +1)) {
+        tmp_angle = G::angle(*this,*dest,*s,*S1);
+        if (tmp_angle < M_PI/2 || tmp_angle > 3*M_PI/2){
+            temp_edge.a = *s;
+            temp_edge.b = *S1;
+            temp_edge.hole_num_1 = hole_nb;
+            temp_edge.hole_num_2 = tmp->id_;
+        }else{
+            temp_edge.a = *S1;
+            temp_edge.b = *s;
+            temp_edge.hole_num_1 = tmp->id_;
+            temp_edge.hole_num_2 = hole_nb;
+        }
+        count++;
+        temp_edge.id = count;
+        b_list_.push_back(temp_edge);
+    }
+    if (!Istersection2 && !Istersection4 && (hole_nb < tmp->id_ || hole_nb == core_num +1)){
+        tmp_angle = G::angle(*this,*dest,*s,*S2);
+        if (tmp_angle < M_PI/2 || tmp_angle > 3*M_PI/2){
+            temp_edge.a = *s;
+            temp_edge.b = *S2;
+            temp_edge.hole_num_1 = hole_nb;
+            temp_edge.hole_num_2 = tmp->id_;
+        }else{
+            temp_edge.a = *S2;
+            temp_edge.b = *s;
+            temp_edge.hole_num_1 = tmp->id_;
+            temp_edge.hole_num_2 = hole_nb;
+        }
+        count ++;
+        temp_edge.id = count;
+        b_list_.push_back(temp_edge);
+    }
+
+    return;
+}
+
+// --------------------- Routing ---------------------------------- //
+
+//Point ConvexHullAgent::routing(Point* dest)
+void CorbalAgent::routing(hdr_corbal_data* edh)
+{
+    long a = -1;
+
+    a = core_list_st_.size();
+    node* s = new node();
+    s->x_ = this->x_;
+    s->y_ = this->y_;
+    s->id_ = my_id_;
+
+    node* t = new node();
+    t->x_ = dest->x_;
+    t->y_ = dest->y_;
+    //   t->id_ = iph->daddr();
+
+    if (this->my_id_ == 1506){
+        printf("debug");
+    }
+
+    findClist(s,t); //Tim danh sach ho
+    a = b_list_.size();
+
+    /* use this when you want to use only core_list_st in determing the base paths
+     for (list<corePolygon*>::iterator iter = core_list_c_.begin(); iter != core_list_c_.end(); iter++) {
+        core_num++;
+         (*iter)->id_ = core_num;
+         core_list_st_.push_back(*iter);
+     }
+     */
+
+    //use this when you want to use all core polygon in determing the base paths
+    core_list_st_.clear();
+    corePolygon * tmp = core_polygon_set;
+    while (tmp != NULL){
+        core_num++;
+        tmp->id_ = core_num;
+        core_list_st_.push_back(tmp);
+        tmp = tmp->next_;
+    }
+
+
+    a = core_list_st_.size();
+
+    // find boundary vertices
+    for (list<corePolygon *>::iterator iter = core_list_st_.begin(); iter != core_list_st_.end(); iter++) {
+        node *first_node = (*iter)->node_;
+        int mark = 0;
+        for (node *node1 = (*iter)->node_; node1 != first_node || mark == 0; node1 = node1->next_) {
+            // check each segment node, node->next
+            mark = 1;
+            bool has_positive_node = false;
+            bool has_negative_node = false;
+            double coe_x = node1->y_ - node1->next_->y_;
+            double coe_y = node1->next_->x_ - node1->x_;
+            double coe_c = node1->x_ * node1->next_->y_ - node1->next_->x_ * node1->y_;
+            bool is_boundary_vertex = true;
+            for (list<corePolygon *>::iterator iter2 = core_list_st_.begin(); iter2 != core_list_st_.end(); iter2++) {
+                node *first_node2 = (*iter2)->node_;
+                for(node *node2 = (*iter2)->node_; node2->next_ != first_node2; node2 = node2->next_){
+                    if(coe_x * node2->x_ + coe_y * node2->y_ + coe_c > 0.000001){
+                        has_positive_node = true;
+                    }
+                    else if (coe_x * node2->x_ + coe_y * node2->y_ + coe_c < -0.000001)
+                        has_negative_node = true;
+                    if(has_negative_node && has_positive_node){
+                        is_boundary_vertex = false;
+                        break;
+                    }
+                }
+                if (is_boundary_vertex == false)
+                    break;
+
+            }
+            if (is_boundary_vertex){
+                if(boundary_vertices_num > 0){
+                    if (boundary_vertices[boundary_vertices_num-1].x_ == node1->x_ && boundary_vertices[boundary_vertices_num-1].y_ == node1->y_){
+                        boundary_vertices[boundary_vertices_num].x_ = node1->next_->x_;
+                        boundary_vertices[boundary_vertices_num].y_ = node1->next_->y_;
+                        boundary_vertices_num ++;
+                    }
+                    else{
+                        boundary_vertices[boundary_vertices_num].x_ = node1->x_;
+                        boundary_vertices[boundary_vertices_num].y_ = node1->y_;
+                        boundary_vertices[boundary_vertices_num+1].x_ = node1->next_->x_;
+                        boundary_vertices[boundary_vertices_num+1].y_ = node1->next_->y_;
+                        boundary_vertices_num += 2;
+                    }
+                }
+                else{
+                    boundary_vertices[boundary_vertices_num].x_ = node1->x_;
+                    boundary_vertices[boundary_vertices_num].y_ = node1->y_;
+                    boundary_vertices[boundary_vertices_num+1].x_ = node1->next_->x_;
+                    boundary_vertices[boundary_vertices_num+1].y_ = node1->next_->y_;
+                    boundary_vertices_num += 2;
+                }
+
+            }
+        }
+    }
+
+    b_list_.clear();
+    count = 0;
+
+    findBlist(s,t);
+
+    int b = 0;
+    edge test[30];
+    if (my_id_ == 1416){
+        for (list<edge>::iterator iter = b_list_.begin(); iter != b_list_.end(); iter++) {
+            test[b] = *iter;
+            b++;
+        }
+    }
+
+    buildGraph(); //Dung do thi
+
+    //    dijkstra(0);
+    V =  count + 2;
+    dijkstra2(0);
+    n = V;
+    D = 0;
+    C = V - 1;
+    KhoiTao();
+    cout<<"Duong di tu 0 den "<< C;
+    TimKiem(1);
+    //   induongdi(0,count,truoc);
+    //	std::cout << "\n";
+
+
+    for (int m = 0; m < num_array_; m++){
+        int j = 0;
+        for (int i = 1; i < sub_num_array[m][0]; i++) {
+            for (list<edge>::iterator iter = b_list_.begin(); iter != b_list_.end(); iter++) {
+                if (sub_num_array[m][i] == iter->id) {
+                    if (j == 0){
+                        if (iter->a.x_ == this->x_ && iter->a.y_ == this->y_) {
+                            sub_node_array[m][j].x_ = iter->a.x_;
+                            sub_node_array[m][j].y_ = iter->a.y_;
+                            sub_node_array[m][j].hole_num = iter->hole_num_1;
+                            sub_node_array[m][j].tagent_num = iter->id;
+                            j++;
+
+                            sub_node_array[m][j].x_ = iter->b.x_;
+                            sub_node_array[m][j].y_ = iter->b.y_;
+                            sub_node_array[m][j].hole_num = iter->hole_num_2;
+                            sub_node_array[m][j].tagent_num = iter->id;
+
+                            j++;
+                        } else {
+                            sub_node_array[m][j].x_ = iter->b.x_;
+                            sub_node_array[m][j].y_ = iter->b.y_;
+                            sub_node_array[m][j].hole_num = iter->hole_num_2;
+                            sub_node_array[m][j].tagent_num = iter->id;
+
+                            j++;
+                            sub_node_array[m][j].x_ = iter->a.x_;
+                            sub_node_array[m][j].y_ = iter->a.y_;
+                            sub_node_array[m][j].hole_num = iter->hole_num_1;
+                            sub_node_array[m][j].tagent_num = iter->id;
+
+                            j++;
+                        }
+                    }else{
+                        if (iter->hole_num_1 == sub_node_array[m][j-1].hole_num) {
+
+                            sub_node_array[m][j].x_ = iter->a.x_;
+                            sub_node_array[m][j].y_ = iter->a.y_;
+                            sub_node_array[m][j].hole_num = iter->hole_num_1;
+                            sub_node_array[m][j].tagent_num = iter->id;
+                            j++;
+
+                            sub_node_array[m][j].x_ = iter->b.x_;
+                            sub_node_array[m][j].y_ = iter->b.y_;
+                            sub_node_array[m][j].hole_num = iter->hole_num_2;
+                            sub_node_array[m][j].tagent_num = iter->id;
+
+                            j++;
+                        } else {
+                            sub_node_array[m][j].x_ = iter->b.x_;
+                            sub_node_array[m][j].y_ = iter->b.y_;
+                            sub_node_array[m][j].hole_num = iter->hole_num_2;
+                            sub_node_array[m][j].tagent_num = iter->id;
+
+                            j++;
+                            sub_node_array[m][j].x_ = iter->a.x_;
+                            sub_node_array[m][j].y_ = iter->a.y_;
+                            sub_node_array[m][j].hole_num = iter->hole_num_1;
+                            sub_node_array[m][j].tagent_num = iter->id;
+
+                            j++;
+                        }
+                    }
+                }
+            }
+        }
+
+
+        sub_node_final_array[m][0] = sub_node_array[m][0];
+        int k = 1;
+        for (int i = 1; i < j; i++){
+            if(sub_node_array[m][i - 1].hole_num == sub_node_array[m][i].hole_num){
+                if (sub_node_array[m][i-1].x_ == sub_node_array[m][i].x_ && sub_node_array[m][i-1].y_ == sub_node_array[m][i].y_){
+                    sub_node_final_array[m][k] = sub_node_array[m][i];
+                    k++;
+                } else{
+                    k = findPointmid_ab2(sub_node_array[m][i-1],sub_node_array[m][i],k,m);
+                }
+            }
+        }
+        sub_node_final_array[m][k] = sub_node_array[m][j-1];
+    }
+
+
+    int j = 0;
+    for (int i = 0; i < sub_count; i++) {
+        //	std::cout << sub_num[i] << "\n";
+        for (list<edge>::iterator iter = b_list_.begin(); iter != b_list_.end(); iter++) {
+            if (sub_num[i] == iter->id) {
+                if (j == 0){
+                    if (iter->a.x_ == this->x_ && iter->a.y_ == this->y_) {
+                        sub_node[j].x_ = iter->a.x_;
+                        sub_node[j].y_ = iter->a.y_;
+                        sub_node[j].hole_num = iter->hole_num_1;
+                        sub_node[j].tagent_num = iter->id;
+                        j++;
+
+                        sub_node[j].x_ = iter->b.x_;
+                        sub_node[j].y_ = iter->b.y_;
+                        sub_node[j].hole_num = iter->hole_num_2;
+                        sub_node[j].tagent_num = iter->id;
+
+                        j++;
+                    } else {
+                        sub_node[j].x_ = iter->b.x_;
+                        sub_node[j].y_ = iter->b.y_;
+                        sub_node[j].hole_num = iter->hole_num_2;
+                        sub_node[j].tagent_num = iter->id;
+
+                        j++;
+                        sub_node[j].x_ = iter->a.x_;
+                        sub_node[j].y_ = iter->a.y_;
+                        sub_node[j].hole_num = iter->hole_num_1;
+                        sub_node[j].tagent_num = iter->id;
+
+                        j++;
+                    }
+                }else{
+                    if (iter->hole_num_1 == sub_node[j-1].hole_num) {
+
+                        sub_node[j].x_ = iter->a.x_;
+                        sub_node[j].y_ = iter->a.y_;
+                        sub_node[j].hole_num = iter->hole_num_1;
+                        sub_node[j].tagent_num = iter->id;
+                        j++;
+
+                        sub_node[j].x_ = iter->b.x_;
+                        sub_node[j].y_ = iter->b.y_;
+                        sub_node[j].hole_num = iter->hole_num_2;
+                        sub_node[j].tagent_num = iter->id;
+
+                        j++;
+                    } else {
+                        sub_node[j].x_ = iter->b.x_;
+                        sub_node[j].y_ = iter->b.y_;
+                        sub_node[j].hole_num = iter->hole_num_2;
+                        sub_node[j].tagent_num = iter->id;
+
+                        j++;
+                        sub_node[j].x_ = iter->a.x_;
+                        sub_node[j].y_ = iter->a.y_;
+                        sub_node[j].hole_num = iter->hole_num_1;
+                        sub_node[j].tagent_num = iter->id;
+
+                        j++;
+                    }
+                }
+            }
+        }
+    }
+
+
+    sub_node_final[0] = sub_node[0];
+    int k = 1;
+    for (int i = 1; i < j; i++){
+        if(sub_node[i - 1].hole_num == sub_node[i].hole_num){
+            if (sub_node[i-1].x_ == sub_node[i].x_ && sub_node[i-1].y_ == sub_node[i].y_){
+                sub_node_final[k] = sub_node[i];
+                k++;
+            } else{
+                k = findPointmid_ab(sub_node[i-1],sub_node[i],k);
+            }
+        }
+    }
+    sub_node_final[k] = sub_node[j-1];
+
+}
+
+void
+CorbalAgent::findClist(node *s, node* t) {
+    node *temp = new node();
+
+    double a = b_list_.size();
+    // tim tiep tuyen tu s den cac hole
+    for (list<corePolygon *>::iterator iter = core_list_st_.begin(); iter != core_list_st_.end(); iter++) {
+        findTangent2(s, *iter, 0);
+    }
+
+    //tim tiep tuyen cua cac hole
+    for (list<corePolygon *>::iterator iter = core_list_st_.begin(); iter != core_list_st_.end(); iter++) {
+        temp = (*iter)->node_;
+        while (temp != NULL) {
+            for (list<corePolygon *>::iterator iter2 = core_list_st_.begin(); iter2 != core_list_st_.end(); iter2++) {
+                if ((*iter)->id_ < (*iter2)->id_) {
+                    findTangent2(temp, *iter2, (*iter)->id_);
+                }
+            }
+            if (temp->next_ == (*iter)->node_) {
+                break;
+            }
+            temp = temp->next_;
+        }
+    }
+    a = b_list_.size();
+
+    int ho = core_num + 1;
+    // tim tiep tuyen tu t den cac hole
+    for (list<corePolygon *>::iterator iter = core_list_st_.begin(); iter != core_list_st_.end(); iter++) {
+        findTangent2(t, *iter, ho);
+    }
+}
+
+void
+CorbalAgent::buildGraph() {
+    //Dung do thi
+    int check = -1;
+    corePolygon *tmp = NULL;
+    node* node_list;
+    Point a, b;
+    for (list<edge>::iterator iter = b_list_.begin(); iter != b_list_.end(); iter++) {
+        for (list<edge>::iterator iter2 = b_list_.begin(); iter2 != b_list_.end(); iter2++) {
+            if((*iter).id < (*iter2).id ){
+                check = checkTangent(*iter,*iter2);
+                if(check != -1){
+                    for (list<corePolygon*>::iterator iter3 = core_list_st_.begin(); iter3 != core_list_st_.end(); iter3++) {
+                        if ((*iter3)->id_ == check) {
+                            tmp = (*iter3);
+                            break;
+                        }
+                    }
+                    node_list = tmp->node_;
+                    bool flag1 = false, flag2 = false;
+                    do {
+                        if ((*iter).a.x_ == node_list->x_ && (*iter).a.y_ == node_list->y_ ){
+                            a.x_ = (*iter).a.x_;
+                            a.y_ = (*iter).a.y_;
+                            flag1 = true;
+                        }
+                        if ((*iter).b.x_ == node_list->x_ && (*iter).b.y_ == node_list->y_ ){
+                            a.x_ = (*iter).b.x_;
+                            a.y_ = (*iter).b.y_;
+                            flag1 = true;
+                        }
+                        if ((*iter2).a.x_ == node_list->x_ && (*iter2).a.y_ == node_list->y_ ){
+                            b.x_ = (*iter2).a.x_;
+                            b.y_ = (*iter2).a.y_;
+                            flag2 = true;
+                        }
+                        if ((*iter2).b.x_ == node_list->x_ && (*iter2).b.y_ == node_list->y_ ){
+                            b.x_ = (*iter2).b.x_;
+                            b.y_ = (*iter2).b.y_;
+                            flag2 = true;
+                        }
+                        if (flag1 && flag2){
+                            break;
+                        }
+                        node_list = node_list->next_;
+                    } while (node_list != NULL && node_list != tmp->node_);
+                    if (!flag1 || !flag2){
+                        int das = 0;
+                    };
+                    double dis_ab = 0;
+                    if(a.x_ != b.x_ || a.y_ != b.y_) {
+                        dis_ab = distance_ab(a, b, tmp);
+                        double cir = circuit_poly(tmp); // chu vi hole
+                        if (dis_ab > cir - dis_ab) {
+                            dis_ab = cir - dis_ab;
+                        }
+                    }
+                    double dis1 = G::distance(iter->a.x_, iter->a.y_, iter->b.x_, iter->b.y_);
+                    double dis2 = G::distance(iter2->a.x_, iter2->a.y_, iter2->b.x_, iter2->b.y_);
+                    dis_ab = dis_ab + dis1/2 + dis2/2;
+                    if(dis_ab == 0) dis_ab = 0.001;
+                    //add_edge(iter->id,iter2->id,dis_ab);
+                    addEdge(iter->id,iter2->id,dis_ab);
+                }
+            }
+        }
+    }
+}
+
+int
+CorbalAgent::checkTangent(edge a, edge b) {
+    //if (a.hole_num_1 == b.hole_num_1 && a.hole_num_1 != 0) return a.hole_num_1;
+    if (a.hole_num_2 == b.hole_num_1 && a.hole_num_2 != 0) return a.hole_num_2;
+    if (a.hole_num_1 == b.hole_num_2 && a.hole_num_1 != 0) return a.hole_num_1;
+    //if (a.hole_num_2 == b.hole_num_2 && a.hole_num_2 != 0) return a.hole_num_2;
+    return -1;
+}
+
+
+void
+CorbalAgent:: dijkstra2(int s) {
+    double dist[V];  // The output array. dist[i] will hold
+    // the shortest distance from src to i
+
+    // sptSet[i] will true if vertex i is included / in shortest
+    // path tree or shortest distance from src to i is finalized
+    bool sptSet[V];
+
+    // Parent array to store shortest path tree
+    int parent[V];
+
+    // Initialize all distances as INFINITE and stpSet[] as false
+    for (int i = 0; i < V; i++)
+    {
+        parent[0] = -1;
+        dist[i] = INT_MAX;
+        sptSet[i] = false;
+    }
+
+    // Distance of source vertex from itself is always 0
+    dist[s] = 0;
+
+    // Find shortest path for all vertices
+    for (int count = 0; count < V-1; count++)
+    {
+        // Pick the minimum distance vertex from the set of
+        // vertices not yet processed. u is always equal to src
+        // in first iteration.
+        int u = minDistance(dist, sptSet);
+
+        // Mark the picked vertex as processed
+        sptSet[u] = true;
+
+        // Update dist value of the adjacent vertices of the
+        // picked vertex.
+        for (int v = 0; v < V; v++)
+
+            // Update dist[v] only if is not in sptSet, there is
+            // an edge from u to v, and total weight of path from
+            // src to v through u is smaller than current value of
+            // dist[v]
+            if (!sptSet[v] && graph[u][v] &&
+                dist[u] + graph[u][v] < dist[v])
+            {
+                parent[v]  = u;
+                dist[v] = dist[u] + graph[u][v];
+            }
+    }
+
+    // print the constructed distance array
+    printSolution(dist, V, parent);
+}
+
+
+int
+CorbalAgent::minDistance(double dist[], bool sptSet[])
+{
+    // Initialize min value
+    double min = INT_MAX;
+    int min_index = 1;
+
+    for (int v = 0; v < V; v++)
+        if (!sptSet[v] && dist[v] <= min)
+            min = dist[v], min_index = v;
+
+    return min_index;
+}
+
+// Function to print shortest path from source to j
+// using parent array
+void CorbalAgent::printPath(int parent[], int j)
+{
+    // Base Case : If j is source
+    if (parent[j]==-1)
+        return;
+
+    printPath(parent, parent[j]);
+
+    sub_num[sub_count] = j;
+    sub_count++;
+
+    printf("%d ", j);
+}
+
+// A utility function to print the constructed distance
+// array
+int
+CorbalAgent::printSolution(double dist[], int n, int parent[])
+{
+    int src = 0;
+    printf("%d : ", my_id_);
+    printf("Vertex\t  Distance\tPath\n");
+    for (int i = 1; i < V; i++)
+    {
+        if (i == V-1){
+            printf("\n%d -> %d \t\t %f\t\t%d ", src, i, dist[i], src);
+            cost_shortest_path_ = dist[i];
+            printPath(parent, i);
+        }
+
+    }
+}
+
+void
+CorbalAgent::scale_path(hdr_corbal_data* edh) {
+    srand(time(NULL));
+    double cost = 0;
+    double theta;
+    corePolygon * tmp = new corePolygon();
+    if (core_list_st_.size() > 4){
+        int ad = 0;
+    }
+/*    bool flag = true;
+    for (int p = 0; p <num_array_; p++){ //xet [p][]
+        for (int q = 0; q <num_array_; q++){ //duyet toan bo [q][]
+            if (p != q){
+                for (int x = 0; x < 20; x++){ //phan tu [q][x]
+                    for (int y = 0; y < 20; y++){
+                        if ((sub_node_final_array[q][x].x_ != sub_node_final_array[p][y].x_)
+                                || (sub_node_final_array[q][x].y_ != sub_node_final_array[p][y].y_ )){
+                            flag = false;
+                            break;
+                        }
+                    }
+                }
+                if (flag){
+                    for (int k = 0; k < 20; k++){
+                        sub_node_final_array[p][k] = sub_node_final_array[num_array_-1][k];
+                        sub_node_array[p][k] = sub_node_array[num_array_-1][k];
+                    }
+                    cost_sub[p] = cost_sub[num_array_ -1];
+                    num_array_--;
+                    p--;
+                    break;
+                }
+                flag = true;
+            }
+        }
+    }*/
+
+    // int m = rand() % num_array_;
+    //gama_ = (1 + (1+epsilon_)/(cost_sub[m]/cost_shortest_path_)) * sin_;
+
+    int m;
+
+    double prob = fwdProb_.uniform(0.0, 1.0);
+    for (int i = 0; i < num_array_; i++){
+        if (prob <= priority_index_list[i]) {
+            m = i;
+            break;
+        }
+    }
+
+
+    theta = cost_shortest_path_ / cost_sub[m];
+
+    int v = 0;
+    int subNodeNum = 0;
+
+    for (v = 0; v < 20; v++){
+        sub_node[v] = sub_node_array[m][v];
+        //sub_node_final[v] = sub_node_final_array[m][v];
+
+        if(sub_node[v].x_ == 0 && sub_node[v].y_==0){
+            break;
+        }
+        subNodeNum ++;
+    }
+
+    for (v = 0; v < 20; v++){
+        sub_node_final[v] = sub_node_final_array[m][v];
+        edh->routing_table[v] = sub_node_final[v];
+        if (sub_node_final[v].x_ == 0 && sub_node_final[v].y_ == 0){
+            edh->routing_index = v -1;
+            break;
+        }
+    }/*
+    v = 0;
+    for (v = 0; v < 20; v++){
+        edh->routing_table[v] = sub_node[v];
+        if (sub_node[v].x_ == 0 && sub_node[v].y_ == 0){
+            edh->routing_index = v -1;
+            break;
+        }
+    }*/
+
+    double scale_factor_list[20];
+    for (int i=0; i<20; i++){
+        scale_factor_list[i] = 1;
+    }
+    Point scale_center[20];
+
+    if(this->my_id_ == 2521){
+        printf("here");
+    }
+    sub_list r1, r2;
+    for (int k = 0; k < subNodeNum; k++){
+        if (sub_node[k].hole_num == sub_node[k+1].hole_num){
+            //cost = graph[sub_node[k].tagent_num][sub_node[k+1].tagent_num];
+            //if (cost > 0) {
+            for (list<corePolygon*>::iterator iter = core_list_st_.begin(); iter != core_list_st_.end(); iter++) {
+                if ((*iter)->id_ == sub_node[k].hole_num){
+                    tmp = (*iter);
+                    break;
+                }
+            }
+            if (sub_node[k].x_ != sub_node[k+1].x_ || sub_node[k].y_ != sub_node[k+1].y_){
+                cost = distance_ab(sub_node[k], sub_node[k+1], tmp);
+                double cir = circuit_poly(tmp);
+                if (cost > cir - cost) {
+                    cost = cir - cost;
+                }
+            }
+
+            double bj=0;
+            Point I;
+            if(cost==0){
+                while(bj==0){
+                    I = genrI(tmp);
+                    bj = G::distance(I,sub_node[k]);
+                }
+            }
+            else{
+                I= genrI(tmp);
+                bj = G::distance(I,sub_node[k]) + G::distance(I,sub_node[k+1]);
+            }
+            double cj = 0;
+            if (k==1){
+                cj = G::distance(sub_node[k-1],sub_node[k]) + G::distance(sub_node[k],sub_node[k+1])/2;
+            }else if (sub_node[k+1].x_ == dest->x_ && sub_node[k+1].y_ == dest->y_){
+                cj = G::distance(sub_node[k-1],sub_node[k])/2 + G::distance(sub_node[k],sub_node[k+1]);
+            } else{
+                cj = G::distance(sub_node[k-1],sub_node[k])/2 + G::distance(sub_node[k],sub_node[k+1])/2;
+            }
+            double scale_factor_ = (gama_ * theta * cost + bj + (gama_ * theta-1)*cj)/(cost + bj);
+            if (scale_factor_ > 1){
+                for (int i = 1; i <v; i++){
+                    if(sub_node_final[i].hole_num == sub_node[k].hole_num){
+                        r1.x_ = scale_factor_ * sub_node_final[i].x_ + (1 - scale_factor_) * I.x_;
+                        r1.y_ = scale_factor_ * sub_node_final[i].y_ + (1 - scale_factor_) * I.y_;
+                        double fix_scale = scale_factor_;
+                        double fix_scale_previous = scale_factor_list[i-1];
+                        while(is_intersect_poly4(edh->routing_table[i-1],r1) || r1.x_ <=5 || r1.y_ <= 5 ||
+                              r1.x_ >= network_width_*0.95 || r1.y_ >= network_height_*0.95){
+                            double scale_down = (double)(rand()%10)/10.0;
+                            if(i > 1 && sub_node_final[i].hole_num != sub_node_final[i-1].hole_num){
+                                fix_scale_previous = fix_scale_previous * scale_down;
+                                fix_scale = fix_scale * scale_down;
+
+                                if (fix_scale_previous < 1){
+                                    fix_scale_previous = 1;
+                                }
+
+                                if (fix_scale < 1){
+                                    fix_scale = 1;
+                                }
+
+                                edh->routing_table[i-1].x_ = fix_scale_previous * sub_node_final[i-1].x_ + (1 - fix_scale_previous) * scale_center[i-1].x_;
+                                edh->routing_table[i-1].y_ = fix_scale_previous * sub_node_final[i-1].y_ + (1 - fix_scale_previous) * scale_center[i-1].y_;
+                                r1.x_ = fix_scale * sub_node_final[i].x_ + (1 - fix_scale) * I.x_;
+                                r1.y_ = fix_scale * sub_node_final[i].y_ + (1 - fix_scale) * I.y_;
+
+                                if (fix_scale_previous == 1 && fix_scale == 1){
+                                    break;
+                                }
+
+                            }
+                            if(i==1 || sub_node_final[i].hole_num == sub_node_final[i-1].hole_num){
+                                fix_scale = fix_scale * scale_down;
+                                if (fix_scale < 1){
+                                    fix_scale = 1;
+                                }
+                                r1.x_ = fix_scale * sub_node_final[i].x_ + (1 - fix_scale) * I.x_;
+                                r1.y_ = fix_scale * sub_node_final[i].y_ + (1 - fix_scale) * I.y_;
+                                if (fix_scale == 1){
+                                    break;
+                                }
+                            }
+                        }
+                        edh->routing_table[i] = r1;
+                        scale_factor_list[i] = fix_scale;
+                        scale_center[i] = I;
+                    }
+                }
+
+                /*
+                r1.x_ = scale_factor_ * sub_node[k].x_ + (1 - scale_factor_) * I.x_;
+                r1.y_ = scale_factor_ * sub_node[k].y_ + (1 - scale_factor_) * I.y_;
+                double fix_scale = 1;
+                while(is_intersect_poly3(sub_node[k],r1) || r1.x_ <=0 || r1.y_ <= 0 ||
+                        r1.x_ >= network_width_ || r1.y_ >= network_height_){
+                    fix_scale = scale_factor_ * 3/4;
+                    if (fix_scale < 1){
+                        fix_scale = 1;
+                    }
+                    r1.x_ = fix_scale * sub_node[k].x_ + (1 - fix_scale) * I.x_;
+                    r1.y_ = fix_scale * sub_node[k].y_ + (1 - fix_scale) * I.y_;
+                    if (fix_scale == 1){
+                        break;
+                    }
+                };
+
+
+
+                r2.x_ = scale_factor_ * sub_node[k+1].x_ + (1 - scale_factor_) * I.x_;
+                r2.y_ = scale_factor_ * sub_node[k+1].y_ + (1 - scale_factor_) * I.y_;
+                fix_scale = 1;
+                while(is_intersect_poly3(sub_node[k+1],r2) || r2.x_ <=0 || r2.y_ <= 0 ||
+                      r2.x_ >= network_width_ || r2.y_ >= network_height_){
+                    fix_scale = scale_factor_ * 3/4;
+                    if (fix_scale < 1){
+                        fix_scale = 1;
+                    }
+                    r2.x_ = fix_scale * sub_node[k+1].x_ + (1 - fix_scale) * I.x_;
+                    r2.y_ = fix_scale * sub_node[k+1].y_ + (1 - fix_scale) * I.y_;
+                    if (fix_scale == 1){
+                        break;
+                    }
+                }*/
+                //    edh->routing_table[k] = r1;
+                //  edh->routing_table[k+1] = r2;
+            }
+
+
+            //}
+
+        }
+
+    }
+
+}
+
+
+
+
+double
+CorbalAgent::distance_ab(Point a, Point b, corePolygon *p) {
+    node* temp = p->node_;
+    double dis = 0;
+    int i = -1;
+    int j = 0;
+    while (temp){
+        if (temp->x_ == a.x_ && temp->y_ == a.y_) {
+            i = 0;
+            break;
+        }
+        if (temp->x_ == b.x_ && temp->y_ == b.y_) {
+            i = 1;
+            break;
+        }
+        temp = temp->next_;
+    }
+    if (i == 0){
+        while(temp){
+            dis = dis + G::distance(temp->x_,temp->y_,temp->next_->x_,temp->next_->y_);
+            temp = temp->next_;
+            if (temp->x_ == b.x_ && temp->y_ == b.y_) {
+                break;
+            }
+        }
+    } else if (i == 1){
+        while(temp){
+            dis = dis + G::distance(temp->x_,temp->y_,temp->next_->x_,temp->next_->y_);
+            temp = temp->next_;
+            if (temp->x_ == a.x_ && temp->y_ == a.y_) {
+                break;
+            }
+        }
+    } else {
+        int b = 0;
+    }
+    return dis;
+}
+
+int
+CorbalAgent::findPointmid_ab(sub_list a, sub_list b, int k ) {
+    corePolygon *p;
+    for (list<corePolygon*>::iterator iter = core_list_st_.begin(); iter != core_list_st_.end(); iter++) {
+        if((*iter)->id_ == a.hole_num){
+            p = (*iter);
+        }
+    }
+
+    node* temp = p->node_;
+    //node table_tmp_1[n_];
+    node table_tmp_1[10];
+    double dis_tmp_1 = 0;
+    //node table_tmp_2[n_];
+    node table_tmp_2[10];
+    double dis_tmp_2 = 0;
+    while (temp){
+        if (temp->x_ == a.x_ && temp->y_ == a.y_) {
+            break;
+        }
+        temp = temp->next_;
+    }
+    int i =0;
+
+    while(temp){
+        dis_tmp_1 = dis_tmp_1 + G::distance(temp->x_,temp->y_,temp->next_->x_,temp->next_->y_);
+        table_tmp_1[i] = *temp;
+        i++;
+        temp = temp->next_;
+        if (temp->x_ == b.x_ && temp->y_ == b.y_) {
+            break;
+        }
+    }
+    table_tmp_1[i] = *temp;
+
+    int j=0;
+    while(temp){
+        dis_tmp_2 = dis_tmp_2 + G::distance(temp->x_,temp->y_,temp->next_->x_,temp->next_->y_);
+        table_tmp_2[j] = *temp;
+        j++;
+        temp = temp->next_;
+        if (temp->x_ == a.x_ && temp->y_ == a.y_) {
+            break;
+        }
+    }
+    table_tmp_2[j] = *temp;
+
+    if (dis_tmp_1 <= dis_tmp_2){
+        for (int m = 0; m <= i; m++){
+            sub_node_final[k].x_ = table_tmp_1[m].x_;
+            sub_node_final[k].y_ = table_tmp_1[m].y_;
+            sub_node_final[k].hole_num = a.hole_num;
+            k++;
+        }
+    } else{
+        for (int m = j; m >= 0; m--){
+            sub_node_final[k].x_ = table_tmp_2[m].x_;
+            sub_node_final[k].y_ = table_tmp_2[m].y_;
+            sub_node_final[k].hole_num = a.hole_num;
+            k++;
+        }
+    }
+    return k;
+}
+
+void CorbalAgent::dumpHop(hdr_corbal_data* edh, hdr_ip *iph) {
+    FILE *fp = fopen("Hopcounts.tr", "a+");
+    fprintf(fp, "%d\t%d\n", iph->saddr(), edh->hopcount_);
+    fclose(fp);
+}
+
+void CorbalAgent::dumpDrop(hdr_ip *iph, int type_) {
+    FILE *fp = fopen("Drop.tr", "a+");
+    if(type_ == 0){
+        fprintf(fp, "%d\t%s\n", iph->saddr(),"ttl");
+    }
+    if(type_ == 1){
+        fprintf(fp, "%d\t%s\n", iph->saddr(),"no_neighbor");
+    }
+
+    fclose(fp);
+}
+
+
+/*Khá»Ÿi táº¡o cÃ¡c tham sá»‘ ban Ä‘áº§u cho chÆ°Æ¡ng trÃ¬nh*/
+void CorbalAgent::KhoiTao() {
+    DanhDau = new char [n];
+    L = new int [n];
+    for (int i = 0; i<n; i++) {   //Táº¥t cáº£ cÃ¡c Ä‘á»‰nh chÆ°a Ä‘Æ°á»£c Ä‘Ã¡nh dáº¥u
+        DanhDau[i] = 0;
+        L[i] = 0;
+    }
+    DanhDau[D] = 1;      //ÄÃ¡nh dáº¥u Ä‘á»‰nh Ä‘áº§u tiÃªn
+    L[0] = D;         //LÆ°u láº¡i Ä‘á»‰nh Ä‘áº§u tiÃªn lÃ  Ä‘á»‰nh xuáº¥t phÃ¡t
+}
+void CorbalAgent::InDuongDi(int SoCanh) {
+    Dem++;
+    int tmp_holenum = -1;
+    Point tmp_prenode;
+    double tmp_cost = 0;
+    double tmp_angle = -2;
+    double tmp_angle_2 = -2;
+    bool flag = true;
+    int tmp1 = 0, tmp2 =0;
+    int k = 0;
+    for (int j = 0; j <SoCanh-1; j++) {
+        tmp1 = L[j];
+        tmp2 = L[j + 1];
+        tmp_cost += graph[tmp1][tmp2];
+        for (list<edge>::iterator iter = b_list_.begin(); iter != b_list_.end(); iter++) {
+            if (L[j] == iter->id) {
+                if (k == 0){
+                    if (iter->a.x_ == this->x_ && iter->a.y_ == this->y_) {
+                        tmp_angle = G::angle(*this,*dest,iter->a,iter->b);
+                        tmp_holenum = iter->hole_num_2;
+                        tmp_prenode = iter->b;
+                        k++;
+                    } else {
+                        tmp_angle = G::angle(*this,*dest,iter->b,iter->a);
+                        tmp_holenum = iter->hole_num_1;
+                        tmp_prenode = iter->a;
+                        k++;
+                    }
+
+                    if (tmp_angle > M_PI/2 && tmp_angle < 3*M_PI/2){
+                        flag = false;
+                        break;
+                    }
+                }else{
+                    if (iter->hole_num_1 == tmp_holenum) {
+                        tmp_angle = G::angle(*this,*dest,iter->a,iter->b);
+                        tmp_angle_2 = G::angle(*this, *dest,tmp_prenode,iter->a);
+                        if (iter->a.y_ > 1.2*tmp_prenode.y_ && (tmp_angle_2 < M_PI/2 || tmp_angle_2 > 3*M_PI/2)){
+                            int a = 0;
+                        }
+                        tmp_holenum = iter->hole_num_2;
+                        tmp_prenode = iter->b;
+
+                    } else {
+                        tmp_angle = G::angle(*this,*dest,iter->b,iter->a);
+                        tmp_angle_2 = G::angle(*this, *dest,tmp_prenode,iter->b);
+                        if (iter->b.y_ > 1.2*tmp_prenode.y_ && (tmp_angle_2 < M_PI/2 || tmp_angle_2 > 3*M_PI/2)){
+                            int a = 0;
+                        }
+                        tmp_holenum = iter->hole_num_1;
+                        tmp_prenode = iter->a;
+                    }
+
+                    if (tmp_angle > M_PI/2 && tmp_angle < 3*M_PI/2 && tmp_angle_2 > M_PI/2 && tmp_angle_2 < 3*M_PI/2){
+                        flag = false;
+                        break;
+                    }
+                }
+            }
+        }
+    }
+
+    if (tmp_cost <= cost_shortest_path_ * (1 + epsilon_)*sin_ && num_array_ < 200 && flag){
+        cout<<endl<<D;
+        int i = 1;
+        for (i = 1; i<SoCanh; i++){
+            cout<<" -> "<<L[i];
+            sub_num_array[num_array_][i] = L[i];
+        }
+        sub_num_array[num_array_][0] = i ;
+        cost_sub[num_array_] = tmp_cost;
+        num_array_++;
+        cout<<"\n";
+    }
+}
+/*Thá»§ tá»¥c Ä‘á»‡ quy tÃ¬m kiáº¿m Ä‘Æ°á»ng Ä‘i*/
+void CorbalAgent::TimKiem(int SoCanh) {
+    if(L[SoCanh-1] == C)      //Xuáº¥t náº¿u Ä‘á»‰nh tÃ¬m tá»« láº§n tÃ¬m kiáº¿m trÆ°á»›c báº±ng C
+        InDuongDi(SoCanh);
+    else {
+        for(int i = 0; i<n; i++)
+            if( graph[L[SoCanh-1]][i]>0 && DanhDau[i] == 0 ){
+                L[SoCanh] = i;      //LÆ°u láº¡i Ä‘á»‰nh Ä‘i qua
+                DanhDau[i] = 1;      //ÄÃ¡nh dáº¥u Ä‘á»‰nh Ä‘i qua
+                TimKiem(SoCanh+1);   //TÃ¬m kiáº¿m Ä‘á»‰nh tiáº¿p theo
+                L[SoCanh] = 0;
+                DanhDau[i] = 0;      //Phá»¥c há»“i Ä‘á»‰nh Ä‘á»‰nh Ä‘Ã£ Ä‘i qua
+            }
+    }
+}
+
+int
+CorbalAgent::findPointmid_ab2(sub_list a, sub_list b, int k, int m ) {
+    corePolygon *p;
+    for (list<corePolygon*>::iterator iter = core_list_st_.begin(); iter != core_list_st_.end(); iter++) {
+        if((*iter)->id_ == a.hole_num){
+            p = (*iter);
+        }
+    }
+
+    node* temp = p->node_;
+    //node table_tmp_1[n_];
+    node table_tmp_1[10];
+    double dis_tmp_1 = 0;
+    //node table_tmp_2[n_];
+    node table_tmp_2[10];
+    double dis_tmp_2 = 0;
+    while (temp){
+        if (temp->x_ == a.x_ && temp->y_ == a.y_) {
+            break;
+        }
+        temp = temp->next_;
+    }
+    int i =0;
+
+    while(temp){
+        dis_tmp_1 = dis_tmp_1 + G::distance(temp->x_,temp->y_,temp->next_->x_,temp->next_->y_);
+        table_tmp_1[i] = *temp;
+        i++;
+        temp = temp->next_;
+        if (temp->x_ == b.x_ && temp->y_ == b.y_) {
+            break;
+        }
+    }
+    table_tmp_1[i] = *temp;
+
+    int j=0;
+    while(temp){
+        dis_tmp_2 = dis_tmp_2 + G::distance(temp->x_,temp->y_,temp->next_->x_,temp->next_->y_);
+        table_tmp_2[j] = *temp;
+        j++;
+        temp = temp->next_;
+        if (temp->x_ == a.x_ && temp->y_ == a.y_) {
+            break;
+        }
+    }
+    table_tmp_2[j] = *temp;
+
+    if (dis_tmp_1 <= dis_tmp_2){
+        for (int n = 0; n <= i; n++){
+            sub_node_final_array[m][k].x_ = table_tmp_1[n].x_;
+            sub_node_final_array[m][k].y_ = table_tmp_1[n].y_;
+            sub_node_final_array[m][k].hole_num = a.hole_num;
+            k++;
+        }
+    } else{
+        for (int n = j; n >= 0; n--){
+            sub_node_final_array[m][k].x_ = table_tmp_2[n].x_;
+            sub_node_final_array[m][k].y_ = table_tmp_2[n].y_;
+            sub_node_final_array[m][k].hole_num = a.hole_num;
+            k++;
+        }
+    }
+    return k;
 }

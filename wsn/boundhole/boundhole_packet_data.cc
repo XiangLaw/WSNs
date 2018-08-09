@@ -53,7 +53,7 @@ void BoundHolePacketData::dump() {
 		node n = get_data(i);
 		fprintf(fp, "%d\t%f\t%f\n", n.id_, n.x_, n.y_);
 	}
-
+	fprintf(fp, "\n");
 	fclose(fp);
 }
 

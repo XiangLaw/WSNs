@@ -21,7 +21,7 @@ public:
         bind_offset(&hdr_hello::offset_);
     }
 
-    ~HelloHeaderClass() { }
+    ~HelloHeaderClass() {}
 } class_hellohdr;
 
 /*
@@ -33,7 +33,7 @@ public:
         bind_offset(&hdr_gpsr::offset_);
     }
 
-    ~GPSRHeaderClass() { }
+    ~GPSRHeaderClass() {}
 } class_gpsrhdr;
 
 /*
@@ -41,7 +41,7 @@ public:
  */
 static class GPSRAgentClass : public TclClass {
 public:
-    GPSRAgentClass() : TclClass("Agent/GPSR") { }
+    GPSRAgentClass() : TclClass("Agent/GPSR") {}
 
     TclObject *create(int, const char *const *) {
         return new GPSRAgent();
@@ -63,6 +63,12 @@ GPSRHelloTimer::expire(Event *e) {
 // --------------- Agent --------------- //
 
 GPSRAgent::GPSRAgent() : Agent(PT_GPSR), hello_timer_(this) {
+    data_pkt_counter_ = 0;
+    hello_counter_ = 0;
+    boundhole_pkt_counter_ = 0;
+    HBA_counter_ = 0;
+    HCI_counter_ = 0;
+
     my_id_ = -1;
     x_ = -1;
     y_ = -1;
@@ -93,6 +99,7 @@ GPSRAgent::command(int argc, const char *const *argv) {
         if (strcasecmp(argv[1], "dump") == 0) {
             dumpNeighbor();
             dumpEnergy();
+            dumpPktOverhead();
             return TCL_OK;
         }
         if (strcasecmp(argv[1], "nodeoff") == 0) {
@@ -117,12 +124,10 @@ GPSRAgent::command(int argc, const char *const *argv) {
         if (strcasecmp(argv[1], "node") == 0) {
             node_ = (MobileNode *) obj;
             return (TCL_OK);
-        }
-        else if (strcasecmp(argv[1], "port-dmux") == 0) {
+        } else if (strcasecmp(argv[1], "port-dmux") == 0) {
             port_dmux_ = (PortClassifier *) obj; //(NsObject *) obj;
             return (TCL_OK);
-        }
-        else if (strcasecmp(argv[1], "tracetarget") == 0) {
+        } else if (strcasecmp(argv[1], "tracetarget") == 0) {
             trace_target_ = (Trace *) obj;
             return TCL_OK;
         }
@@ -148,13 +153,11 @@ GPSRAgent::recv(Packet *p, Handler *h) {
                 {
                     sendGPSR(p);
                     recvGPSR(p);
-                }
-                else    //(cmh->num_forwards() > 0)	// routing loop -> drop
+                } else    //(cmh->num_forwards() > 0)	// routing loop -> drop
                 {
                     drop(p, DROP_RTR_ROUTE_LOOP);
                 }
-            }
-            else {
+            } else {
                 iph->ttl_--;
                 if (iph->ttl_ == 0) {
                     drop(p, DROP_RTR_TTL);
@@ -185,11 +188,16 @@ GPSRAgent::startUp() {
     fclose(fp);
     fp = fopen("RedundantNode.tr", "w");
     fclose(fp);
+    fp = fopen("PacketOverhead.tr", "w");
+    fprintf(fp, "Hello\tBoundhole\tHBA\tHCI\tData\n");
+    fclose(fp);
 
     if (node_->energy_model()) {
         fp = fopen("Energy.tr", "w");
         fclose(fp);
         fp = fopen("EnergyByTime.tr", "w");
+        fclose(fp);
+        fp = fopen("DiedEnergy.tr", "w");
         fclose(fp);
     }
 }
@@ -212,8 +220,7 @@ GPSRAgent::addNeighbor(nsaddr_t nid, Point location) {
         if (neighbor_list_ == NULL)        // the list now is empty
         {
             neighbor_list_ = temp;
-        }
-        else                        // the nodes list is not empty
+        } else                        // the nodes list is not empty
         {
             Angle angle = G::angle(this, neighbor_list_, this, temp);
             node *i;
@@ -230,8 +237,7 @@ GPSRAgent::addNeighbor(nsaddr_t nid, Point location) {
                 i->next_ = temp;
             }
         }
-    }
-    else // temp != null
+    } else // temp != null
     {
         temp->time_ = NOW;
         temp->x_ = location.x_;
@@ -315,6 +321,7 @@ GPSRAgent::sendHello() {
     ghh->location_ = *this;
 
     send(p, 0);
+    hello_counter_++;
 
 }
 
@@ -362,8 +369,7 @@ GPSRAgent::recvGPSR(Packet *p, hdr_gpsr *gdh) {
 
     if (cmh->direction() == hdr_cmn::UP && gdh->daddr_ == my_id_) {
         port_dmux_->recv(p, 0);
-    }
-    else {
+    } else {
         node *nb;
 
         switch (gdh->type_) {
@@ -376,8 +382,7 @@ GPSRAgent::recvGPSR(Packet *p, hdr_gpsr *gdh) {
                     if (nb == NULL) {
                         drop(p, DROP_RTR_NO_ROUTE);
                         return;
-                    }
-                    else {
+                    } else {
                         gdh->type_ = GPSR_PERIME;
                         gdh->peri_ = *this;
                     }
@@ -389,8 +394,7 @@ GPSRAgent::recvGPSR(Packet *p, hdr_gpsr *gdh) {
                 nb = getNeighborByGreedy(gdh->dest_, gdh->peri_);
                 if (nb) {
                     gdh->type_ = GPSR_GPSR;
-                }
-                else {
+                } else {
                     nb = getNeighborByPerimeter(gdh->prev_);
                     if (nb == NULL) {
                         drop(p, DROP_RTR_NO_ROUTE);
@@ -460,6 +464,13 @@ void GPSRAgent::dumpEnergyByTime() {
         );
         fclose(fp);
     }
+}
+
+void GPSRAgent::dumpPktOverhead() {
+    FILE *fp = fopen("PacketOverhead.tr", "a+");
+    fprintf(fp, "%d\t%d\t%d\t%d\t%d\n", hello_counter_, boundhole_pkt_counter_, HBA_counter_, HCI_counter_,
+            data_pkt_counter_);
+    fclose(fp);
 }
 
 void GPSRAgent::dumpRedundantNode(int d) {

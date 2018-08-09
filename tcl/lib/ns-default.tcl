@@ -320,7 +320,6 @@ QueueMonitor set prevTime_ 0
 QueueMonitor set startTime_ 0
 QueueMonitor set estRate_ 0
 QueueMonitor set estimate_rate_ 0
-
 QueueMonitor/ED set epdrops_ 0
 QueueMonitor/ED set ebdrops_ 0
 
@@ -1595,10 +1594,8 @@ Agent/GEAR set range_ 40
 Agent/GOAL set hello_period_ 0
 Agent/GOAL set energy_checkpoint_ 995
 Agent/GOAL set range_ 40
-Agent/GOAL set broadcast_hop_ 10
 Agent/GOAL set storage_opt_ 1
 Agent/GOAL set limit_boundhole_hop_ 100
-Agent/GOAL set limit_ 0
 
 Agent/SCALEGOAL set hello_period_ 0
 Agent/SCALEGOAL set energy_checkpoint_ 995
@@ -1742,3 +1739,34 @@ Agent/NHR set hello_period_ 0
 Agent/NHR set range_ 40
 Agent/NHR set storage_opt_ 1
 Agent/NHR set delta_ 2.1
+
+Agent/VHR set limit_boundhole_hop_ 100
+Agent/VHR set hello_period_ 0
+Agent/VHR set range_ 40
+Agent/VHR set storage_opt_ 1
+Agent/VHR set scaleFactor 0.3
+Agent/VHR set broadcastAngle 1.25663706
+
+Agent/VR1 set limit_boundhole_hop_ 100
+Agent/VR1 set energy_checkpoint_ 995
+Agent/VR1 set hello_period_ 0
+Agent/VR1 set range_ 40
+Agent/VR1 set n_ 10
+Agent/VR1 set k_n_ 3
+Agent/VR1 set min_boundhole_hop_ 5
+Agent/VR1 set epsilon_o_ 0.8
+Agent/VR1 set epsilon_i_ 0.8
+Agent/VR1 set net_width_ 1000
+Agent/VR1 set net_height_ 1000
+
+Agent/VR2 set limit_boundhole_hop_ 100
+Agent/VR2 set energy_checkpoint_ 995
+Agent/VR2 set hello_period_ 0
+Agent/VR2 set range_ 40
+Agent/VR2 set n_ 10
+Agent/VR2 set k_n_ 3
+Agent/VR2 set min_boundhole_hop_ 6
+Agent/VR2 set epsilon_o_ 0.8
+Agent/VR2 set epsilon_i_ 0.8
+Agent/VR2 set net_width_ 1000
+Agent/VR2 set net_height_ 1000

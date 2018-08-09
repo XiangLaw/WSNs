@@ -147,3 +147,4 @@ void CorbalPacketData::update_next_index_of_Bi(int off, int next_index) {
     int offset = off * element_size_;
     memcpy(data_ + offset, &next_index, sizeof(int));
 }
+

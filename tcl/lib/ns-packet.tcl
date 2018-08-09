@@ -204,6 +204,10 @@ set protolist {
 	CORBAL
 	HACH
 	NHR
+	VHR
+	VR1
+	VR2
+	GOAL
 # WSN-EXT
 	GREEDY
 # Other:
