@@ -69,7 +69,7 @@ protected:
 	double range_;
 	double alpha_;
 
-	double static const ENERGY_COST = 1;
+//	double static const ENERGY_COST = 1;
 
 	// energy-aware value
 	double h_;

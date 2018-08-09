@@ -33,6 +33,14 @@ Makefile
 # trace file
 *.tr
 
+cmake-build-debug
+diffusion3/ns/diffagent.o
+diffusion3/ns/diffrtg.o
+diffusion3/ns/difftimer.o
+gen/version.c
+ns
+nse
+
 .idea/
 bin/ns
 bin/ptypes2tcl

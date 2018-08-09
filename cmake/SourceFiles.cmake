@@ -282,11 +282,11 @@ set(OBJ_CC
   wsn/topologicalnetwork/taagent.cc
   wsn/corbal/corbal.cc wsn/corbal/corbal_packet_data.cc
   wsn/hach/hach.cc wsn/hach/hach_packet_data.cc
-  wsn/nearholerouting/nhr.cc wsn/nearholerouting/nhr_packet_data.cc wsn/nearholerouting/nhr_graph.cc
   wsn/geometry/Circle.cpp wsn/geometry/Line.cpp wsn/geometry/Parabola.cpp
   wsn/geometry/Point.cpp wsn/geometry/Vector.cpp
   wsn/graph/voronoi/VoronoiCell.cpp wsn/graph/voronoi/VoronoiDiagram.cpp wsn/graph/voronoi/VoronoiSite.cpp wsn/graph/voronoi/VoronoiEdge.cpp
   wsn/graph/voronoi/fortune/Arc.cpp wsn/graph/voronoi/fortune/BeachLine.cpp wsn/graph/voronoi/fortune/Event.cpp wsn/graph/voronoi/fortune/Fortune.cpp
+	#	wsn/speed/speed.cc wsn/speed/speed_neighbor.cc wsn/speed/speed_bh_data_packet.cc
   ${OBJ_STL}
 )
 set(OBJ_C
