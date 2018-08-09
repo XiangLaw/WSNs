@@ -178,6 +178,24 @@ set ptype(gear) 86\n\
 set pvals(86) GEAR\n\
 set ptype(behds) 87\n\
 set pvals(87) BEHDS\n\
+set ptype(coverage) 88\n\
+set pvals(88) COVERAGE\n\
+set ptype(bcpcoverage) 89\n\
+set pvals(89) BCPCOVERAGE\n\
+set ptype(boundholerouting) 90\n\
+set pvals(90) BOUNDHOLEROUTING\n\
+set ptype(mbc) 91\n\
+set pvals(91) MBC\n\
+set ptype(coverageonline) 92\n\
+set pvals(92) COVERAGEONLINE\n\
+set ptype(taagent) 93\n\
+set pvals(93) TAAGENT\n\
+set ptype(corbal) 94\n\
+set pvals(94) CORBAL\n\
+set ptype(hach) 95\n\
+set pvals(95) HACH\n\
+set ptype(nhr) 96\n\
+set pvals(96) NHR\n\
 proc ptype2val {str} {\n\
 global ptype\n\
 set str [string tolower $str]\n\

@@ -5,6 +5,8 @@
  *  by Trong Nguyen
  */
 
+#include <stdint-gcc.h>
+#include <cstdint>
 #include "config.h"
 #include "dynamicpolygon.h"
 #include "wsn/geomathhelper/geo_math_helper.h"

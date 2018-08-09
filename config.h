@@ -37,6 +37,7 @@
 #ifndef ns_config_h
 #define ns_config_h
 
+using namespace std;
 
 #define MEMDEBUG_SIMULATIONS
 
