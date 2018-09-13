@@ -2600,6 +2600,7 @@ VR2Agent::scalePath(std::vector<std::vector<Point>> base_set_, double beta_, Poi
 
 
 
+
         } else {
             bool is_small_polygon = false;
             Point end_point_1, end_point_2, middle_point_;         // chinh la tmp[j], tmp[j+2] va tmp[j+1]
