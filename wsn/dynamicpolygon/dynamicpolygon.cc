@@ -4,8 +4,7 @@
  *  Last edited on Nov 14, 2013
  *  by Trong Nguyen
  */
-
-#include <stdint-gcc.h>
+ 
 #include <cstdint>
 #include "config.h"
 #include "dynamicpolygon.h"

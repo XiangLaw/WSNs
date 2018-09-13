@@ -286,18 +286,19 @@ set(OBJ_CC
   wsn/geometry/Point.cpp wsn/geometry/Vector.cpp
   wsn/graph/voronoi/VoronoiCell.cpp wsn/graph/voronoi/VoronoiDiagram.cpp wsn/graph/voronoi/VoronoiSite.cpp wsn/graph/voronoi/VoronoiEdge.cpp
   wsn/graph/voronoi/fortune/Arc.cpp wsn/graph/voronoi/fortune/BeachLine.cpp wsn/graph/voronoi/fortune/Event.cpp wsn/graph/voronoi/fortune/Fortune.cpp
-#		wsn/speed/speed.cc wsn/speed/speed_neighbor.cc wsn/speed/speed_bh_data_packet.cc
-        wsn/nearholerouting/nhr.cc wsn/nearholerouting/nhr_packet_data.cc wsn/nearholerouting/nhr_graph.cc
-        wsn/vicinityholerouting/vhr.cc wsn/vicinityholerouting/vhr.h wsn/vicinityholerouting/vhr_packet.h
-        wsn/vicinityholerouting/vhr_packet_data.cc wsn/vicinityholerouting/graph.cc
-        wsn/versatilerouting_v1/vr1.cc wsn/versatilerouting_v1/vr1_packet_data.cc wsn/versatilerouting_v1/geometry_library/geo_lib.cc
-        wsn/versatilerouting_v1/graph/i_graph.cc wsn/versatilerouting_v1/graph/o_graph.cc
 
-        wsn/versatilerouting_v2/vr2.cc wsn/versatilerouting_v2/vr2_packet_data.cc
-        wsn/versatilerouting_v2/graph/vr2_o_graph.cc
-        wsn/versatilerouting_v2/graph/vr2_i_graph.cc
-        wsn/goal/goal.cc wsn/goal/goal_packet_data.cc wsn/goal/graph/goal_o_graph.cc
-        wsn/goal/graph/goal_i_graph.cc
+	#	wsn/speed/speed.cc wsn/speed/speed_neighbor.cc wsn/speed/speed_bh_data_packet.cc
+		wsn/nearholerouting/nhr.cc wsn/nearholerouting/nhr_packet_data.cc wsn/nearholerouting/nhr_graph.cc
+		wsn/vicinityholerouting/vhr.cc wsn/vicinityholerouting/vhr.h wsn/vicinityholerouting/vhr_packet.h
+		wsn/vicinityholerouting/vhr_packet_data.cc wsn/vicinityholerouting/graph.cc
+		wsn/versatilerouting_v1/vr1.cc wsn/versatilerouting_v1/vr1_packet_data.cc wsn/versatilerouting_v1/geometry_library/geo_lib.cc
+		wsn/versatilerouting_v1/graph/i_graph.cc wsn/versatilerouting_v1/graph/o_graph.cc
+
+		wsn/versatilerouting_v2/vr2.cc wsn/versatilerouting_v2/vr2_packet_data.cc
+		wsn/versatilerouting_v2/graph/vr2_o_graph.cc
+		wsn/versatilerouting_v2/graph/vr2_i_graph.cc
+		wsn/goal/goal.cc wsn/goal/goal_packet_data.cc wsn/goal/graph/goal_o_graph.cc
+		wsn/goal/graph/goal_i_graph.cc
   ${OBJ_STL}
 )
 set(OBJ_C

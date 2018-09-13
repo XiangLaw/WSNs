@@ -36,6 +36,10 @@ Makefile
 # trace file
 *.tr
 
+cmake-build-debug
+gen/version.c
+nse
+
 .idea/
 bin/ns
 bin/ptypes2tcl
