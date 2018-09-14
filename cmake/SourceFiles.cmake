@@ -299,6 +299,8 @@ set(OBJ_CC
 		wsn/versatilerouting_v2/graph/vr2_i_graph.cc
 		wsn/goal/goal.cc wsn/goal/goal_packet_data.cc wsn/goal/graph/goal_o_graph.cc
 		wsn/goal/graph/goal_i_graph.cc
+
+		wsn/energy_aware_dual_path_routing/edgr.cc wsn/energy_aware_dual_path_routing/edgr_packet.h
   ${OBJ_STL}
 )
 set(OBJ_C

@@ -229,7 +229,10 @@ static const packet_t PT_VHR = 97;  // vicinity hole routing
 static const packet_t PT_VR1 = 98;  // versatile routing version 1
 static const packet_t PT_VR2 = 99;  // versatile routing version 2
 static const packet_t PT_GOAL = 100; // goal multiple hole + inside hole
-static packet_t       PT_NTYPE = 101; 			// This MUST be the LAST one
+static const packet_t PT_BEACON = 101;  // energy-aware dual-path geographic routing beacon packet
+static const packet_t PT_BURST = 102;   // energy-aware dual-path geographic routing busrt packet
+static const packet_t PT_EDGR = 103;
+static packet_t       PT_NTYPE = 104; 			// This MUST be the LAST one
 
 enum packetClass
 {
@@ -478,6 +481,11 @@ public:
         name_[PT_VR2] = "VR2";
 		name_[PT_GOAL] = "GOAL";
 		name_[PT_NTYPE]= "undefined";
+
+		// energy-aware dual-path geometric routing
+		name_[PT_BEACON] = "BEACON";
+		name_[PT_BURST] = "BUSRT";
+		name_[PT_EDGR] = "EDGR";
 	}
 	static int addPacket(char *name);
 	static packet_t getType(const char *name)
