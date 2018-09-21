@@ -208,6 +208,9 @@ set protolist {
 	VR1
 	VR2
 	GOAL
+	BEACON
+	BURST
+	EDGR
 # WSN-EXT
 	GREEDY
 # Other:

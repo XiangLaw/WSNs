@@ -8,9 +8,12 @@
 #define EDGR_BURST_BYPASS   0x02
 #define EDGR_BURST_FLAG_LEFT    0x03
 #define EDGR_BURST_FLAG_RIGHT   0x04
+#define EDGR_BURST_FORWARD   0x05
+#define EDGR_BURST_FEED_BACK    0x06
 
 #define HDR_BEACON(p)   hdr_beacon::access(p)
 #define HDR_BURST(p)   hdr_burst::access(p)
+#define HDR_EDGR(p)     hdr_edgr::access(p)
 
 struct hdr_beacon
 {
@@ -38,18 +41,20 @@ struct hdr_burst
 {
     u_int8_t mode_;     // greedy mode or bypass mode
     u_int8_t flag_;      // left or right path (bases on left/right hand rule)
+    u_int8_t direction_;
     nsaddr_t  daddr_;
 
     Point void_;        // location enter perimeter mode
     Point dest_;        // destination location
     Point prev_;        // position of previous node
+    Point source_;
 
     Point anchor_list_[20];
-    int anchor_index_;
+    u_int8_t anchor_index_;
 
     inline int size()
     {
-        return 2 * sizeof(u_int8_t) + 24 * sizeof(Point) + sizeof(nsaddr_t);
+        return 3 * sizeof(u_int8_t) + 25 * sizeof(Point) + sizeof(nsaddr_t);
     }
 
     static int offset_;
@@ -66,7 +71,24 @@ struct hdr_burst
 
 struct hdr_edgr
 {
+    Point anchor_list_[20];
+    Point dest_;
+    int anchor_index_;
 
+    inline int size()
+    {
+        return 22 * sizeof(Point) + sizeof(int);
+    }
+
+    static int offset_;
+    inline static int& offset()
+    {
+        return offset_;
+    }
+    inline static struct hdr_edgr* access(const Packet *p)
+    {
+        return (struct hdr_edgr*) p->access(offset_);
+    }
 };
 
 #endif

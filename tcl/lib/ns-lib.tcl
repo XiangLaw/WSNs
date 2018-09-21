@@ -725,6 +725,9 @@ Simulator instproc create-wireless-node args {
             VR2 {
                 set ragent [$self create-vr2-agent $node]
             }
+            EDGR {
+                set ragent [$self create-edgr-agent $node]
+            }
 			MDART {
 				set ragent [$self create-mdart-agent $node]
                         }
@@ -974,6 +977,20 @@ Simulator instproc create-gpsr-agent { node } {
 	return $ragent
 }
 
+# EDGR
+Simulator instproc create-edgr-agent { node } {
+	set ragent [new Agent/EDGR]
+	set addr [$node node-addr]
+	$ragent addr $addr
+	$ragent node $node
+	if [Simulator set mobile_ip_] {
+		$ragent port-dmux [$node demux]
+	}
+	$node addr $addr
+	$node set ragent_ $ragent
+	$self at 0.0 "$ragent start";
+	return $ragent
+}
 
 # BOUNDHOLEROUTING
 Simulator instproc create-boundholerouting-agent { node } {

@@ -1770,3 +1770,7 @@ Agent/VR2 set epsilon_o_ 0.8
 Agent/VR2 set epsilon_i_ 0.8
 Agent/VR2 set net_width_ 1000
 Agent/VR2 set net_height_ 1000
+
+Agent/EDGR set hello_period_ 30
+Agent/EDGR set energy_checkpoint_ 995
+Agent/EDGR set range_ 40

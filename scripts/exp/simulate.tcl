@@ -1,14 +1,14 @@
-# Script for WisSim simulator. Last edit 5/24/2018 9:20:47 AM
+# Script for WisSim simulator. Last edit 15/09/2018 00:55:42
 
 set opt(x)	1000	;# X dimension of the topography
 set opt(y)	1000	;# Y dimension of the topography
-set opt(stop)	3500	;# simulation time
-set opt(nn)	2350	;# number of nodes
+set opt(stop)	500	;# simulation time
+set opt(nn)	2326	;# number of nodes
 set opt(tr)	Trace.tr	;# trace file
 set opt(nam)	nam.out.tr
 
 set opt(ifqlen)	50	;# max packet in ifq
-set opt(dump_at)	90	;# time to dump broadcast energy & broadcast region (GOAL only)
+set opt(dump_at)	90	;# time to dump broadcast energy & broadcast region (CORBAL only)
 set opt(chan)	Channel/WirelessChannel
 set opt(prop)	Propagation/TwoRayGround
 set opt(netif)	Phy/WirelessPhy
@@ -16,7 +16,7 @@ set opt(mac)	Mac/802_11
 set opt(ifq)	Queue/DropTail/PriQueue
 set opt(ll)	LL
 set opt(ant)	Antenna/OmniAntenna
-set opt(rp)	GOAL
+set opt(rp)	EDGR
 set opt(trans)	UDP
 set opt(apps)	CBR
 
@@ -55,10 +55,9 @@ Antenna/OmniAntenna set Z_ 1.5
 Antenna/OmniAntenna set Gt_ 1
 Antenna/OmniAntenna set Gr_ 1
 
-Agent/GOAL set energy_checkpoint_ 995
-Agent/GOAL set hello_period_ 0
-Agent/GOAL set range_ 40
-Agent/GOAL set limit_boundhole_hop_ 80
+Agent/EDGR set energy_checkpoint_ 995
+Agent/EDGR set hello_period_ 100
+Agent/EDGR set range_ 40
 
 Agent/UDP set fid_ 2
 
@@ -69,8 +68,8 @@ Agent/CBR set rate_ 0.1Mb
 Agent/CBR set sport_ 0
 Agent/CBR set interval_1_ 50.0
 Agent/CBR set interval_ 3.0
-Agent/CBR set cbr_start_1_ 3000.0
-Agent/CBR set cbr_start_ 3200.0
+Agent/CBR set cbr_start_1_ 100.0
+Agent/CBR set cbr_start_ 200.0
 
 # ======================================================================
 

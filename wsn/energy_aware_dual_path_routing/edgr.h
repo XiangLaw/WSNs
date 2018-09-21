@@ -17,10 +17,10 @@ struct neighbor: node
     float_t residual_energy_;
 };
 
-class AgentBroadcastTimer: public TimerHandler
+class BroadcastTimer: public TimerHandler
 {
 public:
-    AgentBroadcastTimer(EDGRAgent *a): TimerHandler()
+    BroadcastTimer(EDGRAgent *a): TimerHandler()
     {
         agent_ = a;
     }
@@ -70,6 +70,8 @@ protected:
 
     nsaddr_t my_id_;
 
+    Point left_anchors_[20];
+    Point right_anchors_[20];
 
     void startUp();						// Initialize the Agent
 
@@ -82,6 +84,7 @@ protected:
     void sendBurst(Packet*);
     void recvBurst(Packet*);
     void recvBurst(Packet*, hdr_burst*);
+    void recvBurstFeedback(Packet *, hdr_burst*);
 
     neighbor* getNeighbor(nsaddr_t);
     neighbor* getNeighborByGreedy(Point, Point);
