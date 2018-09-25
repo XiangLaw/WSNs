@@ -1,9 +1,9 @@
-# Script for WisSim simulator. Last edit 15/09/2018 00:55:42
+# Script for WisSim simulator. Last edit 25/09/2018 11:02:31
 
 set opt(x)	1000	;# X dimension of the topography
 set opt(y)	1000	;# Y dimension of the topography
 set opt(stop)	500	;# simulation time
-set opt(nn)	2326	;# number of nodes
+set opt(nn)	2341	;# number of nodes
 set opt(tr)	Trace.tr	;# trace file
 set opt(nam)	nam.out.tr
 
@@ -56,7 +56,7 @@ Antenna/OmniAntenna set Gt_ 1
 Antenna/OmniAntenna set Gr_ 1
 
 Agent/EDGR set energy_checkpoint_ 995
-Agent/EDGR set hello_period_ 100
+Agent/EDGR set hello_period_ 0
 Agent/EDGR set range_ 40
 
 Agent/UDP set fid_ 2

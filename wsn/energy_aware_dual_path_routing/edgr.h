@@ -73,6 +73,13 @@ protected:
     Point left_anchors_[20];
     Point right_anchors_[20];
 
+    // energy model parametrics
+    float_t gamma_ = 0.5;
+    float_t d_opt_ = 25.0;     // 25 m, respect to alpha_ = 2, c1_ = 100, c2_ = 100, c3_ = 60
+    float_t d_o_ = 35.4;     // 35.4 m
+    bool is_burst_sent_ = false;
+    bool is_burst_came_back_ = false;
+
     void startUp();						// Initialize the Agent
 
     virtual void addNeighbor(nsaddr_t, Point, float_t);
@@ -82,15 +89,18 @@ protected:
     void beacontout();					// called by timer::expire(Event*)
 
     void sendBurst(Packet*);
-    void recvBurst(Packet*);
     void recvBurst(Packet*, hdr_burst*);
     void recvBurstFeedback(Packet *, hdr_burst*);
 
+    void sendData(Packet*);
+    void recvData(Packet*, hdr_edgr*);
+
     neighbor* getNeighbor(nsaddr_t);
+    neighbor* getNeighbor(Point);
     neighbor* getNeighborByGreedy(Point, Point);
     neighbor* getNeighborByRightHandRule(Point);
     neighbor* getNeighborByLeftHandRule(Point);
-
+    neighbor* findOptimizedForwarder(Point);
 
     void dumpEnergyByTime();
     void dumpNeighbor();

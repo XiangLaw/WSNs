@@ -6,7 +6,7 @@ set opt(interval) 3.0
 set opt(cbr_start_1_) 100.0
 set opt(cbr_start_) 200.0
 
-set s(0)	1242	;	set d(0)	695
+set s(0)	569	;	set d(0)	1873
 
 for {set i 0} {$i < $opt(tn)} {incr i} {
     $mnode_($s($i)) setdest [$mnode_($d($i)) set X_] [$mnode_($d($i)) set Y_] 0
