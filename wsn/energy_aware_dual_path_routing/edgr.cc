@@ -327,11 +327,19 @@ void EDGRAgent::recvBurst(Packet *p, hdr_burst *gdh) {
                     Packet *p1 = p->copy();
 
                     // p goes by right hand rule
+
+                    double dis_prev = G::distance(gdh->prev_, G::line(gdh->source_, gdh->dest_));
+                    double dis_this = G::distance(*this, G::line(gdh->source_, gdh->dest_));
+                    double dis_next = G::distance(*nb_right, G::line(gdh->source_, gdh->dest_));
+
+                    if (dis_this >= dis_prev && dis_this >= dis_next)
+                        gdh->anchor_list_[gdh->anchor_index_++] = *this;
+
                     gdh->mode_ = EDGR_BURST_BYPASS;
                     gdh->void_ = *this;
                     gdh->prev_ = *this;
-                    gdh->anchor_list_[gdh->anchor_index_++] = *this;
                     gdh->flag_ = EDGR_BURST_FLAG_RIGHT;
+
 
                     cmh->direction_ = hdr_cmn::DOWN;
                     cmh->last_hop_ = my_id_;
@@ -339,12 +347,21 @@ void EDGRAgent::recvBurst(Packet *p, hdr_burst *gdh) {
 
                     send(p, 0);
 
+
                     // p1 goes by left hand rule
+
                     struct hdr_burst *gdh1 = HDR_BURST(p1);
+
+                    dis_prev = G::distance(gdh1->prev_, G::line(gdh1->source_, gdh1->dest_));
+                    dis_this = G::distance(*this, G::line(gdh1->source_, gdh1->dest_));
+                    dis_next = G::distance(*nb_left, G::line(gdh1->source_, gdh1->dest_));
+
+                    if (dis_this >= dis_prev && dis_this >= dis_next)
+                        gdh1->anchor_list_[gdh1->anchor_index_++] = *this;
+
                     gdh1->mode_ = EDGR_BURST_BYPASS;
                     gdh1->void_ = *this;
                     gdh1->prev_ = *this;
-                    gdh1->anchor_list_[gdh1->anchor_index_++] = *this;
                     gdh1->flag_ = EDGR_BURST_FLAG_LEFT;
 
                     struct hdr_cmn *cmh1 = HDR_CMN(p1);
