@@ -572,7 +572,7 @@ neighbor *EDGRAgent::getNeighborByLeftHandRule(Point p) {
     for (node *temp = neighbor_list_; temp; temp = temp->next_) {
         {
             Angle a = G::angle(this, &p, this, temp);
-            if (a < min_angle) {
+            if (a < min_angle && a != 0) {
                 min_angle = a;
                 nb = (neighbor *) temp;
             }
