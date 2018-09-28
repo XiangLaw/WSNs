@@ -301,6 +301,7 @@ set(OBJ_CC
 		wsn/goal/graph/goal_i_graph.cc
 
 		wsn/energy_aware_dual_path_routing/edgr.cc wsn/energy_aware_dual_path_routing/edgr_packet.h
+
   ${OBJ_STL}
 )
 set(OBJ_C
