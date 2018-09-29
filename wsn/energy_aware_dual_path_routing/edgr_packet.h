@@ -49,12 +49,12 @@ struct hdr_burst
     Point prev_;        // position of previous node
     Point source_;
 
-    Point anchor_list_[20];
+    Point anchor_list_[10];
     u_int8_t anchor_index_;
 
     inline int size()
     {
-        return 3 * sizeof(u_int8_t) + 24 * sizeof(Point) + sizeof(nsaddr_t);
+        return 3 * sizeof(u_int8_t) + 14 * sizeof(Point) + sizeof(nsaddr_t);
     }
 
     static int offset_;
@@ -71,12 +71,12 @@ struct hdr_burst
 
 struct hdr_edgr
 {
-    Point anchor_list_[20];
+    Point anchor_list_[10];
     nsaddr_t dest_addr_;
 
     inline int size()
     {
-        return 20 * sizeof(Point) + sizeof(nsaddr_t);
+        return 10 * sizeof(Point) + sizeof(nsaddr_t);
     }
 
     static int offset_;

@@ -27,15 +27,6 @@ public:
     ~BurstHeaderClass() {}
 } class_burst_hdr;
 
-static class EDGRAgentClass : public TclClass {
-public:
-    EDGRAgentClass() : TclClass("Agent/EDGR") {}
-
-    TclObject *create(int, const char *const *) {
-        return (new EDGRAgent());
-    }
-} class_edgr;
-
 static class EDGRHeaderClass : public PacketHeaderClass {
 public:
     EDGRHeaderClass() : PacketHeaderClass("PacketHeader/EDGR", sizeof(hdr_edgr)) {
@@ -44,6 +35,15 @@ public:
 
     ~EDGRHeaderClass() {}
 } class_edgr_hdr;
+
+static class EDGRAgentClass : public TclClass {
+public:
+    EDGRAgentClass() : TclClass("Agent/EDGR") {}
+
+    TclObject *create(int, const char *const *) {
+        return (new EDGRAgent());
+    }
+} class_edgr;
 
 /*
  * Timer
@@ -71,6 +71,15 @@ EDGRAgent::EDGRAgent() : Agent(PT_EDGR), beacon_timer_(this) {
     port_dmux_ = NULL;
     neighbor_list_ = NULL;
     trace_target_ = NULL;
+
+    count_left_ = 0;
+    count_right_ = 0;
+    gamma_ = 0.5;
+    d_opt_ = 25.0;     // 25 m, respect to alpha_ = 2, c1_ = 100, c2_ = 100, c3_ = 60
+    d_o_ = 35.4;     // 35.4 m
+    is_burst_sent_ = false;
+    is_burst_left_came_back_ = false;
+    is_burst_right_came_back_ = false;
 
     dest = new Point();
     bind("hello_period_", &hello_period_);
@@ -173,9 +182,10 @@ void EDGRAgent::recv(Packet *p, Handler *h) {
                 {
                     if (is_burst_sent_ == false)
                         sendBurst(p);
-                    else if (is_burst_sent_ == true && is_burst_came_back_ == false)
+                    else if (is_burst_sent_ == true &&
+                                (is_burst_left_came_back_ == false || is_burst_right_came_back_ == false))
                         drop(p, "Burst is working");
-                    else if (is_burst_came_back_ == true)
+                    else if (is_burst_left_came_back_ == true && is_burst_right_came_back_ == true)
                         sendData(p);
                     else
                         drop(p, "Unknown node's working mode");
@@ -255,7 +265,7 @@ void EDGRAgent::sendBurst(Packet *p) {
     cmh->size() += IP_HDR_LEN + ghh->size();
 
 
-    for (int i = 0; i < 20; i++) {
+    for (int i = 0; i < 10; i++) {
         ghh->anchor_list_[i] = *dest;
     }
     ghh->dest_ = *dest;
@@ -275,9 +285,6 @@ void EDGRAgent::recvBurst(Packet *p, hdr_burst *gdh) {
 
     // debugging
     printf("%d RECV BURST\n", this->my_id_);
-
-    if (this->my_id_ == 1086)
-        printf("here");
 
     struct hdr_cmn *cmh = HDR_CMN(p);
     if (cmh->direction() == hdr_cmn::UP && gdh->dest_ == *this) {
@@ -385,12 +392,14 @@ void EDGRAgent::recvBurst(Packet *p, hdr_burst *gdh) {
             nb = getNeighborByGreedy(gdh->dest_, gdh->void_);
             if (nb) {
                 gdh->mode_ = EDGR_BURST_GREEDY;
-                gdh->anchor_list_[gdh->anchor_index_++] = *this;
+//                gdh->anchor_list_[gdh->anchor_index_++] = *this;
             } else {
                 if (gdh->flag_ == EDGR_BURST_FLAG_LEFT) {
                     nb = getNeighborByLeftHandRule(gdh->prev_);
+                    count_left_ += 1;
                 } else if (gdh->flag_ == EDGR_BURST_FLAG_RIGHT) {
                     nb = getNeighborByRightHandRule(gdh->prev_);
+                    count_right_ += 1;
                 }
 
                 if (nb == NULL) {
@@ -427,16 +436,16 @@ void EDGRAgent::recvBurstFeedback(Packet *p, hdr_burst *gdh) {
     struct hdr_cmn *cmh = HDR_CMN(p);
     if (cmh->direction() == hdr_cmn::UP && gdh->dest_ == *this) {
 
-        is_burst_came_back_ = true;
-
         // print anchor lists
         if (gdh->flag_ == EDGR_BURST_FLAG_LEFT) {
+            is_burst_left_came_back_ = true;
             printf("Left: ");
             for (int i = gdh->anchor_index_ - 1, j = 0; i >= 0; i -= 1, j++) {
                 printf("%f\t%f\t", gdh->anchor_list_[i].x_, gdh->anchor_list_[i].y_);
                 left_anchors_[j] = gdh->anchor_list_[i];
             }
         } else if (gdh->flag_ == EDGR_BURST_FLAG_RIGHT) {
+            is_burst_right_came_back_ = true;
             printf("Right: ");
             for (int i = gdh->anchor_index_ - 1, j = 0; i >= 0; i -= 1, j++) {
                 printf("%f\t%f\t", gdh->anchor_list_[i].x_, gdh->anchor_list_[i].y_);
@@ -608,11 +617,11 @@ void EDGRAgent::sendData(Packet *p) {
     cmh->addr_type() = NS_AF_INET;
     cmh->size() += IP_HDR_LEN + ghh->size();
 
+    ghh->dest_addr_ = iph->daddr();
 
-    for (int i = 0; i < 20; i++) {
+    for (int i = 0; i < 10; i++) {
         ghh->anchor_list_[i] = *dest;
     }
-    ghh->dest_addr_ = iph->daddr();
 
     // choose a random anchor list
     srand(time(0));

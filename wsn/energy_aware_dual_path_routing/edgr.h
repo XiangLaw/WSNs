@@ -78,7 +78,11 @@ protected:
     float_t d_opt_ = 25.0;     // 25 m, respect to alpha_ = 2, c1_ = 100, c2_ = 100, c3_ = 60
     float_t d_o_ = 35.4;     // 35.4 m
     bool is_burst_sent_ = false;
-    bool is_burst_came_back_ = false;
+    bool is_burst_left_came_back_ = false;
+    bool is_burst_right_came_back_ = false;
+
+    int count_left_ = 0;
+    int count_right_ = 0;
 
     void startUp();						// Initialize the Agent
 
