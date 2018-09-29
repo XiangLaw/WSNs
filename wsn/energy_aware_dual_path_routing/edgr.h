@@ -81,9 +81,6 @@ protected:
     bool is_burst_left_came_back_ = false;
     bool is_burst_right_came_back_ = false;
 
-    int count_left_ = 0;
-    int count_right_ = 0;
-
     void startUp();						// Initialize the Agent
 
     virtual void addNeighbor(nsaddr_t, Point, float_t);

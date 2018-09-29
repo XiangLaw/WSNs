@@ -72,8 +72,6 @@ EDGRAgent::EDGRAgent() : Agent(PT_EDGR), beacon_timer_(this) {
     neighbor_list_ = NULL;
     trace_target_ = NULL;
 
-    count_left_ = 0;
-    count_right_ = 0;
     gamma_ = 0.5;
     d_opt_ = 25.0;     // 25 m, respect to alpha_ = 2, c1_ = 100, c2_ = 100, c3_ = 60
     d_o_ = 35.4;     // 35.4 m
@@ -180,15 +178,25 @@ void EDGRAgent::recv(Packet *p, Handler *h) {
             {
                 if (cmh->num_forwards() == 0)   // a new packet
                 {
-                    if (is_burst_sent_ == false)
-                        sendBurst(p);
-                    else if (is_burst_sent_ == true &&
-                                (is_burst_left_came_back_ == false || is_burst_right_came_back_ == false))
+//                    if (is_burst_sent_ == false)
+//                        sendBurst(p);
+//                    else if (is_burst_sent_ == true &&
+//                                (is_burst_left_came_back_ == false || is_burst_right_came_back_ == false))
+//                        drop(p, "Burst is working");
+//                    else if (is_burst_left_came_back_ == true && is_burst_right_came_back_ == true)
+//                        sendData(p);
+//                    else
+//                        drop(p, "Unknown node's working mode");
+
+                    if (is_burst_sent_ == true &&
+                            (is_burst_left_came_back_ == false || is_burst_right_came_back_ == false))
                         drop(p, "Burst is working");
-                    else if (is_burst_left_came_back_ == true && is_burst_right_came_back_ == true)
+                    else if (is_burst_right_came_back_ == true && is_burst_left_came_back_ == true)
+                    {
                         sendData(p);
+                    }
                     else
-                        drop(p, "Unknown node's working mode");
+                        sendBurst(p);
                 } else {
                     drop(p, DROP_RTR_ROUTE_LOOP);
                 }
@@ -277,8 +285,6 @@ void EDGRAgent::sendBurst(Packet *p) {
     iph->saddr() = my_id_;
     iph->daddr() = -1;
     iph->ttl_ = 6 * IP_DEF_TTL;     // max hop-count
-
-    is_burst_sent_ = true;
 }
 
 void EDGRAgent::recvBurst(Packet *p, hdr_burst *gdh) {
@@ -396,10 +402,8 @@ void EDGRAgent::recvBurst(Packet *p, hdr_burst *gdh) {
             } else {
                 if (gdh->flag_ == EDGR_BURST_FLAG_LEFT) {
                     nb = getNeighborByLeftHandRule(gdh->prev_);
-                    count_left_ += 1;
                 } else if (gdh->flag_ == EDGR_BURST_FLAG_RIGHT) {
                     nb = getNeighborByRightHandRule(gdh->prev_);
-                    count_right_ += 1;
                 }
 
                 if (nb == NULL) {
