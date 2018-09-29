@@ -90,5 +90,10 @@ struct hdr_edgr
     }
 };
 
+union hdr_all_edgr {
+    hdr_burst hdb;
+    hdr_edgr hde;
+};
+
 #endif
 

@@ -20,11 +20,9 @@ public:
 
 static class BurstHeaderClass : public PacketHeaderClass {
 public:
-    BurstHeaderClass() : PacketHeaderClass("PacketHeader/EDGR", sizeof(hdr_burst)) {
+    BurstHeaderClass() : PacketHeaderClass("PacketHeader/BURST", sizeof(hdr_burst)) {
         bind_offset(&hdr_burst::offset_);
     }
-
-    ~BurstHeaderClass() {}
 } class_burst_hdr;
 
 static class EDGRHeaderClass : public PacketHeaderClass {
@@ -32,14 +30,11 @@ public:
     EDGRHeaderClass() : PacketHeaderClass("PacketHeader/EDGR", sizeof(hdr_edgr)) {
         bind_offset(&hdr_edgr::offset_);
     }
-
-    ~EDGRHeaderClass() {}
 } class_edgr_hdr;
 
 static class EDGRAgentClass : public TclClass {
 public:
     EDGRAgentClass() : TclClass("Agent/EDGR") {}
-
     TclObject *create(int, const char *const *) {
         return (new EDGRAgent());
     }
@@ -178,16 +173,6 @@ void EDGRAgent::recv(Packet *p, Handler *h) {
             {
                 if (cmh->num_forwards() == 0)   // a new packet
                 {
-//                    if (is_burst_sent_ == false)
-//                        sendBurst(p);
-//                    else if (is_burst_sent_ == true &&
-//                                (is_burst_left_came_back_ == false || is_burst_right_came_back_ == false))
-//                        drop(p, "Burst is working");
-//                    else if (is_burst_left_came_back_ == true && is_burst_right_came_back_ == true)
-//                        sendData(p);
-//                    else
-//                        drop(p, "Unknown node's working mode");
-
                     if (is_burst_sent_ == true &&
                             (is_burst_left_came_back_ == false || is_burst_right_came_back_ == false))
                         drop(p, "Burst is working");
@@ -630,15 +615,17 @@ void EDGRAgent::sendData(Packet *p) {
     // choose a random anchor list
     srand(time(0));
     int ra_ = rand() % 2;
+    int i;
     if (ra_ == 0) {
-        for (int i = 0; left_anchors_[i].x_ != 0 && left_anchors_[i].y_ != 0; i++) {
+        for (i = 0; left_anchors_[i].x_ != 0 && left_anchors_[i].y_ != 0; i++) {
             ghh->anchor_list_[i] = left_anchors_[i];
         }
     } else {
-        for (int i = 0; right_anchors_[i].x_ != 0 && right_anchors_[i].y_ != 0; i++) {
+        for (i = 0; right_anchors_[i].x_ != 0 && right_anchors_[i].y_ != 0; i++) {
             ghh->anchor_list_[i] = right_anchors_[i];
         }
     }
+    ghh->anchor_list_[i+1] = *dest;
 
     iph->saddr() = my_id_;
     iph->daddr() = -1;
@@ -647,7 +634,7 @@ void EDGRAgent::sendData(Packet *p) {
 
 void EDGRAgent::recvData(Packet *p, hdr_edgr *gdh) {
 
-    printf("%f\tRECV DATA\n", this->my_id_);
+    printf("%d\tRECV DATA\n", this->my_id_);
 
     struct hdr_cmn *cmh = HDR_CMN(p);
 
@@ -658,7 +645,7 @@ void EDGRAgent::recvData(Packet *p, hdr_edgr *gdh) {
         Point sub_dest_ = gdh->anchor_list_[0];
         if (sub_dest_ == *this) {       // reached a sub-destination
             // --> remove it from anchor list and derive the next sub destination
-            for (int i = 0; i < 19; i++) {
+            for (int i = 0; i < 9; i++) {
                 gdh->anchor_list_[i] = gdh->anchor_list_[i + 1];
             }
             sub_dest_ = gdh->anchor_list_[0];
@@ -685,17 +672,23 @@ neighbor *EDGRAgent::findOptimizedForwarder(Point p) {
     double d_u_a1_ = G::distance(*this, p);
     ideal_relay_.x_ = this->x_ + d_opt_ * (p.x_ - this->x_) / d_u_a1_;
     ideal_relay_.y_ = this->y_ + d_opt_ * (p.y_ - this->y_) / d_u_a1_;
-    float_t relay_region_radius = 4 / 5 * d_u_a1_;
+    float_t relay_region_radius;
+    float_t n = 0.0;
 
     double max_ = 0;
     neighbor *re_ = NULL;
-    for (node *temp = neighbor_list_; temp; temp = temp->next_) {
-        if (G::distance(temp, p) < relay_region_radius) {
-            neighbor* nb = getNeighbor(*temp);
-            double base = gamma_ * nb->residual_energy_ + (1 - gamma_) * G::distance(nb, ideal_relay_);
-            if (base > max_) {
-                max_ = base;
-                re_ = nb;
+
+    while (re_ == NULL) {
+        n += 1;
+        relay_region_radius = d_u_a1_ * n / (n + 1);
+        for (node *temp = neighbor_list_; temp; temp = temp->next_) {
+            if (G::distance(temp, p) < relay_region_radius) {
+                neighbor *nb = getNeighbor(*temp);
+                double base = gamma_ * nb->residual_energy_ + (1 - gamma_) * G::distance(nb, ideal_relay_);
+                if (base > max_) {
+                    max_ = base;
+                    re_ = nb;
+                }
             }
         }
     }

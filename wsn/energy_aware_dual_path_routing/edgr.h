@@ -70,8 +70,8 @@ protected:
 
     nsaddr_t my_id_;
 
-    Point left_anchors_[20];
-    Point right_anchors_[20];
+    Point left_anchors_[10];
+    Point right_anchors_[10];
 
     // energy model parametrics
     float_t gamma_ = 0.5;
