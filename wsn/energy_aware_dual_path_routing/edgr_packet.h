@@ -72,11 +72,13 @@ struct hdr_burst
 struct hdr_edgr
 {
     Point anchor_list_[10];
-    nsaddr_t dest_addr_;
+    Point dest;
+    u_int8_t flag_;      // left or right path (bases on left/right hand rule) - just in case packet cannot go by edgr
+                         // --> go by gpsr
 
     inline int size()
     {
-        return 10 * sizeof(Point) + sizeof(nsaddr_t);
+        return 11 * sizeof(Point) + sizeof(u_int8_t);
     }
 
     static int offset_;
@@ -88,11 +90,6 @@ struct hdr_edgr
     {
         return (struct hdr_edgr*) p->access(offset_);
     }
-};
-
-union hdr_all_edgr {
-    hdr_burst hdb;
-    hdr_edgr hde;
 };
 
 #endif

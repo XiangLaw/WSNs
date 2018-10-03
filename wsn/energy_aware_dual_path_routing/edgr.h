@@ -71,7 +71,9 @@ protected:
     nsaddr_t my_id_;
 
     Point left_anchors_[10];
+    int left_anchors_num;
     Point right_anchors_[10];
+    int right_anchors_num;
 
     // energy model parametrics
     float_t gamma_ = 0.5;
@@ -102,6 +104,9 @@ protected:
     neighbor* getNeighborByRightHandRule(Point);
     neighbor* getNeighborByLeftHandRule(Point);
     neighbor* findOptimizedForwarder(Point);
+
+    bool isRedundantAnchor(Point[], Point);
+    void makeConvexAnchorList(Point[], Point, Point, int);
 
     void dumpEnergyByTime();
     void dumpNeighbor();

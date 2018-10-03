@@ -196,7 +196,7 @@ void EDGRAgent::recv(Packet *p, Handler *h) {
                     recvBurst(p, gdh);
                 else if (gdh->direction_ == EDGR_BURST_FEED_BACK)
                     recvBurstFeedback(p, gdh);
-            } else if (edgrh->dest_addr_ != 0) {        // data packet
+            } else if (edgrh->dest.x_ != 0 && edgrh->dest.y_ != 0) {        // data packet
                 recvData(p, edgrh);
             } else
                 drop(p, "Unknown cbr type");
@@ -330,7 +330,7 @@ void EDGRAgent::recvBurst(Packet *p, hdr_burst *gdh) {
                     double dis_this = G::distance(*this, G::line(gdh->source_, gdh->dest_));
                     double dis_next = G::distance(*nb_right, G::line(gdh->source_, gdh->dest_));
 
-                    if (dis_this >= dis_prev && dis_this >= dis_next)
+                    if (dis_this >= dis_prev && dis_this >= dis_next && !isRedundantAnchor(gdh->anchor_list_, *this))
                         gdh->anchor_list_[gdh->anchor_index_++] = *this;
 
                     gdh->mode_ = EDGR_BURST_BYPASS;
@@ -354,7 +354,7 @@ void EDGRAgent::recvBurst(Packet *p, hdr_burst *gdh) {
                     dis_this = G::distance(*this, G::line(gdh1->source_, gdh1->dest_));
                     dis_next = G::distance(*nb_left, G::line(gdh1->source_, gdh1->dest_));
 
-                    if (dis_this >= dis_prev && dis_this >= dis_next)
+                    if (dis_this >= dis_prev && dis_this >= dis_next && !isRedundantAnchor(gdh1->anchor_list_, *this))
                         gdh1->anchor_list_[gdh1->anchor_index_++] = *this;
 
                     gdh1->mode_ = EDGR_BURST_BYPASS;
@@ -396,13 +396,14 @@ void EDGRAgent::recvBurst(Packet *p, hdr_burst *gdh) {
                     return;
                 }
 
-                double dis_prev = G::distance(gdh->prev_, G::line(gdh->source_, gdh->dest_));
-                double dis_this = G::distance(*this, G::line(gdh->source_, gdh->dest_));
-                double dis_next = G::distance(*nb, G::line(gdh->source_, gdh->dest_));
-
-                if (dis_this >= dis_prev && dis_this >= dis_next)
-                    gdh->anchor_list_[gdh->anchor_index_++] = *this;
             }
+
+            double dis_prev = G::distance(gdh->prev_, G::line(gdh->source_, gdh->dest_));
+            double dis_this = G::distance(*this, G::line(gdh->source_, gdh->dest_));
+            double dis_next = G::distance(*nb, G::line(gdh->source_, gdh->dest_));
+
+            if (dis_this >= dis_prev && dis_this >= dis_next && !isRedundantAnchor(gdh->anchor_list_, *this))
+                gdh->anchor_list_[gdh->anchor_index_++] = *this;
 
             gdh->prev_ = *this;
 
@@ -427,18 +428,38 @@ void EDGRAgent::recvBurstFeedback(Packet *p, hdr_burst *gdh) {
 
         // print anchor lists
         if (gdh->flag_ == EDGR_BURST_FLAG_LEFT) {
+            int j = 0;
             is_burst_left_came_back_ = true;
-            printf("Left: ");
-            for (int i = gdh->anchor_index_ - 1, j = 0; i >= 0; i -= 1, j++) {
-                printf("%f\t%f\t", gdh->anchor_list_[i].x_, gdh->anchor_list_[i].y_);
+            for (int i = gdh->anchor_index_ - 1; i >= 0; i -= 1, j++) {
                 left_anchors_[j] = gdh->anchor_list_[i];
             }
+
+            // make a "convex" path of anchor list
+            left_anchors_num = j;
+            makeConvexAnchorList(left_anchors_, *this, *dest, left_anchors_num);
+
+            printf("Left: ");
+            for (int i = 0; i < left_anchors_num; i++) {
+                if (left_anchors_[i] != Point(0, 0)) {
+                    printf("%f\t%f\t", left_anchors_[i].x_, left_anchors_[i].y_);
+                }
+            }
         } else if (gdh->flag_ == EDGR_BURST_FLAG_RIGHT) {
+            int j = 0;
             is_burst_right_came_back_ = true;
-            printf("Right: ");
-            for (int i = gdh->anchor_index_ - 1, j = 0; i >= 0; i -= 1, j++) {
-                printf("%f\t%f\t", gdh->anchor_list_[i].x_, gdh->anchor_list_[i].y_);
+            for (int i = gdh->anchor_index_ - 1; i >= 0; i -= 1, j++) {
                 right_anchors_[j] = gdh->anchor_list_[i];
+            }
+
+            // make a "convex" path of anchor list
+            right_anchors_num = j;
+            makeConvexAnchorList(right_anchors_, *this, *dest, right_anchors_num);
+
+            printf("Right: ");
+            for (int i = 0; i < right_anchors_num; i++) {
+                if (right_anchors_[i] != Point(0, 0)) {
+                    printf("%f\t%f\t", right_anchors_[i].x_, right_anchors_[i].y_);
+                }
             }
         } else {
             drop(p, "Unknown feedback");
@@ -581,20 +602,48 @@ neighbor *EDGRAgent::getNeighborByRightHandRule(Point p) {
 }
 
 neighbor *EDGRAgent::getNeighborByLeftHandRule(Point p) {
-    Angle min_angle = DBL_MAX;
+    Angle max_angle = -1;
     neighbor *nb = NULL;
-
     for (node *temp = neighbor_list_; temp; temp = temp->next_) {
         {
-            Angle a = G::angle(this, &p, this, temp);
-            if (a < min_angle && a != 0) {
-                min_angle = a;
+            Angle a = G::angle(this, temp, this, &p);
+            if (a > max_angle) {
+                max_angle = a;
                 nb = (neighbor *) temp;
             }
         }
     }
 
     return nb;
+}
+
+bool EDGRAgent::isRedundantAnchor(Point *curr_list_, Point new_) {
+    for (int i = 0; curr_list_[i].x_ != 0 && curr_list_[i].y_ != 0; i++) {
+        if (new_ == curr_list_[i])
+            return true;
+    }
+    return false;
+}
+
+void EDGRAgent::makeConvexAnchorList(Point *origin, Point source , Point destination, int anchor_num) {
+    double max_dis = 0;
+    Point polar;
+    for (int i = 0; i < anchor_num; i++) {
+        double d = G::distance(origin[i], G::line(source, destination));
+        printf("%f\t%f\n", origin[i].x_, origin[i].y_);
+        if (d > max_dis) {
+            max_dis = d;
+            polar = origin[i];
+        }
+    }
+    for (int i = 0; i < anchor_num; i++) {
+        if (G::isPointLiesInTriangle(&origin[i], &source, &polar, &destination) && origin[i] != polar) {
+            // delete origin[i] in left_anchors
+            origin[i].x_ = 0;
+            origin[i].y_ = 0;
+        }
+    }
+
 }
 
 void EDGRAgent::sendData(Packet *p) {
@@ -606,7 +655,7 @@ void EDGRAgent::sendData(Packet *p) {
     cmh->addr_type() = NS_AF_INET;
     cmh->size() += IP_HDR_LEN + ghh->size();
 
-    ghh->dest_addr_ = iph->daddr();
+    ghh->dest = *dest;
 
     for (int i = 0; i < 10; i++) {
         ghh->anchor_list_[i] = *dest;
@@ -615,17 +664,22 @@ void EDGRAgent::sendData(Packet *p) {
     // choose a random anchor list
     srand(time(0));
     int ra_ = rand() % 2;
-    int i;
+    int i, j;
     if (ra_ == 0) {
-        for (i = 0; left_anchors_[i].x_ != 0 && left_anchors_[i].y_ != 0; i++) {
-            ghh->anchor_list_[i] = left_anchors_[i];
+        for (i = 0, j = 0; i < left_anchors_num; i++) {
+            if (left_anchors_[i] != Point(0,0)) {
+                ghh->anchor_list_[j++] = left_anchors_[i];
+            }
         }
+        ghh->flag_ = EDGR_BURST_FLAG_LEFT;
     } else {
-        for (i = 0; right_anchors_[i].x_ != 0 && right_anchors_[i].y_ != 0; i++) {
-            ghh->anchor_list_[i] = right_anchors_[i];
+        for (i = 0, j = 0; i < right_anchors_num; i++) {
+            if (right_anchors_[i] != Point(0, 0)) {
+                ghh->anchor_list_[j++] = right_anchors_[i];
+            }
         }
+        ghh->flag_ = EDGR_BURST_FLAG_RIGHT;
     }
-    ghh->anchor_list_[i+1] = *dest;
 
     iph->saddr() = my_id_;
     iph->daddr() = -1;
@@ -639,13 +693,13 @@ void EDGRAgent::recvData(Packet *p, hdr_edgr *gdh) {
     struct hdr_cmn *cmh = HDR_CMN(p);
 
     neighbor *nb;
-    if (cmh->direction() == hdr_cmn::UP && gdh->dest_addr_ == my_id_) {
+    if (cmh->direction() == hdr_cmn::UP && gdh->dest == *this) {
         port_dmux_->recv(p, 0);
     } else {
         Point sub_dest_ = gdh->anchor_list_[0];
         if (sub_dest_ == *this) {       // reached a sub-destination
             // --> remove it from anchor list and derive the next sub destination
-            for (int i = 0; i < 9; i++) {
+            for (int i = 0; i < 8; i++) {
                 gdh->anchor_list_[i] = gdh->anchor_list_[i + 1];
             }
             sub_dest_ = gdh->anchor_list_[0];
@@ -657,6 +711,18 @@ void EDGRAgent::recvData(Packet *p, hdr_edgr *gdh) {
             nb = getNeighbor(sub_dest_);
         } else {
             nb = findOptimizedForwarder(sub_dest_);
+        }
+
+        if (nb == NULL) {
+            if (gdh->flag_ == EDGR_BURST_FLAG_RIGHT)
+                nb = getNeighborByRightHandRule(sub_dest_);
+            else if (gdh->flag_ == EDGR_BURST_FLAG_LEFT)
+                nb = getNeighborByLeftHandRule(sub_dest_);
+        }
+
+        if (nb == NULL) {
+            drop(p, DROP_RTR_NO_ROUTE);
+            return;
         }
 
         cmh->direction_ = hdr_cmn::DOWN;
@@ -678,11 +744,11 @@ neighbor *EDGRAgent::findOptimizedForwarder(Point p) {
     double max_ = 0;
     neighbor *re_ = NULL;
 
-    while (re_ == NULL) {
+    while (re_ == NULL && n < 1000) {
         n += 1;
-        relay_region_radius = d_u_a1_ * n / (n + 1);
+        relay_region_radius = d_opt_ * n / (n + 1);
         for (node *temp = neighbor_list_; temp; temp = temp->next_) {
-            if (G::distance(temp, p) < relay_region_radius) {
+            if (G::distance(temp, ideal_relay_) < relay_region_radius) {
                 neighbor *nb = getNeighbor(*temp);
                 double base = gamma_ * nb->residual_energy_ + (1 - gamma_) * G::distance(nb, ideal_relay_);
                 if (base > max_) {
