@@ -10,6 +10,8 @@
 #define EDGR_BURST_FLAG_RIGHT   0x04
 #define EDGR_BURST_FORWARD   0x05
 #define EDGR_BURST_FEED_BACK    0x06
+#define EDGR_EDGR   0x07
+#define EDGR_GPSR   0x08
 
 
 #define HDR_BEACON(p)   hdr_beacon::access(p)

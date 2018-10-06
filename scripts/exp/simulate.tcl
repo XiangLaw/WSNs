@@ -1,14 +1,14 @@
-# Script for WisSim simulator. Last edit 25/09/2018 11:02:31
+# Script for WisSim simulator. Last edit 22/08/2017 14:58:24
 
-set opt(x)	1000	;# X dimension of the topography
-set opt(y)	1000	;# Y dimension of the topography
-set opt(stop)	500	;# simulation time
-set opt(nn)	2341	;# number of nodes
+set opt(x)	1200	;# X dimension of the topography
+set opt(y)	1200	;# Y dimension of the topography
+set opt(stop)	1500	;# simulation time
+set opt(nn)	2933	;# number of nodes
 set opt(tr)	Trace.tr	;# trace file
 set opt(nam)	nam.out.tr
 
 set opt(ifqlen)	50	;# max packet in ifq
-set opt(dump_at)	90	;# time to dump broadcast energy & broadcast region (CORBAL only)
+set opt(dump_at)	600	;# time to dump broadcast energy & broadcast region (EDGR only)
 set opt(chan)	Channel/WirelessChannel
 set opt(prop)	Propagation/TwoRayGround
 set opt(netif)	Phy/WirelessPhy
@@ -67,9 +67,10 @@ Agent/CBR set dport_ 0
 Agent/CBR set rate_ 0.1Mb
 Agent/CBR set sport_ 0
 Agent/CBR set interval_1_ 50.0
-Agent/CBR set interval_ 3.0
-Agent/CBR set cbr_start_1_ 100.0
-Agent/CBR set cbr_start_ 200.0
+Agent/CBR set interval_ 10.0
+Agent/CBR set cbr_start_1_ 600
+Agent/CBR set cbr_start_ 800
+
 
 # ======================================================================
 
